@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v5-run-skills-audio";
+const CACHE_NAME = "claw-quest-v6-premium-run-skills";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

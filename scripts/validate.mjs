@@ -60,7 +60,7 @@ const beginTurnBody = gameScript.slice(beginTurnStart, beginTurnEnd);
 if (beginTurnBody.includes('state.playerAction="idle"') || beginTurnBody.includes("state.attackFx=null")) {
   throw new Error("Beginning the next turn must not erase the previous action's visual feedback.");
 }
-if ((gameScript.match(/function applyEnemyHit\\(e\\)\\{/g) ?? []).length !== 1) {
+if ((gameScript.match(/function applyEnemyHit\(e\)\{/g) ?? []).length !== 1) {
   throw new Error("Enemy damage must have exactly one authoritative resolver.");
 }
 

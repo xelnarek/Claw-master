@@ -319,7 +319,7 @@ function drawHero(x,y){
  rounded(18,-13,8,7,3,"#f3bc83","#ffe0ba",1);
  // Compact mechanical firearm; the picked weapon changes its silhouette and muzzle.
  ctx.save();ctx.translate(23,-28);
- const activeWeapon=weaponForRun(),gunLength=activeWeapon.id==="cannon"?29:activeWeapon.id==="scatter"?25:activeWeapon.id==="laser"?31:23;
+ const activeWeapon=(shotFx&&state.shotFxWeaponId?weaponCatalog.find(w=>w.id===state.shotFxWeaponId):null)||weaponForRun(),gunLength=activeWeapon.id==="cannon"?29:activeWeapon.id==="scatter"?25:activeWeapon.id==="laser"?31:23;
  const shotKick=shotFx?Math.sin(shotProgress*Math.PI)*4.5:0;ctx.translate(-shotKick,0);
  const muzzle=shotFx?clamp(1-shotProgress*1.9,0,1):0;
  const metal=ctx.createLinearGradient(0,-10,0,10);metal.addColorStop(0,"#c4d0cd");metal.addColorStop(.45,"#596b70");metal.addColorStop(1,"#25363d");

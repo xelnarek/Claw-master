@@ -11,11 +11,11 @@
 <meta name="description" content="Claw Quest — kolorowa gra arcade 2D z walką i automatem z chwytakiem.">
 <title>Claw Quest — Arcade Roguelite</title>
 <style>
-:root{color-scheme:dark;--ink:#f7f4ff;--muted:#aab3d0;--panel:#172541;--line:rgba(255,255,255,.13);--gold:#ffcc5c;--cyan:#5ce4e8}
+:root{color-scheme:dark;--ink:#fff8eb;--muted:#aebbd5;--panel:#172541;--line:rgba(255,255,255,.16);--gold:#ffd166;--cyan:#67e8e5;--navy:#101a34;--blue:#29466f}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#091326;font-family:Inter,ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-body{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 20%,#283d6b 0%,#101b35 52%,#07101f 100%)}
-#game-wrap{position:relative;width:min(100vw,56.25dvh);height:min(100dvh,177.78vw);max-width:520px;max-height:925px;overflow:hidden;border-radius:20px;background:#121f3b;box-shadow:0 20px 80px #0009,inset 0 0 0 1px #ffffff20}
+body{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 16%,#344d7a 0%,#142441 47%,#07101f 100%)}
+#game-wrap{position:relative;width:min(100vw,56.25dvh);height:min(100dvh,177.78vw);max-width:520px;max-height:925px;overflow:hidden;border-radius:22px;background:#101b35;box-shadow:0 24px 90px #000b,0 0 0 1px #ffffff24,inset 0 0 0 2px #ffffff12}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 #toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.95);opacity:0;pointer-events:none;padding:11px 17px;border:1px solid #ffffff35;border-radius:16px;background:#111c33ee;color:white;font-size:13px;font-weight:900;letter-spacing:.05em;white-space:nowrap;box-shadow:0 12px 32px #0008;transition:.18s}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -43,10 +43,11 @@ const state={
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,
  enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,
- toastTimer:0,screen:"title",bossSpawned:false
+ toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
 const COLORS={navy:"#111d39",deep:"#0b1530",panel:"#1a2a4b",cyan:"#57e5e8",gold:"#ffd166",orange:"#ff8b55",pink:"#ff6ba8",violet:"#9d82ff",green:"#7ce6a2"};
 let audio=null;
+try{state.sound=localStorage.getItem("clawQuestSound")==="true";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
 function beep(freq=440,duration=.07,type="sine",volume=.035){
  if(!state.sound)return;
  try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.value=volume;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.stop(audio.currentTime+duration)}catch(e){}
@@ -58,6 +59,7 @@ function text(s,x,y,size=14,color="#fff",weight=800,align="left"){
  ctx.font=weight+" "+size+"px Inter,system-ui,sans-serif";ctx.textAlign=align;ctx.textBaseline="middle";ctx.fillStyle=color;ctx.fillText(s,x,y);
 }
 function glow(x,y,r,color,alpha=.35){
+ if(!state.effects)return;
  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"transparent");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
 }
 function line(x1,y1,x2,y2,color,width=2){
@@ -67,9 +69,15 @@ function pill(x,y,w,label,fill="#263a60",color="#fff"){
  rounded(x,y,w,25,12,fill,"#ffffff22");text(label,x+w/2,y+13,10,color,900,"center");
 }
 function button(x,y,w,h,label,sub,active=false){
- rounded(x,y+4,w,h,14,"#070e20aa");rounded(x,y,w,h,14,active?"#ffb84d":"#263b63",active?"#ffe7a2":"#7894c8",2);
- text(label,x+w/2,y+h*.43,15,active?"#37200b":"#f7f6ff",1000,"center");
- if(sub)text(sub,x+w/2,y+h*.75,8,active?"#5a3516":"#b9c9ec",800,"center");
+ const top=active?"#ffe39a":"#456894",bottom=active?"#f0a83d":"#20395f",edge=active?"#fff0b8":"#8db7d1";
+ rounded(x,y+5,w,h,14,"#050b18aa");
+ const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,top);g.addColorStop(1,bottom);
+ rounded(x,y,w,h,14,g,edge,2);
+ rounded(x+4,y+4,w-8,Math.max(8,h*.25),8,active?"#fff4c34a":"#ffffff12");
+ ctx.save();ctx.shadowColor=active?"#ffbf55aa":"#07142699";ctx.shadowBlur=active?13:7;
+ text(label,x+w/2,y+h*.42,Math.min(15,w/Math.max(7,label.length*.58)),active?"#4c2d12":"#f8fbff",1000,"center");
+ ctx.restore();
+ if(sub)text(sub,x+w/2,y+h*.76,Math.min(9,w/Math.max(7,sub.length*.54)),active?"#70491f":"#c9dbf3",900,"center");
 }
 function drawBackground(){
  const g=ctx.createLinearGradient(0,80,0,505);g.addColorStop(0,"#243e71");g.addColorStop(.55,"#2b6d77");g.addColorStop(1,"#193d4d");ctx.fillStyle=g;ctx.fillRect(0,75,W,430);
@@ -88,26 +96,17 @@ function drawBackground(){
  for(const p of state.stars){ctx.globalAlpha=p.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
 }
 function drawHeader(){
- rounded(12,10,426,58,16,"#101b35eF","#ffffff20");
- // logo mark
- glow(35,38,25,"#56e2dd",.22);rounded(19,21,33,33,10,"#ffbd50","#ffe5a4",2);
- text("✦",35,38,20,"#493016",1000,"center");
- text("CLAW",62,28,16,"#fff",1000);text("QUEST",62,47,11,"#69e8e6",1000);
- pill(180,24,72,"FALA "+state.wave,"#243e66","#ffe08a");
- rounded(270,21,94,34,11,"#203554","#5474a9");text("◆ "+state.coins,317,38,13,"#ffdc77",1000,"center");
- // Sound and pause buttons
- rounded(374,20,28,28,9,"#2b4268","#7894c8");text(state.sound?"♫":"♪",388,34,15,"#fff",900,"center");
- rounded(408,20,28,28,9,"#2b4268","#7894c8");text(state.paused?"▶":"Ⅱ",422,34,12,"#fff",900,"center");
-}
-function drawHealth(){
- rounded(15,79,420,40,12,"#101a31dd","#ffffff19");
- text("♥",30,99,17,"#ff6f83",1000);
- rounded(48,89,235,18,9,"#3a4058");
- const pct=clamp(state.hp/state.maxHp,0,1);
- const gr=ctx.createLinearGradient(48,0,283,0);gr.addColorStop(0,"#ff6d80");gr.addColorStop(1,"#ffbb71");rounded(48,89,235*pct,18,9,gr);
- text(Math.ceil(state.hp)+" / "+state.maxHp,166,98,10,"#fff",900,"center");
- pill(295,86,58,"ATK "+state.damage,"#28395c","#8bf1e4");
- pill(360,86,75,"WYNIK "+state.score,"#28395c","#ffe08a");
+ rounded(10,9,430,59,16,"#0c1730eF","#8ca9ce66",1.5);
+ glow(35,38,28,"#55e5e0",.19);
+ rounded(18,20,34,34,11,"#eeb84e","#fff0ad",2);
+ text("✦",35,37,20,"#493016",1000,"center");
+ text("CLAW",61,28,15,"#fff5e4",1000);text("QUEST",61,47,10,"#76eeea",1000);
+ rounded(164,20,91,34,11,"#1a3457","#7898bd",1.4);
+ text("FALA",209,29,8,"#a9c5e5",900,"center");text(String(state.wave),209,43,14,"#ffe29a",1000,"center");
+ rounded(267,20,96,34,11,"#20395b","#718fb6",1.2);
+ text("◆",282,37,12,"#ffd66d",1000,"center");text(String(state.coins),323,37,13,"#fff0c1",1000,"center");
+ rounded(374,20,28,28,9,"#29476b","#91abc9",1.2);text(state.sound?"♫":"♪",388,34,15,"#f9fbff",900,"center");
+ rounded(408,20,28,28,9,"#29476b","#91abc9",1.2);text(state.paused?"▶":"Ⅱ",422,34,12,"#f9fbff",900,"center");
 }
 function drawHero(x,y){
  ctx.save();ctx.translate(x,y);
@@ -170,25 +169,32 @@ function drawEnemy(e){
 }
 function drawArena(){
  drawBackground();
- // top arena label
- pill(18,130,116,"LEŚNA POLANA","#16374e","#baf8dc");
- // glow portals in distance
- glow(405,365,48,"#d47fff",.14);
- // floor details and player
+ rounded(15,126,136,25,10,"#102a42dd","#7dc9c066",1);
+ text("✦  LEŚNA POLANA",83,139,10,"#d5ffe8",1000,"center");
+ glow(405,365,48,"#d47fff",.17);
+ line(14,416,436,416,"#c8ffd233",1);line(14,505,436,505,"#b5e7bd88",2);
+ ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();
  drawHero(state.playerX,state.playerY);
- for(let i=0;i<state.enemies.length;i++){const e=state.enemies[i];drawEnemy(e);if(i===state.selectedEnemy){ctx.strokeStyle="#fff3a6";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(e.x,e.y-17,35,42,0,0,Math.PI*2);ctx.stroke();text("▼",e.x,e.y-69,14,"#fff3a6",1000,"center")}}
- for(const b of state.bullets){
-  glow(b.x,b.y,18,"#79f5ff",.4);ctx.fillStyle="#b9ffff";ctx.beginPath();ctx.ellipse(b.x,b.y,8,4,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#58dfe3";ctx.lineWidth=2;ctx.stroke();
+ for(let i=0;i<state.enemies.length;i++){
+  const e=state.enemies[i];drawEnemy(e);
+  if(i===state.selectedEnemy){
+   ctx.save();ctx.strokeStyle="#fff0a3";ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.beginPath();ctx.ellipse(e.x,e.y-17,e.type==="boss"?48:35,e.type==="boss"?54:42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   glow(e.x,e.y+17,37,"#ffdc83",.12);text("▼",e.x,e.y-(e.type==="boss"?78:69),14,"#fff1a8",1000,"center");ctx.restore();
+  }
  }
+ for(const b of state.bullets){glow(b.x,b.y,18,"#79f5ff",.4);ctx.fillStyle="#b9ffff";ctx.beginPath();ctx.ellipse(b.x,b.y,8,4,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#58dfe3";ctx.lineWidth=2;ctx.stroke()}
  for(const p of state.particles){ctx.globalAlpha=p.life/p.max;glow(p.x,p.y,p.size*2,p.color,.3);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
  for(const f of state.floaters){ctx.globalAlpha=clamp(f.life,0,1);text(f.label,f.x,f.y,12,f.color,1000,"center");ctx.globalAlpha=1}
- // strategic turn-based combat actions
- pill(18,432,110,state.turn==="player"?"TWOJA TURA":"TURA WROGA","#173653",state.turn==="player"?"#a8fff0":"#ffb2b2");
- button(137,435,88,48,"ATAK","J • CEL",state.turn==="player");
- button(231,435,88,48,"OBRONA","K • -65%",state.turn==="player");
- button(325,435,105,48,"SUPER","L • "+(state.skillReady?"GOTOWA":"ŁADUJE"),state.turn==="player"&&state.skillReady);
- if(state.turn==="enemy")text("WRÓG ATAKUJE…",225,421,11,"#ffb4c4",1000,"center");
- if(state.defending)pill(165,386,120,"POSTAWA OBRONNA","#244e68","#a4f5ff");
+ rounded(13,426,424,66,14,"#0d1b35eF","#7197bc77",1.2);
+ const isPlayer=state.turn==="player";
+ rounded(22,432,108,22,9,isPlayer?"#174e55":"#553044",isPlayer?"#6dd6bf":"#e890a1",1);
+ text(isPlayer?"TWOJA TURA":"TURA WROGA",76,443,9,isPlayer?"#baffea":"#ffd0d7",1000,"center");
+ if(state.enemies.length){const target=state.enemies[state.selectedEnemy]||state.enemies[0];text("CEL: "+enemyName(target).toUpperCase(),151,443,9,"#d7e5ff",900,"left")}
+ else text("ARENA OCZYSZCZONA",151,443,9,"#d7e5ff",900,"left");
+ button(22,459,119,27,"ATAK","J",isPlayer);
+ button(151,459,119,27,"OBRONA","K • -65%",isPlayer&&state.defending);
+ button(280,459,148,27,"SUPER","L • "+(state.skillReady?"GOTOWA":"ŁADUJE"),isPlayer&&state.skillReady);
+ if(state.defending)pill(164,395,120,"POSTAWA OBRONNA","#244e68","#a4f5ff");
 }
 function drawPrize(type,x,y,scale=1){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
@@ -200,15 +206,21 @@ function drawPrize(type,x,y,scale=1){
  ctx.restore();
 }
 function drawClawMachine(){
- // cabinet frame
- rounded(12,503,426,283,23,"#0d1830","#6278a5",3);
+ // cabinet frame: a separate illustrated prize chamber
+ rounded(9,500,432,289,25,"#0a142b","#9db5d5",3);
+ rounded(15,506,420,277,20,"#263c61","#d5e6f244",1.5);
+ rounded(21,512,408,265,16,"#101f3d","#5fd5dc66",1);
  rounded(20,511,410,266,17,"#182849","#3b5b8b",2);
  const glass=ctx.createLinearGradient(0,516,0,755);glass.addColorStop(0,"#1e4667");glass.addColorStop(.75,"#162b4b");glass.addColorStop(1,"#25365d");rounded(27,518,396,230,13,glass,"#84ddec55",2);
- // backlight / stars
- glow(100,598,120,"#40bfe0",.13);glow(355,630,110,"#ae71ff",.12);
+ // backlight, side lamps and glass reflections
+ glow(100,598,120,"#40bfe0",.16);glow(355,630,110,"#ae71ff",.15);
+ for(let i=0;i<5;i++){glow(38+i*94,532,18,i%2?"#ffc969":"#62e8e6",.13)}
+ ctx.save();ctx.globalAlpha=.07;ctx.fillStyle="#e8fbff";ctx.beginPath();ctx.moveTo(35,522);ctx.lineTo(142,522);ctx.lineTo(270,744);ctx.lineTo(190,744);ctx.closePath();ctx.fill();ctx.restore();
  for(let i=0;i<21;i++){const x=42+(i*71)%370,y=535+(i*43)%181;ctx.globalAlpha=.3;ctx.fillStyle="#c7f7ff";ctx.beginPath();ctx.arc(x,y,1.1+(i%3),0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
- // top rail
- rounded(41,529,368,12,6,"#b1c9e5","#f2fbff",1);rounded(state.clawX-19,524,38,21,7,"#ffca62","#fff0ac",2);
+ // top rail and marquee
+ rounded(108,515,234,21,9,"#152743","#8bbbd0",1);
+ text("SKARBNICA  •  AUTOMAT ŁUPÓW",225,526,9,"#d5fbff",1000,"center");
+ rounded(41,541,368,10,5,"#b1c9e5","#f2fbff",1);rounded(state.clawX-19,524,38,21,7,"#ffca62","#fff0ac",2);
  // claw wire
  line(state.clawX,545,state.clawX,state.clawY-22,"#d3e2f1",3);
  // clamp body
@@ -233,32 +245,77 @@ function drawClawMachine(){
  // status ribbon
  pill(164,684,123,state.clawMode==="idle"?"USTAW I ZŁAP":"CHWYTAK W RUCHU","#10213e",state.clawMode==="idle"?"#a8f8ea":"#ffe39b");
 }
+function drawMenuScene(){
+ const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#101c42");sky.addColorStop(.47,"#29546e");sky.addColorStop(1,"#172b42");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ glow(350,170,115,"#9bcbf5",.19);ctx.fillStyle="#f5e5ae";ctx.beginPath();ctx.arc(350,170,31,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.18;ctx.fillStyle="#ffffff";ctx.beginPath();ctx.arc(339,159,9,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+ ctx.fillStyle="#1c3d5c";ctx.beginPath();ctx.moveTo(0,352);ctx.lineTo(75,245);ctx.lineTo(128,315);ctx.lineTo(214,220);ctx.lineTo(305,333);ctx.lineTo(384,255);ctx.lineTo(450,340);ctx.lineTo(450,560);ctx.lineTo(0,560);ctx.fill();
+ ctx.fillStyle="#1b4c51";ctx.beginPath();ctx.moveTo(0,396);ctx.quadraticCurveTo(100,311,185,405);ctx.quadraticCurveTo(292,300,450,397);ctx.lineTo(450,590);ctx.lineTo(0,590);ctx.fill();
+ for(let i=0;i<11;i++){const x=i*48-12,h=72+(i*37)%70;ctx.fillStyle="#0c303e";ctx.fillRect(x+16,405-h*.28,7,h*.6);ctx.fillStyle=i%2?"#12434a":"#16515a";for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+19,365-h*.62+k*23);ctx.lineTo(x-7-k*2,395-h*.62+k*23);ctx.lineTo(x+45+k*2,395-h*.62+k*23);ctx.closePath();ctx.fill()}}
+ ctx.fillStyle="#20334c";ctx.beginPath();ctx.moveTo(0,474);ctx.quadraticCurveTo(80,431,160,469);ctx.quadraticCurveTo(255,420,350,467);ctx.lineTo(450,454);ctx.lineTo(450,800);ctx.lineTo(0,800);ctx.fill();
+ ctx.fillStyle="#35566a";ctx.beginPath();ctx.ellipse(225,481,187,36,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#52736f";ctx.beginPath();ctx.ellipse(225,464,177,29,0,0,Math.PI*2);ctx.fill();
+ glow(225,404,105,"#46e7dc",.25);ctx.strokeStyle="#7cefe0";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(225,406,53,73,0,Math.PI,Math.PI*2);ctx.stroke();
+ ctx.strokeStyle="#e7c777";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(225,406,64,84,0,Math.PI,Math.PI*2);ctx.stroke();
+ for(let i=0;i<17;i++){const a=(i/17)*Math.PI*2,x=225+Math.cos(a)*74,y=406+Math.sin(a)*91;glow(x,y,12,i%2?"#ffd978":"#6df0e4",.28);ctx.fillStyle=i%2?"#ffd978":"#6df0e4";ctx.beginPath();ctx.arc(x,y,2.2,0,Math.PI*2);ctx.fill()}
+ ctx.save();ctx.translate(225,410);ctx.scale(1.42,1.42);drawHero(0,0);ctx.restore();
+ drawPrize("gem",104,385,.7);drawPrize("coin",338,354,.65);drawPrize("star",306,449,.48);
+ for(const x of [39,411]){glow(x,480,34,"#ffb84f",.26);rounded(x-6,464,12,22,4,"#e2a64b","#ffe5a0",1);ctx.fillStyle="#fff0ae";ctx.beginPath();ctx.arc(x,474,4,0,Math.PI*2);ctx.fill()}
+ const v=ctx.createRadialGradient(225,390,140,225,390,560);v.addColorStop(0,"transparent");v.addColorStop(1,"#050d1d99");ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+function drawTitle(){
+ drawMenuScene();
+ rounded(27,25,396,111,24,"#0d1a31dE","#9bc4d777",1.5);
+ rounded(39,37,372,87,18,"#172b49dd","#e4c77966",1);
+ glow(225,77,92,"#ffd166",.13);
+ rounded(55,50,48,48,14,"#eeb84e","#fff0b0",2);text("✦",79,74,28,"#523516",1000,"center");
+ text("CLAW QUEST",247,66,27,"#fff7e8",1000,"center");
+ text("ARCADE  •  ROGUELITE  •  2D",247,96,10,"#8bf0e7",1000,"center");
+ rounded(30,493,390,271,22,"#0d1931ed","#9bb7d4",2);
+ rounded(39,502,372,253,17,"#1b3151","#567ca5",1);
+ text("BAZA WYPRAWY",225,523,12,"#e8f3ff",1000,"center");line(62,540,388,540,"#d5e5f033",1);
+ rounded(53,550,102,43,11,"#142743","#587da0",1);text("NAJLEPSZY WYNIK",104,562,7,"#a8bed9",900,"center");text(String(state.bestScore),104,580,14,"#ffdf86",1000,"center");
+ rounded(174,550,102,43,11,"#142743","#587da0",1);text("POKONANI",225,562,7,"#a8bed9",900,"center");text(String(state.kills),225,580,14,"#b7f5e7",1000,"center");
+ rounded(295,550,102,43,11,"#142743","#587da0",1);text("MONETY",346,562,7,"#a8bed9",900,"center");text(String(state.coins),346,580,14,"#ffdf86",1000,"center");
+ button(66,606,318,57,"ROZPOCZNIJ WYPRAWĘ","WALKA TUROWA  •  CHWYTAK 2D",true);
+ button(53,676,165,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);
+ button(232,676,165,43,"JAK GRAĆ","ZASADY I STEROWANIE",false);
+ text("WYBIERZ CEL  •  ZAPLANUJ RUCH  •  ZDOBĄDŹ ŁUP",225,741,8,"#b9d2df",900,"center");
+}
+function drawSettingsOverlay(){
+ ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
+ rounded(38,234,374,340,23,"#12213d","#a6c3df",2);rounded(47,243,356,322,17,"#1c3454","#668aaa",1);
+ text("USTAWIENIA",225,279,22,"#fff6e7",1000,"center");text("DOPASUJ WRAŻENIA Z GRY",225,303,9,"#9ed8df",900,"center");line(72,324,378,324,"#d9edff33",1);
+ rounded(67,340,316,61,13,"#142744","#6e91b7",1);text("DŹWIĘK",86,360,12,"#fff",1000);text("Efekty i sygnały audio",86,382,9,"#a9bdd7",700);button(285,351,84,37,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound);
+ rounded(67,416,316,61,13,"#142744","#6e91b7",1);text("EFEKTY WIZUALNE",86,436,12,"#fff",1000);text("Poświaty i drobne cząsteczki",86,458,9,"#a9bdd7",700);button(285,427,84,37,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects);
+ text("Ustawienia zapisują się na tym urządzeniu.",225,497,9,"#b8cce3",700,"center");button(112,516,226,41,"ZAMKNIJ","",true);
+}
+function drawHelpOverlay(){
+ ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
+ rounded(36,204,378,404,23,"#12213d","#a6c3df",2);rounded(45,213,360,386,17,"#1c3454","#668aaa",1);
+ text("JAK GRAĆ",225,250,22,"#fff6e7",1000,"center");text("WALKA TUROWA",225,286,11,"#8ef0df",1000,"center");
+ const helpRows=[["1","DOTKNIJ WROGA","Wybierz cel przed wykonaniem ruchu."],["2","ATAK / OBRONA","Atak zadaje obrażenia, obrona zmniejsza otrzymane."],["3","SUPER","Silny cios odnawia się po czasie."],["4","CHWYTAK","Przesuń chwytak i złap monetę, klejnot lub bonus."]];
+ let y=321;for(const r of helpRows){rounded(64,y-13,30,30,9,"#eab854","#ffedb1",1);text(r[0],79,y+2,12,"#4c3218",1000,"center");text(r[1],108,y-4,10,"#fff",1000);text(r[2],108,y+13,8.5,"#bed0e5",700);y+=54}
+ rounded(64,541,322,26,9,"#142744","#6387ab",1);text("J / K / L  •  ATAK / OBRONA / SUPER",225,554,9,"#ffe29b",900,"center");button(112,565,226,34,"WRÓĆ","",true);
+}
 function drawOverlay(){
- if(state.screen==="title"){
-  ctx.fillStyle="#071226c9";ctx.fillRect(0,0,W,H);
-  glow(225,330,170,"#4acbd3",.18);
-  rounded(32,206,386,302,26,"#182a4beb","#85e5e6",2);
-  text("CLAW QUEST",225,255,30,"#fff",1000,"center");
-  text("ARCADE QUEST",225,286,15,"#70e7e7",1000,"center");
-  // hero emblem
-  glow(225,355,70,"#ffd166",.25);drawHero(225,389);
-  text("WALCZ • ZBIERAJ • ROZWIJAJ",225,441,12,"#dce8ff",900,"center");
-  button(101,462,248,46,"ROZPOCZNIJ GRĘ","DOTKNIJ, ABY WEJŚĆ DO AKCJI",true);
- }
  if(state.paused&&state.screen==="game"){
-  ctx.fillStyle="#071226bb";ctx.fillRect(0,0,W,H);rounded(55,315,340,145,22,"#192b4b","#7b98ca",2);
-  text("PAUZA",225,350,24,"#fff",1000,"center");button(125,382,200,48,"WRÓĆ DO GRY","",true);
+  ctx.fillStyle="#050d1cbb";ctx.fillRect(0,0,W,H);
+  rounded(49,271,352,274,23,"#12213d","#a6c3df",2);rounded(58,280,334,256,17,"#1c3454","#668aaa",1);
+  text("PAUZA",225,319,24,"#fff5e7",1000,"center");text("WYPRAWA WSTRZYMANA",225,344,9,"#9bd8df",900,"center");
+  button(107,370,236,45,"WRÓĆ DO GRY","",true);button(107,428,236,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);button(107,483,236,43,"MENU GŁÓWNE","ZAKOŃCZ TĘ WYPRAWĘ",false);
  }
  if(state.over){
-  ctx.fillStyle="#071226cc";ctx.fillRect(0,0,W,H);rounded(42,280,366,228,24,"#1a2a49","#ffbc62",2);
-  text("KONIEC WYPRAWY",225,322,23,"#fff",1000,"center");
-  text("WYNIK  "+state.score,225,366,17,"#ffdc7a",1000,"center");
-  text("POKONANI WROGOWIE: "+state.kills,225,395,11,"#dce7ff",900,"center");
-  button(112,430,226,51,"ZAGRAJ PONOWNIE","",true);
+  ctx.fillStyle="#050d1ccc";ctx.fillRect(0,0,W,H);
+  rounded(38,272,374,251,23,"#17213d","#e8be71",2);rounded(47,281,356,233,17,"#25334f","#8c9bb8",1);glow(225,330,115,"#ff9a71",.17);
+  text("KONIEC WYPRAWY",225,321,22,"#fff3e8",1000,"center");text("WYNIK  "+state.score,225,367,18,"#ffdf86",1000,"center");
+  text("POKONANI WROGOWIE: "+state.kills,225,395,10,"#dce7ff",900,"center");text("NAJLEPSZY WYNIK: "+state.bestScore,225,416,10,"#9cebdd",900,"center");
+  button(101,448,248,48,"ZAGRAJ PONOWNIE","",true);
  }
+ if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();
 }
 function draw(){
  ctx.clearRect(0,0,W,H);
+ if(state.screen==="title"){drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();return}
  drawHeader();drawHealth();drawArena();drawClawMachine();drawOverlay();
 }
 function spawnEnemy(){
@@ -330,18 +387,31 @@ function deployClaw(){
 function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
+ state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;state.settingsOpen=false;state.helpOpen=false;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
 }
 function interact(x,y){
- if(state.screen==="title"){if(x>70&&x<380&&y>430&&y<530){reset()}else reset();return}
- if(state.over){if(y>400&&y<510)reset();return}
- if(state.paused){state.paused=false;return}
+ if(state.settingsOpen){
+  if(y>=345&&y<=400&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
+  if(y>=415&&y<=480&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}beep(420,.05);return}
+  if(y>=500&&y<=565){state.settingsOpen=false;return}return;
+ }
+ if(state.helpOpen){if(y>=545&&y<=610){state.helpOpen=false;return}return}
+ if(state.screen==="title"){
+  if(y>=600&&y<=666){reset();return}
+  if(y>=670&&y<=725){if(x<225)state.settingsOpen=true;else state.helpOpen=true;return}return;
+ }
+ if(state.over){if(y>430&&y<510)reset();return}
+ if(state.paused){
+  if(y>=365&&y<=420){state.paused=false;return}
+  if(y>=425&&y<=480){state.settingsOpen=true;return}
+  if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.enemies=[];state.particles=[];state.floaters=[];return}return;
+ }
  if(y<60&&x>400){state.paused=true;return}
- if(y<60&&x>365){state.sound=!state.sound;beep(520,.05);return}
- if(y>435&&y<490){if(x<225)combatAttack();else if(x<320)combatDefend();else combatSkill();return}
- if(y>675&&y<735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
- if(y>=500&&y<=675){moveClaw(x<state.clawX?-1:1);return}
- if(y>330&&y<430&&state.turn==="player"&&state.enemies.length){let near=0,best=1e9;state.enemies.forEach((en,i)=>{let d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(best<110){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]));}}
+ if(y<60&&x>365){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
+ if(y>455&&y<495){if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
+ if(y>674&&y<735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
+ if(y>=500&&y<=674){moveClaw(x<state.clawX?-1:1);return}
+ if(y>330&&y<420&&state.turn==="player"&&state.enemies.length){let near=0,best=1e9;state.enemies.forEach((en,i)=>{let d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(best<110){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]));}}
 }
 let pointerStart=null;
 canvas.addEventListener("pointerdown",e=>{
@@ -371,11 +441,12 @@ function update(dt){
  if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
  const alive=[];for(const e of state.enemies){if(e.hp<=0)defeat(e);else alive.push(e)}state.enemies=alive;
  if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;const count=state.wave%5===0?1:Math.min(2+Math.floor(state.wave/2),5);for(let i=0;i<count;i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • "+(state.wave%5===0?"BOSS":"NOWI WROGOWIE"));}
- if(state.hp<=0){state.hp=0;state.over=true;return}
+ if(state.hp<=0){state.hp=0;state.over=true;if(state.score>state.bestScore){state.bestScore=state.score;try{localStorage.setItem("clawQuestBest",String(state.bestScore))}catch(e){}}return}
  if(state.playerHit>0)state.playerHit-=dt;
  if(state.shield>0)state.shield-=dt;
  for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}
  state.particles=state.particles.filter(p=>p.life>0);
+ if(!state.effects)state.particles=[];
  for(const f of state.floaters){f.y-=22*dt;f.life-=dt}
  state.floaters=state.floaters.filter(f=>f.life>0);
  if(state.clawMode==="down"){

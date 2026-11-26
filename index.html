@@ -541,7 +541,7 @@ canvas.addEventListener("pointerdown",e=>{
  pointerStart={x,y,id:e.pointerId};canvas.setPointerCapture(e.pointerId);interact(x,y);
 });
 canvas.addEventListener("pointermove",e=>{
- if(!pointerStart||state.clawMode!=="idle")return;
+ if(!pointerStart||state.clawMode!=="idle"||state.turn!=="player"||state.clawUsedThisTurn)return;
  if(pointerStart.y>500&&pointerStart.y<675){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;state.clawX=clamp(x,54,396)}
 });
 canvas.addEventListener("pointerup",()=>{pointerStart=null});

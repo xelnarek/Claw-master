@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v14-relic-vault-visuals";
+const CACHE_NAME = "claw-quest-v15-forged-weapons-enemy-fx";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

@@ -1,4 +1,4 @@
-# Claw Master — Arcade Quest
+# Claw Quest — Arcade Roguelite
 
 A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 

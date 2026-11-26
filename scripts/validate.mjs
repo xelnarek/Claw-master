@@ -23,7 +23,7 @@ const requiredFeatures = [
   "function purchaseUpgrade(kind)", "function beginPlayerTurn()", "function planEnemyIntents()",
   "function resolveEnemyTurn()", "function checkEncounterClear()", "function generateMachinePrizes()",
   "function drawClawMachine()", "function drawAttackFx()", "function drawBuildStrip()", "function drawHeader()", "function drawCombatImpacts()", "function markDefeatedEnemies()",
-  "function applyEnemyHit(", "const stageCatalog=", "const abilityPool=",
+  "function applyEnemyHit(", "const wid=activeWeapon.id", 'wid==="sidearm"', 'wid==="repeater"', 'wid==="scatter"', 'wid==="cannon"', 'wid==="laser"', "Contact shadow, grounding every creature", "Enemy intent is visible on the floor", "for(let i=0;i<13;i++)", "for(let i=0;i<6;i++)", "const stageCatalog=", "const abilityPool=",
   "function rollAbilityChoices()", "function chooseAbility(index)", "state.runSkills",
   'id:"bleed"', 'id:"ward"', 'id:"riposte"', 'id:"venom"', "state.runBleed", "state.runWard", "state.runCounterBonus",
   "target.poisonTurns", "target.poisonDamage", "e.poisonTurns", "e.poisonDamage", "TRUCIZNA", "KOROZJA",

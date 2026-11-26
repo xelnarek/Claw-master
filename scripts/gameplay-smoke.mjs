@@ -185,6 +185,16 @@ assert.ok(game.state.runSkillBonus >= 2, "skill prize should also improve the sk
 
 // Run passives and enemy archetypes must create visible, turn-bound mechanics.
 game.startRun(1);
+for (const skillId of ["bleed", "ward", "riposte"]) {
+  game.state.levelChoices = [game.abilityPool.find(skill => skill.id === skillId)];
+  game.state.pendingLevelUps = 1;
+  assert.equal(game.chooseAbility(0), true, skillId + " should be selectable from the level-up draft");
+}
+assert.equal(game.state.runBleed, 1, "Bleed Mark choice should activate bleed stacks");
+assert.equal(game.state.runWard, 1, "Iron Oath choice should activate start-of-turn shielding");
+assert.equal(game.state.runCounterBonus, 2, "Riposte Rune choice should strengthen counterattack damage");
+
+game.startRun(1);
 const bleedTarget = game.state.enemies[0];
 bleedTarget.hp = 100;
 bleedTarget.maxHp = 100;

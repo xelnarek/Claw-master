@@ -13,9 +13,9 @@ There is no real-time combat, automatic fire, passive enemy movement, or cooldow
 
 - **Claw machine:** each turn generates a varied arrangement of prize capsules. Coins, XP, weapons, damage shards, healing, shields, bombs and skill charges have different values and visual treatments. A grab can miss if the player aims poorly; claw precision upgrades and run skills improve the capture window.
 - **One hero action:** choose a single weapon attack, a counterattack that also halves incoming damage for that enemy phase, or an area skill. Every option attacks; the counterattack also guards. The action immediately closes the hero phase.
-- **Weapons:** five archetypes with different turn-based effects — sidearm, repeater, scatter gun, siege cannon and photon lance. Their attack patterns, damage and visual effects differ without firing continuously.
+- **Weapons:** five archetypes with different turn-based effects — sidearm, repeater, scatter gun, siege cannon and photon lance. Each has its own shot trail, muzzle flash, recoil/casing animation and distinct impact language. The repeater burst, scatter pellets and cannon blast are visual components of one committed hero action, not extra turns.
 - **Enemy intent and archetypes:** goblins raise a breakable guard, porcupines brace their spines and reflect one hit per player turn, bats dive and reposition, slimes poison, and bosses enrage below half health. Their telegraphs, armor and status marks are visible before the enemy phase.
-- **Skills and builds:** three-choice level-up drafts create run-specific synergies. New passives add bleed, start-of-turn ward regeneration and stronger counterattacks. Poison ticks at the start of a player turn; bleed ticks during the enemy phase. Special-skill recovery is counted in full turns, not seconds. Claw upgrades, critical hits, healing on defeat, shields and loot bonuses remain part of the build system.
+- **Skills and builds:** three-choice level-up drafts create run-specific synergies. Bleed ticks during the enemy phase; Toxic Ammo applies a two-phase poison that also ticks during the enemy phase. Combining poison with bleed adds one toxin damage to the tick. Iron Oath restores shield at the start of each player turn, while Riposte Rune adds counterattack damage. Active perks and shield are visible in the HUD. Special-skill recovery is counted in full turns, not seconds. Claw upgrades, critical hits, healing on defeat, shields and loot bonuses remain part of the build system.
 - **Campaign:** authored opening stages and waves lead into a scalable expedition, with boss encounters, local profile persistence and permanent camp upgrades.
 - **Visual presentation:** original procedural 2D art, adult dark-fantasy palette, layered arena, animated glass prize capsules, weapon-specific hit effects, synthesized audio and high-DPI mobile Canvas scaling.
 
@@ -44,4 +44,4 @@ For GitHub Pages, select **GitHub Actions** as the deployment source in the repo
 
 ## Automated checks
 
-Run node scripts/validate.mjs with Node.js 22. The checks validate JavaScript syntax, the PWA manifest, service worker, responsive layout, the turn-based state machine, action limits, claw rewards, enemy intent and mobile touch handling.
+Run node scripts/validate.mjs with Node.js 22. The checks validate JavaScript syntax, the PWA manifest, service worker, responsive layout, the turn-based state machine, action limits, claw rewards, enemy intent, each weapon shot/impact profile, toxin/bleed perk synergy and mobile touch handling.

@@ -433,7 +433,7 @@ function drawArena(){
   if(!e.dying&&e.hp>0&&state.turnPhase!=="enemy"){
    if(e.intent==="attack")pill(e.x-36,e.y-82,72,"ZAMACH","#743e42","#ffe6bd");
    else if(e.intent==="advance")pill(e.x-36,e.y-82,72,"NADCHODZI","#374b4c","#d7eadb");
-   else pill(e.x-36,e.y-82,72,"ODDECH","#4a4550","#d9d0e6");
+   else pill(e.x-36,e.y-82,72,"SZYKUJE CIOS","#4a4550","#d9d0e6");
   }
  }
  drawAttackFx();drawCombatImpacts();
@@ -453,7 +453,7 @@ function drawArena(){
  text("BROŃ: "+weapon.name.toUpperCase(),178,438,8,weapon.color,1000,"left");
  const ready=state.turnPhase==="hero";
  button(22,456,119,34,"ATAK","J • JEDEN CIOS",ready);
- button(151,456,119,34,"BLOK","K • NA RUCH WROGÓW",ready);
+ button(151,456,119,34,"KONTRATAK","K • ATAK + OSŁONA",ready);
  button(280,456,148,34,"UMIEJĘTNOŚĆ",state.skillCooldownTurns>0?"L • ZA "+state.skillCooldownTurns+" TUR":"L • "+(ready?"GOTOWA":"PO CHWYTAKU"),ready&&state.skillCooldownTurns===0);
  if(state.turnPhase==="claw")pill(164,393,120,"NAJPIERW UŻYJ CLAW","#28544d","#b9f0cb");
  else if(state.turnPhase==="hero")pill(164,393,120,"TERAZ TWOJA AKCJA","#28544d","#b9f0cb");
@@ -606,7 +606,7 @@ function drawHelpOverlay(){
  text("JEDNA TURA  /  TRZY KROKI",225,258,8,"#aa916c",900,"center");line(59,278,391,278,"#ffffff20",1);
  const rows=[
   ["01","USTAW I ZŁAP","Przesuń pazur w automacie. Masz dokładnie jedną próbę."],
-  ["02","WYBIERZ AKCJĘ","Po chwycie wykonaj jeden atak, blok albo umiejętność."],
+  ["02","WYBIERZ ATAK","Po chwycie wykonaj jeden cios, kontratak z osłoną albo atak specjalny."],
   ["03","RUCH PRZECIWNIKÓW","Wrogowie ruszają lub atakują dopiero po Twojej akcji."],
   ["04","ZBUDUJ SYNERGIĘ","Łupy, broń i skille zmieniają kolejne tury i build."]
  ];
@@ -828,8 +828,8 @@ function combatAttack(){
 function shootVolley(){return combatAttack()}
 function combatDefend(){
  if(!canHeroAct())return false;
- state.guardTurns=1;state.defending=true;popText("BLOK",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
- finishPlayerAction("defend");return true;
+ state.guardTurns=1;state.defending=true;popText("KONTRATAK + OSŁONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
+ fireWeapon();finishPlayerAction("counter");return true;
 }
 function combatSkill(){
  if(!canHeroAct()||state.skillCooldownTurns>0)return false;

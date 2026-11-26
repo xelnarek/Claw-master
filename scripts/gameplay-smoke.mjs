@@ -447,6 +447,22 @@ game.state.settingsOpen = true; game.render(); game.state.settingsOpen = false;
 game.state.helpOpen = true; game.render(); game.state.helpOpen = false;
 game.state.upgradesOpen = true; game.render(); game.state.upgradesOpen = false;
 game.startRun(1);
+for (const weaponId of ["sidearm", "repeater", "scatter", "cannon", "laser"]) {
+ game.state.weaponId = weaponId;
+ game.state.shotFxWeaponId = weaponId;
+ game.state.shotFxTimer = .18;
+ game.render();
+}
+for (const enemyType of ["slime", "bat", "porcupine", "goblin", "boss"]) {
+ game.state.enemies = [];
+ game.spawnEnemy(enemyType);
+ const enemy = game.state.enemies[0];
+ enemy.intent = "attack";
+ enemy.guard = enemyType === "goblin" ? 2 : 0;
+ enemy.spinesActive = enemyType === "porcupine";
+ enemy.enraged = enemyType === "boss";
+ game.render();
+}
 for (const stage of [1, 2, 3, 4, 5]) { game.state.stage = stage; game.render(); }
 game.state.paused = true; game.render(); game.state.paused = false;
 game.state.levelChoices = game.abilityPool.slice(0, 3); game.render(); game.state.levelChoices = null;
@@ -454,3 +470,4 @@ game.state.stageCleared = true; game.render(); game.state.stageCleared = false;
 game.state.over = true; game.render(); game.state.over = false;
 
 console.log("PASS: title menu, help panel and keyboard-close behavior");
+console.log("PASS: five distinct weapon silhouettes, muzzle flashes and five enemy model render paths");

@@ -41,7 +41,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const state={
- started:false,paused:false,over:false,sound:false,
+ started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],
  time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
@@ -86,7 +86,7 @@ function purchaseUpgrade(kind){const cfg={attack:{rank:"attackRank",base:30,step
 function spawnStageWave(){const def=stageDefinition();if(state.stageWave>=def.waves.length){completeStage();return}const types=def.waves[state.stageWave++];state.wave=state.stageWave;state.enemies=[];state.selectedEnemy=0;state.threatEnemy=null;for(const type of types)spawnEnemy(type);notify("ETAP "+state.stage+" • FALA "+state.wave)}
 function completeStage(){if(state.stageCleared)return false;const def=stageDefinition();state.stageCleared=true;state.stageReward=def.coins;state.stageXp=def.xp;gainCoins(def.coins);gainXp(def.xp);profile.unlockedStage=Math.max(profile.unlockedStage,state.stage+1);profile.bestStage=Math.max(profile.bestStage,state.stage);profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=Math.max(state.bestScore,state.score);saveProfile();state.hp=Math.min(state.maxHp,state.hp+15);notify("ETAP UKOŃCZONY • NAGRODA ODEBRANA");return true}
 function advanceStage(){if(!state.stageCleared)return false;state.stage++;state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.enemies=[];state.selectedEnemy=0;state.turn="player";state.turnTimer=0;state.defending=false;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();state.hp=Math.min(state.maxHp,state.hp);spawnStageWave();return true}
-function startRun(stage=profile.unlockedStage){state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;spawnStageWave();notify("WYPRAWA ROZPOCZĘTA!")}
+function startRun(stage=profile.unlockedStage){state.clawUsedThisTurn=false;state.machinePrizes=generateMachinePrizes();state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;spawnStageWave();notify("WYPRAWA ROZPOCZĘTA!")}
 let audio=null;
 try{state.coins=profile.coins;state.bestScore=profile.bestScore;state.sound=localStorage.getItem("clawQuestSound")!=="false";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
 function beep(freq=440,duration=.07,type="sine",volume=.035){
@@ -331,7 +331,13 @@ function drawPrize(type,x,y,scale=1){
  if(type==="heart"){glow(0,0,25,"#ff7299",.32);ctx.fillStyle="#ff668c";ctx.beginPath();ctx.moveTo(0,13);ctx.bezierCurveTo(-27,-3,-15,-20,0,-9);ctx.bezierCurveTo(15,-20,27,-3,0,13);ctx.fill();ctx.strokeStyle="#ffd5df";ctx.lineWidth=2;ctx.stroke()}
  if(type==="star"){glow(0,0,26,"#ffcc59",.38);ctx.fillStyle="#ffce62";ctx.strokeStyle="#fff3ba";ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?7:16;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke()}
  if(type==="bomb"){glow(0,0,24,"#ff845e",.32);ctx.fillStyle="#626d94";ctx.beginPath();ctx.arc(0,2,12,0,Math.PI*2);ctx.fill();line(4,-9,10,-17,"#ffbd66",3);ctx.fillStyle="#ffe28c";ctx.beginPath();ctx.arc(12,-19,3,0,Math.PI*2);ctx.fill()}
+ if(type==="xp"){glow(0,0,25,"#73d9ff",.36);ctx.fillStyle="#74dfff";ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#e2faff";ctx.lineWidth=2;ctx.stroke();text("XP",0,1,8,"#123c62",1000,"center")}
+ if(type==="ammo"){glow(0,0,25,"#9dffc5",.3);rounded(-10,-14,20,28,6,"#4fcf9a","#d4ffe7",2);text("✦",0,1,14,"#f2fff7",1000,"center")}
  ctx.restore();
+}
+function generateMachinePrizes(){
+ const types=["coin","coin","gem","star","heart","bomb","xp","ammo"],chosen=[],count=5+Math.floor(Math.random()*2);
+ for(let i=0;i<count;i++){chosen.push({id:"p"+Math.random().toString(36).slice(2),type:pick(types),x:48+Math.random()*354,y:676+Math.random()*43,phase:Math.random()*6.28})}return chosen;
 }
 function drawClawMachine(){
  // cabinet frame: a separate illustrated prize chamber
@@ -358,8 +364,8 @@ function drawClawMachine(){
  ctx.beginPath();ctx.moveTo(state.clawX-6,state.clawY-10);ctx.lineTo(state.clawX-spread,state.clawY+9);ctx.stroke();
  ctx.beginPath();ctx.moveTo(state.clawX+6,state.clawY-10);ctx.lineTo(state.clawX+spread,state.clawY+9);ctx.stroke();
  // prizes in machine, bounce slightly
- const prizes=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}];
- for(const p of prizes){const caught=state.grabbed&&state.grabbed.x===p.x; if(!caught)drawPrize(p.type,p.x,704+Math.sin(state.time*3+p.x)*2,.9)}
+ const prizes=state.machinePrizes||[];
+ for(const p of prizes){const caught=state.grabbed&&state.grabbed.id===p.id;if(!caught){drawPrize(p.type,p.x,p.y+Math.sin(state.time*3+p.phase)*3,.9);if(p.type==="xp"||p.type==="ammo")text(p.type==="xp"?"XP":"✦",p.x,p.y+24,7,"#fff",1000,"center")}}
  if(state.grabbed&&state.clawMode==="return")drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72);
  // floor tray
  rounded(35,735,380,15,6,"#0c1428","#6983ad",1);
@@ -369,9 +375,9 @@ function drawClawMachine(){
  // controls under cabinet
  button(34,680,47,43,"◀","LEWO",false);
  button(91,680,47,43,"▶","PRAWO",false);
- button(299,680,116,43,state.clawMode==="idle"?"ZŁAP!":"...",state.clawMode==="idle"?"CHWYĆ NAGRODĘ":"CHWYTAK",state.clawMode==="idle");
+ button(299,680,116,43,state.turn==="player"&&!state.clawUsedThisTurn&&state.clawMode==="idle"?"ZŁAP!":"...",state.turn==="player"&&!state.clawUsedThisTurn?"JEDEN CHWYT":"ZUŻYTO W TEJ TURZE",state.turn==="player"&&!state.clawUsedThisTurn&&state.clawMode==="idle");
  // status ribbon
- pill(164,684,123,state.clawMode==="idle"?"USTAW I ZŁAP":"CHWYTAK W RUCHU","#10213e",state.clawMode==="idle"?"#a8f8ea":"#ffe39b");
+ pill(164,684,123,state.turn==="player"?"FAZA CHWYTAKA":state.turn==="claw"?"CHWYT W TOKU":state.turn==="player-action"?"FAZA WALKI":"RUCH WROGÓW","#10213e",state.turn==="player-action"?"#ffe39b":"#a8f8ea");
 }
 function drawMenuScene(){
  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#234f70");sky.addColorStop(.43,"#5599a2");sky.addColorStop(.72,"#427d68");sky.addColorStop(1,"#203d43");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
@@ -450,6 +456,8 @@ function defeat(e){
  if(state.runHealOnKill)state.hp=Math.min(state.maxHp,state.hp+state.runHealOnKill);if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP")}beep(680,.09,"triangle");
 }
 function reward(type){
+ if(type==="xp"){gainXp(12);state.score+=25;popText("+12 XP",225,633,"#a8e9ff")}
+ if(type==="ammo"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=35;popText("ŁADUNEK +1 ATK",225,633,"#9fffe5")}
  if(type==="coin"){const amount=Math.round(5*(1+state.runLootBonus));gainCoins(amount);state.score+=30;popText("+"+amount+" MONET",225,633,"#ffdf79")}
  if(type==="gem"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=50;popText("ATAK +1",225,633,"#80fff0")}
  if(type==="heart"){state.hp=Math.min(state.maxHp,state.hp+28);state.score+=20;popText("+28 ŻYCIA",225,633,"#ff8eae")}
@@ -458,7 +466,7 @@ function reward(type){
 }
 function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="porcupine"?"Jeżoryj":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":"Goblin"}
 function combatAttack(){
- if(state.turn!=="player"||!state.started||state.over||!state.enemies.length)return;
+ if(state.turn!=="player-action"||!state.started||state.over||!state.enemies.length)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];
  if(e.dying)return;
  const critical=Math.random()<state.runCrit,dmg=(state.damage+(e.type==="bat"?1:0))*(critical?2:1);
@@ -468,11 +476,11 @@ function combatAttack(){
  state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
 }
 function combatDefend(){
- if(state.turn!=="player"||!state.started||state.over||state.stageCleared)return;
+ if(state.turn!=="player-action"||!state.started||state.over||state.stageCleared)return;
  state.defending=true;state.playerAction="defend";state.playerActionDuration=.68;state.playerActionTimer=.68;state.turn="enemy";state.turnTimer=.65;popText("OBRONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
 }
 function combatSkill(){
- if(state.turn!=="player"||!state.started||state.over||state.stageCleared||!state.skillReady)return;
+ if(state.turn!=="player-action"||!state.started||state.over||state.stageCleared||!state.skillReady)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];if(!e)return;
  if(e.dying)return;
  const dmg=state.damage*2+3+state.runSkillBonus;e.hp-=dmg;state.skillReady=false;state.skillCooldown=Math.max(2.2,4.5-(state.runSkills.storm||0)*.25);state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
@@ -488,7 +496,7 @@ function resolveEnemyTurn(){
   if(dmg>0){state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;state.playerAction=guarded?"defend":"hurt";state.playerActionDuration=guarded?.34:.3;state.playerActionTimer=guarded?.34:.3;beep(170,.12,"sawtooth")}
   if(target.type==="boss"&&!guarded&&Math.random()<.25){state.hp=Math.max(0,state.hp-3);popText("MOC BOSS +3",state.playerX,state.playerY-90,"#ff9cbd")}
  }
- state.defending=false;state.turn="player";state.threatEnemy=null;const ix=state.enemies.findIndex(e=>!e.dying&&e.hp>0);state.selectedEnemy=ix<0?0:clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));if(state.enemies[state.selectedEnemy]?.dying)state.selectedEnemy=ix<0?0:ix;notify("TWOJA TURA");
+ state.defending=false;state.turn="player";state.clawUsedThisTurn=false;state.machinePrizes=generateMachinePrizes();state.threatEnemy=null;const ix=state.enemies.findIndex(e=>!e.dying&&e.hp>0);state.selectedEnemy=ix<0?0:clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));if(state.enemies[state.selectedEnemy]?.dying)state.selectedEnemy=ix<0?0:ix;notify("TWOJA TURA");
 }
 function updateCharacterAnimations(dt){
  if(state.playerActionTimer>0){
@@ -506,10 +514,10 @@ function updateCharacterAnimations(dt){
  }
 }
 function deployClaw(){
- if(!state.started||state.over||state.paused||state.clawMode!=="idle")return;
- state.clawMode="down";state.clawTimer=0;state.grabbed=null;beep(310,.08,"triangle");
+ if(!state.started||state.over||state.paused||state.clawMode!=="idle"||state.turn!=="player"||state.clawUsedThisTurn)return;
+ state.clawUsedThisTurn=true;state.turn="claw";state.clawMode="down";state.clawTimer=0;state.grabbed=null;beep(310,.08,"triangle");
 }
-function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
+function moveClaw(dir){if(state.clawMode==="idle"&&state.turn==="player"&&!state.clawUsedThisTurn){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){return startRun(profile.unlockedStage)}
 function interact(x,y){
@@ -522,8 +530,8 @@ function interact(x,y){
  if(state.stageCleared){if(y>=435&&y<=505){advanceStage();return}return}
  if(state.paused){if(y>=365&&y<=420){state.paused=false;return}if(y>=425&&y<=480){state.settingsOpen=true;return}if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.enemies=[];state.particles=[];state.floaters=[];return}return}
  if(y<60&&x>400){state.paused=true;return}if(y<60&&x>365){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
- if(y>=450&&y<=495){if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
- if(y>=680&&y<=735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
+ if(y>=450&&y<=495){if(state.turn!=="player-action"){notify("NAJPIERW WYKONAJ JEDEN CHWYT");return}if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
+ if(y>=680&&y<=735){if(state.turn!=="player"||state.clawUsedThisTurn){notify("CHWYTAK DOSTĘPNY RAZ NA TURĘ");return}if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
  if(y>=500&&y<675){if(state.clawMode==="idle")state.clawX=clamp(x,54,396);return}
  if(y>330&&y<420&&state.turn==="player"&&state.enemies.length){let near=-1,best=1e9;state.enemies.forEach((en,i)=>{if(en.dying||en.hp<=0)return;const d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(near>=0&&best<120){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]))}}
 }
@@ -567,8 +575,8 @@ function update(dt){
  if(state.playerHit>0)state.playerHit-=dt;
  for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}state.particles=state.particles.filter(p=>p.life>0);if(!state.effects)state.particles=[];
  for(const f of state.floaters){f.y-=22*dt;f.life-=dt}state.floaters=state.floaters.filter(f=>f.life>0);
- if(state.clawMode==="down"){state.clawY=Math.min(713,state.clawY+250*dt);if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}],nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a),tolerance=42+profile.clawRank*4+state.runClawBonus;if(Math.abs(nearest.x-state.clawX)<tolerance){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}}
- else if(state.clawMode==="return"){state.clawY=Math.max(565,state.clawY-280*dt);if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null}}
+ if(state.clawMode==="down"){state.clawY=Math.min(713,state.clawY+250*dt);if(state.clawY>=700){const options=state.machinePrizes,nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a),tolerance=25+profile.clawRank*3+state.runClawBonus;if(Math.abs(nearest.x-state.clawX)<tolerance){state.grabbed=nearest;state.machinePrizes=options.filter(p=>p.id!==nearest.id);state.clawMode="return";notify("ZŁAPANO KULKĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}}
+ else if(state.clawMode==="return"){state.clawY=Math.max(565,state.clawY-280*dt);if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null;state.turn="player-action";notify("TERAZ TWOJA AKCJA BOJOWA")}}
  for(const s of state.stars){s.y+=s.v*dt;if(s.y>500)s.y=85}
 }
 function frame(ts){

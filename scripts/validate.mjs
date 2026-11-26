@@ -22,7 +22,9 @@ const requiredVisualFeatures = [
   "function drawHelpOverlay()",
   'localStorage.setItem("clawQuestSound"',
   'localStorage.setItem("clawQuestEffects"',
-  'localStorage.setItem("clawQuestBest"'
+  "function drawUpgradeOverlay()",
+  "const stageCatalog=",
+  "localStorage.setItem(PROFILE_KEY"
 ];
 for (const feature of requiredVisualFeatures) {
   if (!gameScript.includes(feature)) {
@@ -62,7 +64,7 @@ if (!html.includes('rel="manifest"') || !html.includes('serviceWorker.register("
 new Function(read("sw.js"));
 
 console.log("PASS: game JavaScript syntax");
-console.log("PASS: illustrated menu, settings, help and local preferences");
+console.log("PASS: illustrated menu, settings, help, stage catalog and local profile");
 console.log("PASS: character action, hit and defeat animations");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");

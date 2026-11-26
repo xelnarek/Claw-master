@@ -295,6 +295,76 @@ assert.equal(game.combatAttack(), true, "test attack animation should resolve");
 assert.equal(game.state.playerAction, "attack", "committed attack animation should survive entry into the next turn");
 assert.ok(game.state.playerActionTimer > 0, "committed attack should retain its presentation timer");
 
+// Every gun gets its own visible trail and impact identity, but still costs one hero action.
+const weaponVisuals = [
+  ["sidearm", "bullet"],
+  ["repeater", "pulse"],
+  ["scatter", "pellet"],
+  ["cannon", "heavy"],
+  ["laser", "pierce"]
+];
+for (const [weaponId, impactKind] of weaponVisuals) {
+  game.startRun(1);
+  game.state.weaponId = weaponId;
+  const target = game.state.enemies[0];
+  target.hp = 1000;
+  target.maxHp = 1000;
+  target.x = game.state.playerX + 110;
+  target.nextAttackTurn = game.state.turnNumber + 5;
+  game.state.enemies = [target];
+  game.state.selectedEnemy = 0;
+  game.planEnemyIntents();
+  completeClaw("coin");
+  const shotsBefore = game.state.shot;
+  assert.equal(game.combatAttack(), true, weaponId + " should resolve as one hero action");
+  assert.equal(game.state.shot, shotsBefore + 1, weaponId + " must not create extra turn actions");
+  assert.equal(game.state.attackFx.type, weaponId, weaponId + " should have its own shot animation");
+  assert.ok(game.state.attackFx.targets.length >= 1, weaponId + " should retain its resolved hit point for the visual trail");
+  assert.ok(game.state.impacts.some(fx => fx.kind === impactKind), weaponId + " should create its own impact style");
+  assert.ok(game.state.shotFxTimer > 0, weaponId + " should start its independent recoil/muzzle animation");
+  assert.equal(game.state.turnPhase, "claw", weaponId + " should still pass to the next turn after one attack");
+}
+
+// A received hit must not erase the separate recoil/muzzle animation of the shot just fired.
+game.startRun(1);
+const retaliationTarget = game.state.enemies[0];
+retaliationTarget.hp = 1000;
+retaliationTarget.maxHp = 1000;
+retaliationTarget.x = game.state.playerX + 90;
+retaliationTarget.nextAttackTurn = game.state.turnNumber;
+game.state.enemies = [retaliationTarget];
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+completeClaw("coin");
+assert.equal(game.combatAttack(), true, "shot should resolve before immediate enemy retaliation");
+assert.ok(["hurt", "defend"].includes(game.state.playerAction), "enemy retaliation should still show its own reaction");
+assert.ok(game.state.shotFxTimer > 0, "enemy hit reaction must not erase the separate weapon shot animation");
+assert.ok(game.state.attackFx, "weapon trail should remain visible during enemy retaliation");
+
+// Toxic Ammo is now a damage-over-time perk; with Bleed it creates a real two-status synergy.
+game.startRun(1);
+for (const skillId of ["venom", "bleed"]) {
+  game.state.levelChoices = [game.abilityPool.find(skill => skill.id === skillId)];
+  game.state.pendingLevelUps = 1;
+  assert.equal(game.chooseAbility(0), true, skillId + " should be selectable");
+}
+assert.equal(game.state.runVenom, 1, "Toxic Ammo should scale toxin damage by perk level");
+assert.equal(game.state.runBleed, 1, "Bleed Mark should activate its independent status");
+const toxicTarget = game.state.enemies[0];
+toxicTarget.hp = 100;
+toxicTarget.maxHp = 100;
+toxicTarget.x = game.state.playerX + 90;
+toxicTarget.nextAttackTurn = game.state.turnNumber + 5;
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+completeClaw("coin");
+const toxicHpBefore = toxicTarget.hp;
+assert.equal(game.combatAttack(), true, "poison/bleed build should still use exactly one normal attack");
+assert.ok(toxicTarget.hp <= toxicHpBefore - 8, "direct damage, bleed and toxin synergy should tick in the same enemy phase");
+assert.equal(toxicTarget.bleedTurns, 1, "bleed should remain active after its first enemy-phase tick");
+assert.equal(toxicTarget.poisonTurns, 1, "poison should remain active after its first enemy-phase tick");
+assert.ok(toxicTarget.poisonDamage >= 1, "poison damage should be stored per enemy, not as a global player status");
+
 const oldAttackRank = game.profile.attackRank;
 game.profile.coins += 100;
 game.saveProfile();

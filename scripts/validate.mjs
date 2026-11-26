@@ -22,15 +22,16 @@ const requiredFeatures = [
   "function spawnStageWave()", "function completeStage()", "function advanceStage()",
   "function purchaseUpgrade(kind)", "function beginPlayerTurn()", "function planEnemyIntents()",
   "function resolveEnemyTurn()", "function checkEncounterClear()", "function generateMachinePrizes()",
-  "function drawClawMachine()", "function drawAttackFx()", "function markDefeatedEnemies()",
+  "function drawClawMachine()", "function drawAttackFx()", "function drawBuildStrip()", "function drawCombatImpacts()", "function markDefeatedEnemies()",
   "function applyEnemyHit(", "const stageCatalog=", "const abilityPool=",
   "function rollAbilityChoices()", "function chooseAbility(index)", "state.runSkills",
-  'id:"bleed"', 'id:"ward"', 'id:"riposte"', "state.runBleed", "state.runWard", "state.runCounterBonus",
+  'id:"bleed"', 'id:"ward"', 'id:"riposte"', 'id:"venom"', "state.runBleed", "state.runWard", "state.runCounterBonus",
+  "target.poisonTurns", "target.poisonDamage", "e.poisonTurns", "e.poisonDamage", "TRUCIZNA", "KOROZJA",
   "e.enraged", "e.spinesActive", "e.guard", 'action==="dive"', 'action==="slam"',
   "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
   "state.skillCooldownTurns", "state.turnPhase", "state.heroActionUsedThisTurn",
   "state.clawUsedThisTurn", "function beep(", "function spawnImpact(",
-  "function drawCombatImpacts()", "const weaponCatalog=", "function fireWeapon(",
+  "function drawCombatImpacts()", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
   "function combatAttack()", "function combatDefend()", "function combatSkill()", "function update(dt)"
 ];
 for (const feature of requiredFeatures) if (!gameScript.includes(feature)) throw new Error("Required feature missing: " + feature);
@@ -65,7 +66,7 @@ if ((gameScript.match(/function applyEnemyHit\(e\)\{/g) ?? []).length !== 1) {
 }
 
 const animationFeatures = [
-  'playerAction:"idle"', "playerActionTimer", "function updateCharacterAnimations(dt)",
+  'playerAction:"idle"', "playerActionTimer", "shotFxTimer", "function updateCharacterAnimations(dt)",
   "e.actionTimer", "e.deathTimer", "e.dying", "function drawHero(", "function drawEnemy("
 ];
 for (const feature of animationFeatures) if (!gameScript.includes(feature)) throw new Error("Character animation feature is missing: " + feature);

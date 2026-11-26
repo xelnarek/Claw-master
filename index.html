@@ -41,7 +41,7 @@ const state={
  started:false,paused:false,over:false,sound:false,
  time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
- playerX:86,playerY:408,playerHit:0,flash:0,
+ playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
  enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
@@ -109,6 +109,80 @@ function drawHeader(){
  rounded(408,20,28,28,9,"#29476b","#91abc9",1.2);text(state.paused?"▶":"Ⅱ",422,34,12,"#f9fbff",900,"center");
 }
 function drawHero(x,y){
+ const duration=Math.max(.001,state.playerActionDuration||.42);
+ const progress=clamp(1-(state.playerActionTimer||0)/duration,0,1);
+ const action=state.playerActionTimer>0?state.playerAction:(state.defending?"defend":"idle");
+ const swing=Math.sin(progress*Math.PI);
+ const idle=Math.sin(state.time*4.2)*1.7;
+ const hurt=action==="hurt";
+ const attack=action==="attack";
+ const special=action==="special";
+ const guard=action==="defend";
+ ctx.save();ctx.translate(x,y+idle-(attack||special?swing*2:0));
+ if(hurt)ctx.rotate(-.11);
+ if(attack)ctx.rotate(.055*swing);
+ if(special)ctx.rotate(.08*swing);
+ // ground shadow and action aura
+ ctx.globalAlpha=.28;ctx.fillStyle="#06101e";ctx.beginPath();ctx.ellipse(0,9,30,8,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+ if(special)glow(5,-29,58,"#80f4ff",.26+.18*swing);
+ if(guard)glow(23,-28,44,"#66dff5",.19);
+ if(hurt)glow(-2,-24,38,"#ff667d",.18);
+ // animated split cape with highlighted seam
+ const capeWave=Math.sin(state.time*5.1)*3.2;
+ ctx.fillStyle="#b94469";ctx.beginPath();ctx.moveTo(-12,-38);ctx.quadraticCurveTo(-34+capeWave,-23,-26+capeWave,5);ctx.quadraticCurveTo(-9,-1,1,-27);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#f06d83";ctx.beginPath();ctx.moveTo(-10,-35);ctx.quadraticCurveTo(-24+capeWave,-21,-20+capeWave,-3);ctx.quadraticCurveTo(-8,-8,-2,-28);ctx.closePath();ctx.fill();
+ ctx.strokeStyle="#ffb0a8";ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(-9,-31);ctx.quadraticCurveTo(-18+capeWave,-14,-19+capeWave,0);ctx.stroke();
+ // legs and boots with a tiny idle shift
+ const step=Math.sin(state.time*5)*1.1;
+ rounded(-16,-12+step,12,20,5,"#334d83","#20365d",1);
+ rounded(2,-12-step,12,20,5,"#334d83","#20365d",1);
+ rounded(-19,2+step,17,8,4,"#f2b75d","#ffe1a1",1);
+ rounded(0,2-step,17,8,4,"#f2b75d","#ffe1a1",1);
+ line(-15,7+step,-5,7+step,"#fff0c0",1);line(4,7-step,14,7-step,"#fff0c0",1);
+ // tunic, leather belt and chest strap
+ const tunic=ctx.createLinearGradient(-15,-42,16,-7);tunic.addColorStop(0,"#66a7e8");tunic.addColorStop(.48,"#3977c7");tunic.addColorStop(1,"#234e91");
+ ctx.fillStyle=tunic;ctx.strokeStyle="#9bc8f2";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-16,-39);ctx.quadraticCurveTo(0,-48,16,-39);ctx.lineTo(18,-10);ctx.quadraticCurveTo(0,-1,-18,-10);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.save();ctx.rotate(-.14);rounded(-4,-34,8,23,3,"#e6b94f","#fff0b1",1);ctx.restore();
+ line(-9,-35,10,-15,"#c9a36a",3);rounded(5,-23,7,7,2,"#f7d275","#fff1bd",1);
+ // animated arms
+ const armSwing=attack?-.78*swing:special?-1.05*swing:guard?-.38:Math.sin(state.time*4)*.035;
+ ctx.save();ctx.translate(-18,-30);ctx.rotate(-.18);rounded(-5,-4,12,24,6,"#f3bc83","#ffe0ba",1);ctx.restore();
+ ctx.save();ctx.translate(17,-29);ctx.rotate(armSwing);rounded(-5,-3,12,24,6,"#f3bc83","#ffe0ba",1);ctx.restore();
+ // head, hair, eyebrows and face
+ ctx.fillStyle="#f2c18d";ctx.strokeStyle="#ffe5c5";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(0,-49,17,0,Math.PI*2);ctx.fill();ctx.stroke();
+ ctx.fillStyle="#5b382b";ctx.beginPath();ctx.arc(0,-55,17,Math.PI,Math.PI*2);ctx.lineTo(16,-49);ctx.quadraticCurveTo(5,-55,-15,-47);ctx.fill();
+ rounded(-17,-59,34,7,4,"#ffd166","#fff0b3",1);rounded(7,-57,13,4,2,"#f28b48");
+ ctx.fillStyle="#2b3552";ctx.beginPath();ctx.arc(6,-48,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(-5,-48,2,0,Math.PI*2);ctx.fill();
+ line(-9,-52,-3,-53,"#5b382b",1.4);line(3,-53,9,-52,"#5b382b",1.4);
+ ctx.strokeStyle="#9b4e45";ctx.lineWidth=1.7;ctx.beginPath();ctx.arc(0,-43,5,.15,Math.PI-.15);ctx.stroke();
+ // pauldron and glove details
+ glow(-15,-32,17,"#ffd166",.12);rounded(-23,-36,13,10,4,"#d9a64d","#ffe5a4",1);
+ rounded(18,-13,8,7,3,"#f3bc83","#ffe0ba",1);
+ // sword pivot: sweep during attack, rising arc during the charged special
+ ctx.save();ctx.translate(23,-28);
+ let swordAngle=-.5;
+ if(attack)swordAngle=-.62+1.65*swing;
+ if(special)swordAngle=-1.18+1.95*swing;
+ if(guard)swordAngle=.1;
+ ctx.rotate(swordAngle);
+ if(special){ctx.shadowColor="#81f6ff";ctx.shadowBlur=16}
+ rounded(-3,-4,7,26,3,"#c8d8e9","#ffffff",1);
+ ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(-3,-4);ctx.lineTo(0,-22);ctx.lineTo(4,-4);ctx.closePath();ctx.fill();
+ line(0,-18,0,-5,"#8fe8f1",1.5);rounded(-8,0,17,5,2,"#ffcf66","#fff0b1",1);rounded(-2,16,5,10,2,"#8a5839","#dca66c",1);
+ ctx.restore();
+ // readable attack slash trail and guard shield
+ if((attack||special)&&progress>.12&&progress<.94){
+  ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.52)*1.5)*.72;ctx.strokeStyle=special?"#9effff":"#fff0a8";ctx.lineWidth=special?5:3;
+  ctx.beginPath();ctx.arc(15,-29,special?48:39,-1.65,-.12);ctx.stroke();ctx.restore();
+ }
+ if(guard){
+  ctx.save();ctx.translate(27,-25);
+  ctx.fillStyle="#398bb6";ctx.strokeStyle="#a4efff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(15,-14);ctx.lineTo(13,6);ctx.quadraticCurveTo(0,21,-13,6);ctx.lineTo(-15,-14);ctx.closePath();ctx.fill();ctx.stroke();
+  line(-6,-8,6,7,"#e4ffff",2);line(6,-8,-6,7,"#e4ffff",2);ctx.restore();
+ }
+ if(hurt){ctx.globalAlpha=.35;rounded(-25,-68,50,76,19,"#ff687d");ctx.globalAlpha=1}
+ ctx.restore();
+}
  ctx.save();ctx.translate(x,y);
  // shadow
  ctx.globalAlpha=.3;ctx.fillStyle="#07111f";ctx.beginPath();ctx.ellipse(0,8,29,8,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
@@ -134,6 +208,67 @@ function drawHero(x,y){
  ctx.restore();
 }
 function drawEnemy(e){
+ ctx.save();ctx.translate(e.x,e.y);
+ const dyingProgress=e.dying?clamp(1-(e.deathTimer||0)/.46,0,1):0;
+ const attackProgress=e.action==="attack"?clamp(1-(e.actionTimer||0)/Math.max(.001,e.actionDuration||.38),0,1):0;
+ const bob=Math.sin(state.time*(e.type==="bat"?7:4.6)+e.phase)* (e.type==="bat"?5:2.6);
+ const shake=e.hit>0?Math.sin(state.time*91+e.phase)*2.8:0;
+ const lunge=e.action==="attack"?-Math.sin(attackProgress*Math.PI)*13:0;
+ ctx.translate(lunge+shake,bob-(e.dying?dyingProgress*9:0));
+ if(e.dying){ctx.globalAlpha=1-dyingProgress;ctx.rotate(dyingProgress*.72);ctx.scale(1-dyingProgress*.54,1-dyingProgress*.38)}
+ if(e.type==="slime"){
+  glow(0,-10,34,"#79f3bd",.17);
+  const squash=e.hit>0?.12:Math.sin(state.time*4.2+e.phase)*.055;
+  ctx.save();ctx.translate(0,2);ctx.scale(1+squash,1-squash);
+  const g=ctx.createLinearGradient(0,-42,0,6);g.addColorStop(0,"#d8ffe7");g.addColorStop(.42,"#73e8b6");g.addColorStop(1,"#159d78");
+  ctx.fillStyle=g;ctx.strokeStyle="#d2ffe6";ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-23,0);ctx.quadraticCurveTo(-28,-18,-14,-35);ctx.quadraticCurveTo(0,-48,17,-32);ctx.quadraticCurveTo(28,-17,23,0);ctx.quadraticCurveTo(0,12,-23,0);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#ffffff88";ctx.beginPath();ctx.ellipse(-8,-31,7,4,-.5,0,Math.PI*2);ctx.fill();
+  rounded(-13,-22,8,13,4,"#fff");rounded(6,-22,8,13,4,"#fff");
+  rounded(-11,-18,4,7,2,"#163b50");rounded(8,-18,4,7,2,"#163b50");
+  ctx.strokeStyle="#1d6b61";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-9,7,.2,Math.PI-.2);ctx.stroke();
+  ctx.restore();
+ }else if(e.type==="bat"){
+  const wing=Math.sin(state.time*18+e.phase)*13;
+  ctx.fillStyle="#6550a1";ctx.strokeStyle="#bcaaff";ctx.lineWidth=1.7;
+  ctx.beginPath();ctx.moveTo(-7,-13);ctx.quadraticCurveTo(-24,-33-wing,-38,-12-wing*.7);ctx.quadraticCurveTo(-28,0,-9,3);ctx.quadraticCurveTo(0,10,9,3);ctx.quadraticCurveTo(28,0,38,-12-wing*.7);ctx.quadraticCurveTo(24,-33-wing,7,-13);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#ba9cff";ctx.beginPath();ctx.ellipse(0,-12,16,18,0,0,Math.PI*2);ctx.fill();
+  rounded(-12,-23,9,12,4,"#fff");rounded(3,-23,9,12,4,"#fff");
+  rounded(-9,-19,4,6,2,"#30264d");rounded(6,-19,4,6,2,"#30264d");
+  ctx.fillStyle="#fff0b0";ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-1,3);ctx.lineTo(2,-3);ctx.closePath();ctx.fill();
+ }else if(e.type==="boss"){
+  const pulse=1+Math.sin(state.time*3+e.phase)*.035;
+  ctx.save();ctx.scale(pulse,pulse);
+  glow(0,-15,62,"#ff6b8f",.3);
+  ctx.fillStyle="#623f80";ctx.beginPath();ctx.moveTo(-28,-28);ctx.lineTo(-41,-53);ctx.quadraticCurveTo(-17,-49,-12,-36);ctx.quadraticCurveTo(0,-46,12,-36);ctx.quadraticCurveTo(25,-53,41,-53);ctx.lineTo(28,-20);ctx.closePath();ctx.fill();
+  const bg=ctx.createLinearGradient(0,-47,0,18);bg.addColorStop(0,"#f2a2df");bg.addColorStop(.48,"#bd62bb");bg.addColorStop(1,"#64327f");
+  ctx.fillStyle=bg;ctx.strokeStyle="#f4b6ff";ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-32,4);ctx.quadraticCurveTo(-38,-26,-24,-42);ctx.quadraticCurveTo(0,-57,24,-42);ctx.quadraticCurveTo(38,-26,32,4);ctx.quadraticCurveTo(0,22,-32,4);ctx.fill();ctx.stroke();
+  rounded(-20,-27,14,13,5,"#ffe8a1");rounded(6,-27,14,13,5,"#ffe8a1");
+  rounded(-15,-24,6,8,2,"#7b254d");rounded(9,-24,6,8,2,"#7b254d");
+  ctx.fillStyle="#54264f";ctx.beginPath();ctx.moveTo(-10,-4);ctx.lineTo(-5,5);ctx.lineTo(0,-3);ctx.lineTo(5,5);ctx.lineTo(10,-4);ctx.closePath();ctx.fill();
+  rounded(-43,-51,86,7,3,"#251735");rounded(-43,-51,86*clamp(e.hp/e.maxHp,0,1),7,3,"#ff799c");
+  ctx.restore();
+ }else{
+  // Goblin raider: leather hood, cheek plates, teeth and shoulder guards.
+  const arm=Math.sin(attackProgress*Math.PI)*.72;
+  rounded(-21,-35,42,40,13,"#b96c49","#ffd0a0",2);
+  ctx.fillStyle="#7a443d";ctx.beginPath();ctx.moveTo(-23,-26);ctx.lineTo(-14,-45);ctx.lineTo(0,-39);ctx.lineTo(15,-46);ctx.lineTo(23,-25);ctx.closePath();ctx.fill();
+  rounded(-15,-28,12,15,4,"#fff2cf");rounded(3,-28,12,15,4,"#fff2cf");
+  rounded(-11,-24,5,8,2,"#573b42");rounded(7,-24,5,8,2,"#573b42");
+  ctx.fillStyle="#fff0ca";ctx.beginPath();ctx.moveTo(-7,-7);ctx.lineTo(-3,0);ctx.lineTo(0,-6);ctx.lineTo(4,1);ctx.lineTo(8,-7);ctx.closePath();ctx.fill();
+  rounded(-24,-42,48,9,5,"#7e4f44");rounded(-12,-49,24,9,4,"#ffcc63");
+  ctx.save();ctx.translate(-18,-28);ctx.rotate(-arm*.45);rounded(-8,-3,12,23,5,"#b96c49","#f3c08d",1);ctx.restore();
+  ctx.save();ctx.translate(18,-28);ctx.rotate(arm);rounded(-4,-3,12,23,5,"#b96c49","#f3c08d",1);ctx.restore();
+  rounded(-19,-15,10,8,3,"#6d829d","#d4deeb",1);rounded(9,-15,10,8,3,"#6d829d","#d4deeb",1);
+ }
+ if(e.hit>0&&!e.dying){
+  ctx.save();ctx.globalAlpha=clamp(e.hit/.26,0,1)*.82;ctx.strokeStyle="#fff5d4";ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(0,-18,e.type==="boss"?43:29,e.type==="boss"?48:35,0,0,Math.PI*2);ctx.stroke();
+  for(let i=0;i<3;i++){const a=state.time*8+i*Math.PI*2/3;line(Math.cos(a)*27,Math.sin(a)*22-18,Math.cos(a)*37,Math.sin(a)*32-18,"#fff0b5",2)}
+  ctx.restore();
+ }
+ if(e.type!=="boss"&&!e.dying){rounded(-23,-54,46,5,3,"#15213d");rounded(-23,-54,46*clamp(e.hp/e.maxHp,0,1),5,3,"#ff7088")}
+ ctx.restore();
+}
  ctx.save();ctx.translate(e.x,e.y);
  const bob=Math.sin(state.time*5+e.phase)*3;ctx.translate(0,bob);
  if(e.type==="slime"){
@@ -322,7 +457,7 @@ function spawnEnemy(){
  const wave=state.wave;const boss=wave%5===0&&!state.bossSpawned;
  const type=boss?"boss":pick(["slime","slime","bat","goblin"]);
  const max=boss?32+wave*4:10+Math.floor(wave*1.6);
- state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+wave*1.1,damage:boss?22:6+wave,phase:rand(0,6),hit:0});
+ state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+wave*1.1,damage:boss?22:6+wave,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
@@ -351,34 +486,55 @@ function combatAttack(){
  if(state.turn!=="player"||!state.started||state.over||!state.enemies.length)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];
  const dmg=state.damage+(e.type==="bat"?1:0);
- e.hp-=dmg;e.hit=.2;state.playerHit=.15;
+ e.hp-=dmg;e.hit=.26;state.playerHit=.15;state.playerAction="attack";state.playerActionDuration=.42;state.playerActionTimer=.42;
  for(let i=0;i<7;i++)particle(e.x,e.y,"#ffdd91",rand(2,4));
  popText("-"+dmg,e.x,e.y-45,"#ffe38b");state.score+=5;
  state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
 }
 function combatDefend(){
  if(state.turn!=="player"||!state.started||state.over)return;
- state.defending=true;state.turn="enemy";state.turnTimer=.65;popText("OBRONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
+ state.defending=true;state.playerAction="defend";state.playerActionDuration=.68;state.playerActionTimer=.68;state.turn="enemy";state.turnTimer=.65;popText("OBRONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
 }
 function combatSkill(){
  if(state.turn!=="player"||!state.started||state.over||!state.skillReady)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];if(!e)return;
- const dmg=state.damage*3+4;e.hp-=dmg;state.skillReady=false;
+ const dmg=state.damage*3+4;e.hp-=dmg;state.skillReady=false;state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
  state.playerHit=.25;for(let i=0;i<18;i++)particle(e.x,e.y,pick(["#a7ffff","#ffdb78","#ff9bbd"]),rand(3,6));
  popText("SUPER -"+dmg,e.x,e.y-48,"#ffb8ff");notify("MOCNY CIOS!");state.turn="enemy";state.turnTimer=.85;state.defending=false;beep(880,.15,"sawtooth");
  setTimeout(()=>{state.skillReady=true},4500);
 }
 function resolveEnemyTurn(){
  if(state.turn!=="enemy")return;
- if(state.enemies.length){
-  const target=state.enemies.reduce((a,b)=>a.x>b.x?a:b);
+ const active=state.enemies.filter(e=>!e.dying);
+ if(active.length){
+  const target=active.reduce((a,b)=>a.x>b.x?a:b);
+  target.action="attack";target.actionDuration=.38;target.actionTimer=.38;
+  const guarded=state.defending;
   const raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;
-  const dmg=state.defending?Math.max(1,Math.ceil(raw*.35)):raw;
+  const dmg=guarded?Math.max(1,Math.ceil(raw*.35)):raw;
   if(state.shield>0){state.shield=Math.max(0,state.shield-dmg);popText("TARCZA",state.playerX,state.playerY-65,"#83f6e9")}
-  else {state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;beep(170,.12,"sawtooth")}
-  if(target.type==="boss"&&Math.random()<.3&&!state.defending){state.hp=Math.max(0,state.hp-4);popText("MOC BOSS +4",state.playerX,state.playerY-90,"#ff9cbd")}
+  else {state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;state.playerAction=guarded?"defend":"hurt";state.playerActionDuration=guarded?.34:.3;state.playerActionTimer=guarded?.34:.3;beep(170,.12,"sawtooth")}
+  if(target.type==="boss"&&Math.random()<.3&&!guarded){state.hp=Math.max(0,state.hp-4);popText("MOC BOSS +4",state.playerX,state.playerY-90,"#ff9cbd")}
  }
- state.defending=false;state.turn="player";state.selectedEnemy=clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));notify("TWOJA TURA");
+ state.defending=false;state.turn="player";
+ const aliveIndex=state.enemies.findIndex(e=>!e.dying);
+ state.selectedEnemy=aliveIndex<0?0:clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));
+ if(state.enemies[state.selectedEnemy]?.dying)state.selectedEnemy=aliveIndex<0?0:aliveIndex;
+ notify("TWOJA TURA");
+}
+function updateCharacterAnimations(dt){
+ if(state.playerActionTimer>0){
+  state.playerActionTimer=Math.max(0,state.playerActionTimer-dt);
+  if(state.playerActionTimer===0)state.playerAction="idle";
+ }
+ for(const e of state.enemies){
+  if(e.hit>0)e.hit=Math.max(0,e.hit-dt);
+  if(e.actionTimer>0){
+   e.actionTimer=Math.max(0,e.actionTimer-dt);
+   if(e.actionTimer===0)e.action="idle";
+  }
+  if(e.dying&&e.deathTimer>0)e.deathTimer=Math.max(0,e.deathTimer-dt);
+ }
 }
 function deployClaw(){
  if(!state.started||state.over||state.paused||state.clawMode!=="idle")return;
@@ -387,7 +543,7 @@ function deployClaw(){
 function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;state.settingsOpen=false;state.helpOpen=false;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
+ state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;state.settingsOpen=false;state.helpOpen=false;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
 }
 function interact(x,y){
  if(state.settingsOpen){
@@ -446,9 +602,20 @@ function update(dt){
  if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
  if(state.screen!=="game"||state.paused||state.over)return;
  // visual-only idle movement of enemy bodies; actions are resolved in discrete turns.
- for(const e of state.enemies){e.phase+=dt*2;if(e.hit>0)e.hit-=dt}
+ updateCharacterAnimations(dt);
+ for(const e of state.enemies){e.phase+=dt*2}
  if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
- const alive=[];for(const e of state.enemies){if(e.hp<=0)defeat(e);else alive.push(e)}state.enemies=alive;
+ const alive=[];
+ for(const e of state.enemies){
+  if(e.hp<=0&&!e.dying){defeat(e);e.dying=true;e.action="death";e.deathTimer=.46;e.actionTimer=0}
+  if(e.dying&&e.deathTimer<=0)continue;
+  alive.push(e);
+ }
+ state.enemies=alive;
+ if(state.enemies[state.selectedEnemy]?.dying){
+  const nextTarget=state.enemies.findIndex(e=>!e.dying);
+  state.selectedEnemy=nextTarget<0?0:nextTarget;
+ }
  if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;const count=state.wave%5===0?1:Math.min(2+Math.floor(state.wave/2),5);for(let i=0;i<count;i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • "+(state.wave%5===0?"BOSS":"NOWI WROGOWIE"));}
  if(state.hp<=0){state.hp=0;state.over=true;if(state.score>state.bestScore){state.bestScore=state.score;try{localStorage.setItem("clawQuestBest",String(state.bestScore))}catch(e){}}return}
  if(state.playerHit>0)state.playerHit-=dt;

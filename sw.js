@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v10-realtime-claw";
+const CACHE_NAME = "claw-quest-v11-turn-based";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

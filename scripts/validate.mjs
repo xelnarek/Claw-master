@@ -31,7 +31,16 @@ const requiredVisualFeatures = [
   'localStorage.setItem("clawQuestEffects"',
   "function drawUpgradeOverlay()",
   "const stageCatalog=",
-  "localStorage.setItem(PROFILE_KEY"
+  "localStorage.setItem(PROFILE_KEY",
+  "const abilityPool=",
+  "function rollAbilityChoices()",
+  "function chooseAbility(index)",
+  "function drawLevelChoiceOverlay()",
+  "state.runSkills",
+  "function beep(",
+  "voice(freq*2",
+  "state.runCrit",
+  "state.runClawBonus"
 ];
 for (const feature of requiredVisualFeatures) {
   if (!gameScript.includes(feature)) {
@@ -73,6 +82,7 @@ new Function(read("sw.js"));
 console.log("PASS: game JavaScript syntax");
 console.log("PASS: illustrated menu, settings, help, stage catalog and local profile");
 console.log("PASS: character action, hit and defeat animations");
+console.log("PASS: three-choice skill draft, run build modifiers and synthesized audio");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");
 

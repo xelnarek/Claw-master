@@ -44,7 +44,11 @@ const requiredVisualFeatures = [
   "function beep(",
   "voice(freq*2",
   "state.runCrit",
-  "state.runClawBonus"
+  "state.runClawBonus",
+  "function spawnImpact(",
+  "function drawCombatImpacts()",
+  "state.impacts",
+  "state.shake"
 ];
 for (const feature of requiredVisualFeatures) {
   if (!gameScript.includes(feature)) {

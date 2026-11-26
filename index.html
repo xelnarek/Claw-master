@@ -51,10 +51,10 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const state={
  started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],
- time:0,last:0,spawn:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,clawTimer:0,grabbed:null,heroActionUsedThisTurn:false,
- wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,fireCooldown:0,burstCooldown:0,clawCooldown:0,guardTimer:0,guardTurns:0,skillCooldownTurns:0,playerInvuln:0,prizeRefreshTimer:0,
+ time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,grabbed:null,heroActionUsedThisTurn:false,
+ wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
- enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,skillCooldown:0,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,
+ enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,
  stage:1,stageWave:0,stageCleared:false,stageReward:0,stageXp:0,runDamageBonus:0,threatEnemy:null,upgradesOpen:false,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
@@ -114,7 +114,7 @@ function planEnemyIntents(){
 function beginPlayerTurn(){
  if(state.over||state.stageCleared)return false;
  state.turn="player";state.turnPhase="claw";state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;
- state.defending=false;state.guardTimer=0;state.clawMode="idle";state.clawY=565;state.grabbed=null;
+ state.defending=false;state.clawMode="idle";state.clawY=565;state.grabbed=null;
  state.clawX=clamp(225+rand(-55,55),58,392);state.machinePrizes=generateMachinePrizes();
  state.playerAction="idle";state.playerActionTimer=0;state.attackFx=null;
  planEnemyIntents();state.skillReady=state.skillCooldownTurns<=0;
@@ -142,12 +142,12 @@ function advanceStage(){
  state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();state.hp=Math.min(state.maxHp,state.hp);spawnStageWave();return true;
 }
 function startRun(stage=profile.unlockedStage){
- state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;state.clawCooldown=0;state.guardTimer=0;state.guardTurns=0;
- state.playerInvuln=0;state.fireCooldown=0;state.burstCooldown=0;state.skillCooldownTurns=0;
+ state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;state.guardTurns=0;
+ state.skillCooldownTurns=0;
  state.weaponId="sidearm";state.weaponLevel=1;state.prizeRefreshTimer=0;state.machinePrizes=generateMachinePrizes();
  state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;
- state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.turnTimer=0;state.defending=false;state.selectedEnemy=0;
- state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;
+ state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.defending=false;state.selectedEnemy=0;
+ state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;
  state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;
  state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;
  state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;
@@ -903,7 +903,7 @@ function updateCharacterAnimations(dt){
 }
 function deployClaw(){
  if(!state.started||state.over||state.paused||state.turnPhase!=="claw"||state.clawUsedThisTurn||state.clawMode!=="idle")return false;
- state.clawUsedThisTurn=true;state.clawMode="down";state.clawTimer=0;state.grabbed=null;beep(310,.08,"triangle");return true;
+ state.clawUsedThisTurn=true;state.clawMode="down";state.grabbed=null;beep(310,.08,"triangle");return true;
 }
 function moveClaw(dir){
  if(state.turnPhase==="claw"&&!state.clawUsedThisTurn&&state.clawMode==="idle"){
@@ -969,7 +969,7 @@ function update(dt){
  if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
  if(state.screen!=="game"||state.paused||state.over||state.stageCleared||state.levelChoices)return;
  updateCharacterAnimations(dt);
- state.playerInvuln=0;state.guardTimer=state.guardTurns>0?1:0;
+ 
  const remaining=[];
  for(const b of state.bullets){b.life-=dt;if(b.life>0)remaining.push(b)}
  state.bullets=remaining;

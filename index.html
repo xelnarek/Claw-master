@@ -217,25 +217,82 @@ function button(x,y,w,h,label,sub,active=false){
  if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#5b4126":"#a2adb1",800,"center");
 }
 function drawBackground(){
- const def=stageDefinition(),palettes={
- meadow:{sky1:"#72b6bd",sky2:"#8dbb89",sky3:"#526f58",hill:"#56845a",tree:"#244d3b",tree2:"#376b4a",floor1:"#a29a66",floor2:"#5c7650",line:"#e2c47a"},
- forest:{sky1:"#4f9eaa",sky2:"#668d6b",sky3:"#294b42",hill:"#35674c",tree:"#173f34",tree2:"#285d45",floor1:"#8c915a",floor2:"#3d6144",line:"#c6b477"},
- cave:{sky1:"#627c94",sky2:"#40556c",sky3:"#1d2c3a",hill:"#39475b",tree:"#263648",tree2:"#3e5266",floor1:"#77766c",floor2:"#454d56",line:"#c5b08b"},
- ruins:{sky1:"#c38b65",sky2:"#8a6e5b",sky3:"#373d3e",hill:"#67584b",tree:"#343d38",tree2:"#5a5948",floor1:"#a18a61",floor2:"#5a5948",line:"#e2c18a"},
- boss:{sky1:"#b87976",sky2:"#634a64",sky3:"#1e2334",hill:"#4c3d58",tree:"#2b2a3e",tree2:"#594454",floor1:"#80605b",floor2:"#393b4b",line:"#e4a66c"}};
- const p=palettes[def.biome]||palettes.forest,g=ctx.createLinearGradient(0,80,0,505);g.addColorStop(0,p.sky1);g.addColorStop(.55,p.sky2);g.addColorStop(1,p.sky3);
- ctx.fillStyle=g;ctx.fillRect(0,75,W,430);glow(345,170,125,def.biome==="boss"?"#ff947d":"#ffe39b",.2);
- for(let i=0;i<4;i++){const x=((i*137-state.time*5)%570+570)%570-60,y=135+(i%2)*54;ctx.globalAlpha=.12;ctx.fillStyle="#f4ffff";ctx.beginPath();ctx.ellipse(x,y,38,11,0,0,Math.PI*2);ctx.ellipse(x+20,y-7,22,12,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
- ctx.fillStyle=p.hill;ctx.beginPath();ctx.moveTo(0,354);ctx.quadraticCurveTo(70,280,145,355);ctx.quadraticCurveTo(250,265,340,355);ctx.quadraticCurveTo(405,300,450,344);ctx.lineTo(450,505);ctx.lineTo(0,505);ctx.fill();
- for(let i=0;i<9;i++){const x=i*59-14,high=65+(i*31)%65;ctx.fillStyle=p.tree;ctx.fillRect(x+16,365-high*.5,10,high*.7);ctx.fillStyle=i%2?p.tree2:p.tree;ctx.beginPath();ctx.arc(x+21,360-high*.55,30+(i%3)*5,0,Math.PI*2);ctx.fill()}
- const floor=ctx.createLinearGradient(0,405,0,505);floor.addColorStop(0,p.floor1);floor.addColorStop(1,p.floor2);ctx.fillStyle=floor;ctx.fillRect(0,405,W,100);
- for(let i=0;i<18;i++){const x=i*29+(i%2)*8;ctx.fillStyle=i%2?"#ffffff24":"#fff2bf30";ctx.beginPath();ctx.ellipse(x,455+(i%3)*10,7,2,0,0,Math.PI*2);ctx.fill()}
- line(0,503,450,503,p.line,3);
- // Environmental depth: foreground stones, roots and biome-specific silhouettes.
- ctx.save();ctx.globalAlpha=.32;for(let i=0;i<16;i++){const x=((i*83-state.time*7)%520+520)%520-35,y=465+(i%4)*8;ctx.fillStyle=i%2?p.line:p.tree2;ctx.beginPath();ctx.ellipse(x,y,13+(i%3)*4,3+(i%2)*2,(i%3-.8)*.12,0,Math.PI*2);ctx.fill()}ctx.restore();
- for(let i=0;i<12;i++){const x=((i*47-state.time*(def.biome==="cave"?2:8))%490+490)%490-20;ctx.strokeStyle=p.line;ctx.globalAlpha=.3;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,500);ctx.quadraticCurveTo(x-8,484,x+3,470-(i%3)*7);ctx.stroke();ctx.globalAlpha=1}
- if(def.biome==="cave"||def.biome==="ruins"){for(let i=0;i<7;i++){const x=i*76+12;ctx.fillStyle=def.biome==="cave"?"#252b4c":"#7a806d";ctx.beginPath();ctx.moveTo(x,405);ctx.lineTo(x+14,376+(i%2)*12);ctx.lineTo(x+30,405);ctx.closePath();ctx.fill()}}
- for(const mote of state.stars){ctx.globalAlpha=mote.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(mote.x,mote.y,mote.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ const def=stageDefinition(),biome=def.biome,palettes={
+  meadow:{sky:["#7caeb0","#587d79","#233c40"],sun:"#f3d49a",far:"#546f69",mid:"#31574c",near:"#183a33",floor:["#726b4e","#303d35"],accent:"#d0ae70",fog:"#c6d9bb"},
+  forest:{sky:["#557e78","#304c46","#152b2b"],sun:"#a5b99a",far:"#354c42",mid:"#203d35",near:"#10251f",floor:["#4a5940","#1c3028"],accent:"#bba66e",fog:"#8ca995"},
+  cave:{sky:["#617b91","#344c60","#172532"],sun:"#9bd4dc",far:"#37495a",mid:"#233847",near:"#142733",floor:["#58636a","#202a34"],accent:"#a5d2cd",fog:"#9db7c7"},
+  ruins:{sky:["#a77e63","#65564f","#292e32"],sun:"#e5b77a",far:"#655448",mid:"#413b37",near:"#242c2c",floor:["#776348","#35332f"],accent:"#d5b47a",fog:"#c3a184"},
+  boss:{sky:["#805c72","#49374f","#1c2233"],sun:"#ff9e83",far:"#493d55",mid:"#312b43",near:"#1e2032",floor:["#624753","#27283a"],accent:"#f0a56e",fog:"#c18483"}
+ };
+ const p=palettes[biome]||palettes.forest;
+ const sky=ctx.createLinearGradient(0,75,0,508);sky.addColorStop(0,p.sky[0]);sky.addColorStop(.52,p.sky[1]);sky.addColorStop(1,p.sky[2]);
+ ctx.fillStyle=sky;ctx.fillRect(0,75,W,433);
+ // Distant light source and layered atmospheric haze.
+ const orbX=biome==="cave"?348:biome==="ruins"?103:biome==="boss"?349:355;
+ const orbY=biome==="boss"?186:biome==="cave"?168:158;
+ const aura=ctx.createRadialGradient(orbX,orbY,2,orbX,orbY,150);aura.addColorStop(0,p.sun+"66");aura.addColorStop(.22,p.sun+"28");aura.addColorStop(1,"#00000000");
+ ctx.fillStyle=aura;ctx.fillRect(0,75,W,360);
+ ctx.save();ctx.globalAlpha=.68;ctx.fillStyle=p.sun;ctx.beginPath();ctx.arc(orbX,orbY,biome==="boss"?28:23,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.22;ctx.strokeStyle=p.sun;ctx.lineWidth=1.5;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(orbX,orbY,39+i*12,0,Math.PI*2);ctx.stroke()}ctx.restore();
+ // Long light shafts soften the horizon without hiding combat silhouettes.
+ ctx.save();ctx.globalAlpha=.055;ctx.fillStyle="#fff4d8";
+ for(let i=0;i<5;i++){const x=orbX-105+i*48;ctx.beginPath();ctx.moveTo(x,75);ctx.lineTo(x+17,75);ctx.lineTo(x+115,414);ctx.lineTo(x+69,414);ctx.closePath();ctx.fill()}ctx.restore();
+ // Three distinct mountain / ruin silhouettes create parallax depth.
+ ctx.fillStyle=p.far;ctx.beginPath();ctx.moveTo(0,342);ctx.lineTo(0,301);ctx.lineTo(54,265);ctx.lineTo(92,298);ctx.lineTo(151,244);ctx.lineTo(203,302);ctx.lineTo(264,256);ctx.lineTo(321,297);ctx.lineTo(381,250);ctx.lineTo(450,302);ctx.lineTo(450,408);ctx.lineTo(0,408);ctx.closePath();ctx.fill();
+ ctx.save();ctx.globalAlpha=.2;ctx.strokeStyle=p.fog;ctx.lineWidth=1.3;
+ for(let i=0;i<6;i++){const x=i*88-18;ctx.beginPath();ctx.moveTo(x,332);ctx.lineTo(x+43,282+(i%2)*17);ctx.lineTo(x+77,334);ctx.stroke()}ctx.restore();
+ // Mid-ground terrain uses the biome silhouette, not a repeated flat tree row.
+ ctx.fillStyle=p.mid;ctx.beginPath();ctx.moveTo(0,375);ctx.quadraticCurveTo(58,321,117,366);ctx.quadraticCurveTo(180,304,246,366);ctx.quadraticCurveTo(325,306,385,362);ctx.quadraticCurveTo(423,341,450,365);ctx.lineTo(450,455);ctx.lineTo(0,455);ctx.closePath();ctx.fill();
+ if(biome==="cave"){
+  // Stalactites and luminous mineral seams.
+  for(let i=0;i<10;i++){const x=i*53-8,h=24+(i*29)%51;ctx.fillStyle=i%2?"#1b2a38":"#23394a";ctx.beginPath();ctx.moveTo(x,76);ctx.lineTo(x+13,76);ctx.lineTo(x+7,76+h);ctx.closePath();ctx.fill();
+   if(i%3===0){line(x+7,90,x+7,90+h*.55,p.accent,1);glow(x+7,90+h*.55,15,p.sun,.12)}
+  }
+  for(let i=0;i<6;i++){const x=25+i*78,y=390+(i%2)*13;ctx.fillStyle="#203a4c";ctx.beginPath();ctx.moveTo(x-16,y);ctx.lineTo(x,y-48-(i%3)*8);ctx.lineTo(x+17,y);ctx.closePath();ctx.fill();ctx.strokeStyle="#8cc8c8";ctx.globalAlpha=.44;ctx.stroke();ctx.globalAlpha=1;glow(x,y-25,19,p.sun,.12)}
+ }else if(biome==="ruins"||biome==="boss"){
+  // Broken columns and a ruined arch frame the battlefield.
+  for(let i=0;i<6;i++){const x=i*91-17,h=74+(i%3)*21;ctx.fillStyle=biome==="boss"?"#342a3d":"#4c443c";ctx.fillRect(x,355-h*.55,13,h*.55);ctx.fillStyle="#81705a";ctx.fillRect(x-5,355-h*.55-5,23,7);ctx.fillStyle="#282c31";ctx.fillRect(x+3,355-h*.55+5,4,h*.55-9);ctx.globalAlpha=.28;ctx.strokeStyle=p.accent;ctx.strokeRect(x-5,355-h*.55-5,23,h*.55+7);ctx.globalAlpha=1}
+  ctx.strokeStyle=p.accent;ctx.globalAlpha=.25;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(34,362);ctx.lineTo(34,303);ctx.quadraticCurveTo(225,124,416,303);ctx.lineTo(416,362);ctx.stroke();ctx.globalAlpha=1;
+ }else{
+  // Irregular tree clusters, branches and canopy highlights.
+  for(let i=0;i<11;i++){
+   const x=i*46-21,h=52+(i*37)%65,base=382+(i%3)*5;
+   ctx.fillStyle="#101e1a88";ctx.fillRect(x+13,base-h*.43,9,h*.55);
+   const rr=22+(i%3)*7;ctx.fillStyle=i%2?p.near:p.mid;
+   ctx.beginPath();ctx.arc(x+17,base-h*.58,rr,0,Math.PI*2);ctx.arc(x+2,base-h*.48,rr*.68,0,Math.PI*2);ctx.arc(x+34,base-h*.47,rr*.72,0,Math.PI*2);ctx.fill();
+   ctx.globalAlpha=.18;ctx.strokeStyle=p.fog;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x+17,base-h*.58,rr*.8,3.5,5.7);ctx.stroke();ctx.globalAlpha=1;
+  }
+ }
+ // Foreground floor and perspective stonework.
+ const floor=ctx.createLinearGradient(0,398,0,508);floor.addColorStop(0,p.floor[0]);floor.addColorStop(.56,p.floor[1]);floor.addColorStop(1,"#10191b");
+ ctx.fillStyle=floor;ctx.fillRect(0,396,W,112);
+ ctx.save();ctx.globalAlpha=.16;ctx.strokeStyle=p.accent;ctx.lineWidth=1;
+ for(let y=415;y<510;y+=19){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(450,y);ctx.stroke()}
+ for(let x=-210;x<=660;x+=51){ctx.beginPath();ctx.moveTo(225,396);ctx.lineTo(x,508);ctx.stroke()}ctx.restore();
+ for(let i=0;i<9;i++){
+  const x=i*59-12,y=435+(i%3)*20;
+  ctx.save();ctx.globalAlpha=.26;ctx.strokeStyle=p.accent;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+24,y-4);ctx.lineTo(x+42,y+9);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+8,y+7);ctx.lineTo(x+17,y+13);ctx.lineTo(x+23,y+8);ctx.stroke();ctx.restore();
+ }
+ // Biome-specific foreground debris gives the player a stable ground plane.
+ for(let i=0;i<17;i++){
+  const x=((i*83-state.time*(biome==="cave"?2.2:5.5))%520+520)%520-35,y=465+(i%4)*8;
+  ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=i%2?p.accent:p.near;ctx.beginPath();ctx.ellipse(x,y,10+(i%3)*4,2.5+(i%2)*1.8,(i%3-.8)*.12,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ for(let i=0;i<11;i++){
+  const x=((i*47-state.time*(biome==="cave"?1.5:7))%490+490)%490-20;
+  ctx.save();ctx.globalAlpha=.26;ctx.strokeStyle=p.accent;ctx.lineWidth=biome==="cave"?1.4:2;ctx.beginPath();ctx.moveTo(x,501);ctx.quadraticCurveTo(x-8,484,x+3,470-(i%3)*7);ctx.stroke();ctx.restore();
+ }
+ line(0,503,450,503,p.accent,2.4);line(0,507,450,507,"#080e12aa",3);
+ // Slow drifting fireflies / dust motes. Bounded loops keep mobile frame cost predictable.
+ for(const mote of state.stars){
+  const drift=(mote.x+Math.sin(state.time*.5+mote.y)*5+450)%450;
+  ctx.save();ctx.globalAlpha=mote.a*(.68+.32*Math.sin(state.time*2+mote.x));ctx.fillStyle=biome==="cave"?"#b8f1ff":"#fff0ca";
+  ctx.beginPath();ctx.arc(drift,mote.y,mote.r,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ // Cinematic edge falloff.
+ const shade=ctx.createLinearGradient(0,75,0,508);shade.addColorStop(0,"#07101c55");shade.addColorStop(.42,"#00000000");shade.addColorStop(1,"#050a0bdd");
+ ctx.fillStyle=shade;ctx.fillRect(0,75,W,433);
 }
 function drawHeader(){
  rounded(10,9,430,59,16,"#0c1730eF","#8ca9ce66",1.5);
@@ -649,24 +706,60 @@ function drawClawMachine(){
  pill(164,684,123,state.turnPhase==="claw"?"FAZA 1/2":state.turnPhase==="hero"?"FAZA 2/2":"TURA WROGÓW",state.turnPhase==="hero"?"#28544d":"#302a22",state.turnPhase==="hero"?"#b9f0cb":"#e6c98e");
 }
 function drawMenuScene(){
- // Adult dark-fantasy key art: basalt citadel, restrained brass and ember accents.
- const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#090d14");bg.addColorStop(.48,"#151b24");bg.addColorStop(1,"#080b10");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
- for(let i=0;i<34;i++){const x=(i*83+17)%450,y=(i*137+31)%800;ctx.globalAlpha=.045+(i%4)*.012;ctx.fillStyle=i%3?"#d8c39a":"#8da4ad";ctx.fillRect(x,y,1+(i%2),18+(i%5)*7)}ctx.globalAlpha=1;
- // Architectural ribs and distant vault.
- const vault=ctx.createRadialGradient(225,330,20,225,330,300);vault.addColorStop(0,"#34404a");vault.addColorStop(.55,"#1a232d");vault.addColorStop(1,"#090d13");ctx.fillStyle=vault;ctx.fillRect(0,90,450,430);
- ctx.strokeStyle="#b18a50";ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(18,470);ctx.lineTo(18,210);ctx.quadraticCurveTo(225,-15,432,210);ctx.lineTo(432,470);ctx.stroke();
- for(let side=0;side<2;side++){const x=side?402:48;ctx.fillStyle="#202a34";ctx.fillRect(x-13,190,26,292);ctx.fillStyle="#68727a";ctx.fillRect(x-15,188,30,5);ctx.fillStyle="#0a1018";ctx.fillRect(x-8,212,16,240);ctx.strokeStyle="#8c7049";ctx.globalAlpha=.4;ctx.strokeRect(x-13,190,26,292);ctx.globalAlpha=1}
- // Ground plane with subtle perspective grid.
- const floor=ctx.createLinearGradient(0,455,0,800);floor.addColorStop(0,"#29313a");floor.addColorStop(1,"#0b0f14");ctx.fillStyle=floor;ctx.fillRect(0,455,450,345);
- ctx.strokeStyle="#8b795d";ctx.globalAlpha=.17;ctx.lineWidth=1;for(let y=480;y<810;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(450,y);ctx.stroke()}for(let x=-200;x<=650;x+=55){ctx.beginPath();ctx.moveTo(225,455);ctx.lineTo(x,800);ctx.stroke()}ctx.globalAlpha=1;
- // Ember-lit relic portal and hero plinth.
- glow(225,390,150,"#b76b35",.17);ctx.fillStyle="#111820";ctx.beginPath();ctx.ellipse(225,492,150,35,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#9b7949";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(225,489,145,31,0,0,Math.PI*2);ctx.stroke();
- ctx.strokeStyle="#c18d50";ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(225,386,69,106,0,Math.PI,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
- for(let i=0;i<13;i++){const a=Math.PI+(i/12)*Math.PI,x=225+Math.cos(a)*72,y=386+Math.sin(a)*108;glow(x,y,12,i%2?"#d5a15b":"#b7c6c6",.2);ctx.fillStyle=i%2?"#d5a15b":"#aebdc2";ctx.fillRect(x-1,y-2,2,4)}
- ctx.save();ctx.translate(225,414);ctx.scale(1.25,1.25);drawHero(0,0);ctx.restore();
+ // Main-menu key art: a sealed citadel vault lit by a relic gate.
+ const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#080c12");bg.addColorStop(.42,"#171a20");bg.addColorStop(.76,"#20201d");bg.addColorStop(1,"#080a0d");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ // Deep corridor silhouettes and stone paneling.
+ const vault=ctx.createRadialGradient(225,322,10,225,322,300);vault.addColorStop(0,"#59605a");vault.addColorStop(.38,"#30363a");vault.addColorStop(1,"#0a0e14");
+ ctx.fillStyle=vault;ctx.fillRect(0,76,W,445);
+ for(let i=0;i<7;i++){
+  const y=120+i*47;ctx.save();ctx.globalAlpha=.1+(i%2)*.035;ctx.strokeStyle="#b59a72";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(450,y);ctx.stroke();ctx.restore();
+ }
+ // Double vaulted arch, bevelled supports and inset vertical channels.
+ for(let n=0;n<3;n++){ctx.save();ctx.strokeStyle=n===0?"#d3b27b":"#746247";ctx.globalAlpha=n===0?.42:.19;ctx.lineWidth=n===0?2.2:7-n*2;ctx.beginPath();ctx.moveTo(18+n*12,484);ctx.lineTo(18+n*12,211);ctx.quadraticCurveTo(225,-28+n*30,432-n*12,211);ctx.lineTo(432-n*12,484);ctx.stroke();ctx.restore()}
+ for(let side=0;side<2;side++){
+  const x=side?401:49;const col=ctx.createLinearGradient(x-16,0,x+16,0);col.addColorStop(0,"#111820");col.addColorStop(.48,"#53606a");col.addColorStop(1,"#151b22");
+  ctx.fillStyle=col;ctx.fillRect(x-15,188,30,294);ctx.fillStyle="#9b835c";ctx.fillRect(x-20,184,40,7);ctx.fillRect(x-20,475,40,9);
+  ctx.strokeStyle="#c5a16a";ctx.globalAlpha=.35;ctx.lineWidth=1;ctx.strokeRect(x-12,205,24,260);ctx.globalAlpha=1;
+  ctx.fillStyle="#0a1016";ctx.fillRect(x-7,222,14,224);
+  glow(x,256,31,"#d38d50",.12);ctx.fillStyle="#d29c60";ctx.beginPath();ctx.arc(x,252+Math.sin(state.time*2+side)*2,3.2,0,Math.PI*2);ctx.fill();
+ }
+ // The relic gate is layered, animated, and brighter than the menu panels.
+ glow(225,366,186,"#bd7847",.15);glow(225,385,104,"#d0a16a",.13);
+ ctx.save();ctx.translate(225,386);
+ for(let ring=0;ring<4;ring++){
+  ctx.globalAlpha=.5-ring*.09;ctx.strokeStyle=ring%2?"#d9c08b":"#946d48";ctx.lineWidth=ring===0?3:1.2;
+  ctx.beginPath();ctx.ellipse(0,0,68+ring*9,106+ring*11,0,Math.PI,Math.PI*2);ctx.stroke();
+ }
+ ctx.globalAlpha=.3;ctx.strokeStyle="#e5bf81";ctx.setLineDash([3,8]);ctx.lineDashOffset=-state.time*5;ctx.beginPath();ctx.ellipse(0,0,85,122,0,Math.PI,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+ for(let i=0;i<16;i++){
+  const a=Math.PI+(i/15)*Math.PI,x=225+Math.cos(a)*76,y=386+Math.sin(a)*112;
+  glow(x,y,17,i%2?"#e4b86f":"#a6d3ce",.18+.05*Math.sin(state.time*2+i));
+  ctx.fillStyle=i%2?"#e4b86f":"#a6d3ce";ctx.beginPath();ctx.arc(x,y,1.5+(i%3)*.5,0,Math.PI*2);ctx.fill();
+ }
+ // Pedestal, concentric engraved rings and polished floor.
+ const floor=ctx.createLinearGradient(0,450,0,800);floor.addColorStop(0,"#3b3c37");floor.addColorStop(.42,"#222621");floor.addColorStop(1,"#080b0d");ctx.fillStyle=floor;ctx.fillRect(0,450,450,350);
+ ctx.save();ctx.globalAlpha=.22;ctx.strokeStyle="#b39a6c";ctx.lineWidth=1;
+ for(let y=472;y<810;y+=27){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(450,y);ctx.stroke()}
+ for(let x=-200;x<700;x+=57){ctx.beginPath();ctx.moveTo(225,450);ctx.lineTo(x,800);ctx.stroke()}ctx.restore();
+ ctx.fillStyle="#0c1114";ctx.beginPath();ctx.ellipse(225,495,157,37,0,0,Math.PI*2);ctx.fill();
+ const plinth=ctx.createLinearGradient(0,454,0,514);plinth.addColorStop(0,"#817253");plinth.addColorStop(.18,"#3a3b34");plinth.addColorStop(1,"#111719");
+ ctx.fillStyle=plinth;ctx.beginPath();ctx.ellipse(225,489,147,30,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#c8a66d";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(225,486,143,27,0,0,Math.PI*2);ctx.stroke();
+ ctx.save();ctx.translate(225,486);ctx.rotate(state.time*.08);ctx.strokeStyle="#d6b77d";ctx.globalAlpha=.55;ctx.lineWidth=1.2;
+ for(let i=0;i<12;i++){const a=i*Math.PI/6;ctx.beginPath();ctx.moveTo(Math.cos(a)*103,Math.sin(a)*18);ctx.lineTo(Math.cos(a)*127,Math.sin(a)*23);ctx.stroke()}ctx.restore();
+ // Hero is framed by the portal; the scale remains fixed for the 450x800 canvas.
+ ctx.save();ctx.translate(225,414);ctx.scale(1.28,1.28);drawHero(0,0);ctx.restore();
  drawPrize("gem",112,405,.62);drawPrize("coin",342,370,.58);
- // Vignette keeps UI legible and gives the scene cinematic contrast.
- const vignette=ctx.createRadialGradient(225,390,130,225,390,560);vignette.addColorStop(0,"#00000000");vignette.addColorStop(1,"#020407d9");ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+ // Floating embers animate slowly behind the menu, not over the text.
+ for(let i=0;i<18;i++){
+  const x=(i*71+Math.sin(state.time*.55+i)*11+450)%450;
+  const y=155+((i*47-state.time*(5+i%3))%350+350)%350;
+  ctx.save();ctx.globalAlpha=.12+.12*Math.sin(state.time*2+i);ctx.fillStyle=i%3?"#e4b86f":"#a8c9c3";ctx.beginPath();ctx.arc(x,y,1+(i%3)*.45,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ // Vignette and subtle top/bottom letterbox shading.
+ const vignette=ctx.createRadialGradient(225,390,120,225,390,560);vignette.addColorStop(0,"#00000000");vignette.addColorStop(1,"#020407e8");ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+ const edge=ctx.createLinearGradient(0,0,0,H);edge.addColorStop(0,"#00000077");edge.addColorStop(.18,"#00000000");edge.addColorStop(.8,"#00000000");edge.addColorStop(1,"#00000088");ctx.fillStyle=edge;ctx.fillRect(0,0,W,H);
 }
 function drawTitle(){
  drawMenuScene();

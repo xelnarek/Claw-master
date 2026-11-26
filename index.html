@@ -91,7 +91,7 @@ const abilityPool=[
  {id:"storm",name:"Burza eteru",tag:"SUPER",desc:"+4 obrażenia superataku",color:"#b69aff",max:4},
  {id:"claw",name:"Magnes skarbów",tag:"CHWYTAK",desc:"+12 px tolerancji chwytu",color:"#72e8dd",max:4},
  {id:"fortune",name:"Złoty instynkt",tag:"ŁUP",desc:"+50% monet z chwytaka",color:"#ffd36c",max:3},
- {id:"venom",name:"Zatruty sztych",tag:"DOT",desc:"Każdy atak dodaje 2 obrażenia",color:"#a5e477",max:4},
+ {id:"venom",name:"Toksyczna amunicja",tag:"TRUCIZNA",desc:"Trafienia zatruwają cel na 2 fazy; +1 obrażenie trucizny / poziom",color:"#a5e477",max:3},
  {id:"bleed",name:"Krwawy znak",tag:"KRWAWIENIE",desc:"Ataki krwawią przez 2 fazy wrogów",color:"#ff8194",max:3},
  {id:"ward",name:"Żelazna przysięga",tag:"TARCZA",desc:"Odnów 2 pkt. tarczy na początku tury",color:"#9fc9ff",max:4},
  {id:"riposte",name:"Runa riposty",tag:"KONTRATAK",desc:"+2 obrażeń w kontrataku",color:"#82e5f2",max:4}
@@ -108,7 +108,7 @@ function chooseAbility(index){
  if(a.id==="storm")state.runSkillBonus+=4;
  if(a.id==="claw")state.runClawBonus+=12;
  if(a.id==="fortune")state.runLootBonus+=.5;
- if(a.id==="venom")state.runVenom+=2;
+ if(a.id==="venom")state.runVenom+=1;
  if(a.id==="bleed")state.runBleed+=1;
  if(a.id==="ward")state.runWard+=1;
  if(a.id==="riposte")state.runCounterBonus+=2;
@@ -319,11 +319,21 @@ function drawHero(x,y){
  // Compact mechanical firearm; the picked weapon changes its silhouette and muzzle.
  ctx.save();ctx.translate(23,-28);
  const activeWeapon=weaponForRun(),gunLength=activeWeapon.id==="cannon"?29:activeWeapon.id==="scatter"?25:activeWeapon.id==="laser"?31:23;
+ const shotKick=attack?Math.sin(progress*Math.PI)*4.5:0;ctx.translate(-shotKick,0);
+ const muzzle=attack?clamp(1-progress*1.9,0,1):0;
  const metal=ctx.createLinearGradient(0,-10,0,10);metal.addColorStop(0,"#c4d0cd");metal.addColorStop(.45,"#596b70");metal.addColorStop(1,"#25363d");
  rounded(-8,-7,22,12,3,metal,"#d4d9cc",1);rounded(7,-5,gunLength,6,2,"#46575d","#c5c9b4",1);rounded(9,-1,activeWeapon.id==="cannon"?12:8,9,2,"#28363d","#82908b",1);rounded(-13,-4,8,8,2,"#8d6945","#d5ae73",1);
  line(-5,-10,12,-10,activeWeapon.color,1.7);
  if(activeWeapon.id==="laser"){glow(gunLength+5,-2,15,activeWeapon.color,.32);rounded(gunLength-2,-4,7,4,1,"#d8ffff",activeWeapon.color,1)}else rounded(gunLength-1,-4,6,5,1,activeWeapon.color,"#fff1c9",1);
- if(action==="attack"&&progress<.4)glow(gunLength+8,-2,18,activeWeapon.color,.45);
+ if(muzzle>.02){
+  glow(gunLength+8,-2,14+muzzle*9,activeWeapon.color,.35+muzzle*.42);
+  ctx.save();ctx.globalAlpha=muzzle;ctx.fillStyle="#fff6d7";ctx.strokeStyle=activeWeapon.color;ctx.lineWidth=1.4;
+  ctx.beginPath();ctx.moveTo(gunLength+2,-2);ctx.lineTo(gunLength+9,-7);ctx.lineTo(gunLength+17,-2);ctx.lineTo(gunLength+9,3);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ }
+ if(attack&&activeWeapon.id!=="laser"){
+  const caseT=clamp(progress*1.8,0,1),caseAlpha=clamp(1-Math.abs(progress-.42)*2.1,0,1);
+  if(caseAlpha>.01){ctx.save();ctx.globalAlpha=caseAlpha;ctx.translate(7-caseT*10,-1+caseT*15);ctx.rotate(caseT*4);rounded(-2,-1,5,2,1,"#d6a65e","#fff0b5",.7);ctx.restore()}
+ }
  if(special){ctx.shadowColor="#8ef4ff";ctx.shadowBlur=14;rounded(-5,-12,34,3,1,"#9beeff")}
  ctx.restore();
  if(special&&progress>.08&&progress<.96){ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.5)*1.7)*.75;ctx.strokeStyle="#9effff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(15,-29,45,-1.6,-.1);ctx.stroke();ctx.restore()}
@@ -419,6 +429,7 @@ function drawEnemy(e){
  }
  if(e.guard>0){ctx.strokeStyle="#8edcff";ctx.globalAlpha=.7;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-18,34,-2.4,-.5);ctx.stroke();ctx.globalAlpha=1}
  if(e.bleedTurns>0){ctx.fillStyle="#ff7f91";ctx.beginPath();ctx.arc(0,-69,3,0,Math.PI*2);ctx.fill();ctx.fillRect(-1,-66,2,5)}
+  if(e.poisonTurns>0){glow(12,-67,9,"#a5e477",.25);ctx.fillStyle="#baff88";ctx.beginPath();ctx.arc(12,-67,2.5,0,Math.PI*2);ctx.fill()}
  ctx.restore();
  if(e.action==="windup"&&!e.dying){ctx.save();ctx.globalAlpha=.4+Math.sin(state.time*24+e.phase)*.22;ctx.strokeStyle="#ffd07a";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(0,-18,e.type==="boss"?54:36,e.type==="boss"?58:44,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore()}
  if(e.hit>0&&!e.dying){
@@ -782,17 +793,17 @@ function spawnEnemy(typeOverride=null){
  const step={slime:28,bat:52,goblin:38,porcupine:20,boss:26}[type]||30;
  const range={slime:122,bat:148,goblin:136,porcupine:116,boss:178}[type]||122;
  const every={slime:2,bat:1,goblin:1,porcupine:2,boss:2}[type]||1;
- state.enemies.push({x,y,baseY:y,type,hp:max,maxHp:max,speed:step,approachStep:step,range,attackEvery:every,nextAttackTurn:state.turnNumber+1,damage:stats.damage+Math.floor(scale/3),guard:0,bleedTurns:0,bleedDamage:0,lastThornsTurn:-1,enraged:false,spinesActive:false,attackCooldown:0,attackWindup:.38,attackInterval:every,windupTimer:0,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0,intent:"advance"});
+ state.enemies.push({x,y,baseY:y,type,hp:max,maxHp:max,speed:step,approachStep:step,range,attackEvery:every,nextAttackTurn:state.turnNumber+1,damage:stats.damage+Math.floor(scale/3),guard:0,bleedTurns:0,bleedDamage:0,poisonTurns:0,poisonDamage:0,lastThornsTurn:-1,enraged:false,spinesActive:false,attackCooldown:0,attackWindup:.38,attackInterval:every,windupTimer:0,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0,intent:"advance"});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
  state.particles.push({x,y,vx:rand(-60,60),vy:rand(-85,40),life:rand(.3,.7),max:.7,color,size});
 }
 function popText(label,x,y,color="#fff"){state.floaters.push({label,x,y,life:1,color})}
-function spawnImpact(target,kind,damage=0){
+function spawnImpact(target,kind,damage=0,customColor=null){
  if(!state.effects)return;
  const palette={slime:"#8ce9bd",bat:"#b5a0ff",porcupine:"#f3c27e",goblin:"#ee9470",boss:"#ff7da5",hero:"#ff7b83"};
- const color=kind==="arcane"?"#9beeff":kind==="incoming"?"#ff7684":kind==="critical"?"#ffe08a":(palette[target.type]||"#f4d39a");
+ const color=customColor||(kind==="arcane"||kind==="heavy"?"#9beeff":kind==="incoming"?"#ff7684":kind==="critical"?"#ffe08a":(palette[target.type]||"#f4d39a"));
  const max=kind==="arcane"?.56:kind==="incoming"?.3:.36;
  state.impacts.push({x:target.x,y:target.y,kind,color,life:max,max,radius:target.type==="boss"?47:30});
  state.shake=Math.max(state.shake,kind==="arcane"?6.2:kind==="incoming"?3.2:kind==="critical"?4.4:2.7);
@@ -846,16 +857,17 @@ function findCombatTarget(){
 function applyWeaponDamage(target,damage,weapon,critical=false){
  if(!target||target.dying||target.hp<=0)return;
  const finalDamage=Math.max(1,Math.ceil(damage*(critical?1.7:1)));
- let remaining=finalDamage;if(target.guard>0){const absorbed=Math.min(target.guard,remaining);target.guard-=absorbed;remaining-=absorbed;if(absorbed)popText("PANCERZ -"+absorbed,target.x,target.y-55,"#9cddff")}if(remaining>0)target.hp-=remaining;target.hit=.28;state.score+=1;if(remaining>0&&state.runBleed>0){target.bleedTurns=Math.max(target.bleedTurns||0,2);target.bleedDamage=Math.max(target.bleedDamage||0,state.runBleed)}if(target.type==="porcupine"&&target.spinesActive&&target.lastThornsTurn!==state.turnNumber){target.lastThornsTurn=state.turnNumber;state.hp=Math.max(0,state.hp-2);popText("KOLCE -2",state.playerX,state.playerY-67,"#ffbd82");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",2)}
- const kind=critical?"critical":weapon.id==="cannon"?"arcane":"slash";
- spawnImpact(target,kind,finalDamage);
+ let remaining=finalDamage;if(target.guard>0){const absorbed=Math.min(target.guard,remaining);target.guard-=absorbed;remaining-=absorbed;if(absorbed)popText("PANCERZ -"+absorbed,target.x,target.y-55,"#9cddff")}if(remaining>0)target.hp-=remaining;target.hit=.28;state.score+=1;if(remaining>0&&state.runBleed>0){target.bleedTurns=Math.max(target.bleedTurns||0,2);target.bleedDamage=Math.max(target.bleedDamage||0,state.runBleed)}
+  if(remaining>0&&state.runVenom>0){target.poisonTurns=Math.max(target.poisonTurns||0,2);target.poisonDamage=Math.max(target.poisonDamage||0,state.runVenom)}if(target.type==="porcupine"&&target.spinesActive&&target.lastThornsTurn!==state.turnNumber){target.lastThornsTurn=state.turnNumber;state.hp=Math.max(0,state.hp-2);popText("KOLCE -2",state.playerX,state.playerY-67,"#ffbd82");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",2)}
+ const kind=critical?"critical":weapon.id==="cannon"?"heavy":weapon.id==="laser"?"pierce":weapon.id==="scatter"?"pellet":weapon.id==="repeater"?"pulse":"bullet";
+ spawnImpact(target,kind,finalDamage,weapon.color);
  popText((critical?"KRYTYK ":"-")+finalDamage,target.x,target.y-45,critical?"#ff9b63":weapon.color);
 }
 function fireWeapon(counter=false){
  if(!canHeroAct())return false;
  const weapon=weaponForRun(),target=findCombatTarget();
  if(!target)return false;
- const base=currentWeaponDamage()+state.runVenom+(counter?state.runCounterBonus:0),active=state.enemies.filter(e=>!e.dying&&e.hp>0);
+ const base=currentWeaponDamage()+(counter?state.runCounterBonus:0),active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  const critical=Math.random()<state.runCrit;
  applyWeaponDamage(target,base,weapon,critical);
  if(weapon.id==="repeater")applyWeaponDamage(target,Math.ceil(base*.55),weapon,false);
@@ -923,6 +935,7 @@ function resolveEnemyTurn(){
  for(const e of active){
   if(state.hp<=0)break;
   if(e.bleedTurns>0&&e.hp>0){const wound=e.bleedDamage||1;e.hp-=wound;e.bleedTurns--;popText("KRWAWIENIE -"+wound,e.x,e.y-64,"#ff8998");spawnImpact(e,"critical",wound)}
+  if(e.poisonTurns>0&&e.hp>0){const toxin=(e.poisonDamage||1)+(e.bleedTurns>0?1:0);e.hp-=toxin;e.poisonTurns--;popText("TRUCIZNA -"+toxin,e.x,e.y-78,"#b9ec86");spawnImpact(e,"pulse",toxin,"#a5e477")}
   if(e.hp<=0)continue;
   if(e.intent==="attack"&&state.turnNumber>=e.nextAttackTurn){
    if(e.type==="bat"){e.x=Math.max(state.playerX+66,e.x-18);e.action="dive"}

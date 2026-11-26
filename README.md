@@ -6,12 +6,12 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 
 - Portrait layout designed for Android phones.
 - Side-view 2D arena with a cartoon hero, animated enemies, health, score and waves.
-- Automatic basic attack with visible projectiles and hit effects.
+- Turn-based combat: choose a target, attack, defend to reduce incoming damage, or use a powerful cooldown skill.
 - Enemy variety, wave scaling and a boss encounter every fifth wave.
 - Separate claw-machine cabinet in the lower half of the screen.
 - Touch/drag claw positioning, left/right controls and a grab/retrieval cycle.
 - Loot rewards: coins, gems, health, shield and bomb.
-- Keyboard fallback: A/D or arrow keys to move the claw, Space/F to grab, Escape to pause.
+- Keyboard fallback: J attack, K defend, L special; A/D or arrows move claw, Space/F grab, Escape pause.
 - No 3D engine, remote asset dependency, build step or external library.
 
 ## Run locally
@@ -23,6 +23,7 @@ For GitHub Pages, select **Deploy from a branch**, choose `main` and the root fo
 ## Controls
 
 - Tap **ROZPOCZNIJ GRĘ** to start.
+- Tap an enemy in the arena to select a target. Tap the action buttons (attack/defend/special) to resolve your turn.
 - Tap/drag in the claw cabinet to position the claw.
 - Use the lower **LEWO / PRAWO** buttons to position it precisely.
 - Tap **ZŁAP!** to lower the claw and retrieve a nearby prize.
@@ -54,3 +55,7 @@ To publish with GitHub Pages:
 Expected project URL after Pages is enabled: `https://xelnarek.github.io/Claw-master/`.
 
 The current repository has Pages disabled, so the deployment workflow cannot publish yet. This is a repository setting, not a game-code error.
+
+## Combat
+
+Turn order alternates between the player and enemy phases. Choose an enemy by tapping its sprite, then use Attack, Defend or Special. The special attack has a cooldown. Defending reduces incoming damage for the next enemy action.

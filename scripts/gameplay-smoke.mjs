@@ -70,10 +70,14 @@ assert.ok(game.state.enemies.length > 0, "stage 1 should spawn a curated first e
 const firstEnemy = game.state.enemies[0];
 const hpBeforeAutoFire = firstEnemy.hp;
 game.state.fireCooldown = 0;
-for (let i = 0; i < 10; i++) game.update(0.1);
+let sawImpactAtCollision = false;
+for (let i = 0; i < 10; i++) {
+  game.update(0.1);
+  if (firstEnemy.hp < hpBeforeAutoFire && game.state.impacts.length > 0) sawImpactAtCollision = true;
+}
 assert.ok(game.state.shot > 0, "hero should fire automatically while enemies are active");
 assert.ok(firstEnemy.hp < hpBeforeAutoFire, "projectile collision should damage an enemy");
-assert.ok(game.state.impacts.length > 0, "successful hits should create visible impact effects");
+assert.equal(sawImpactAtCollision, true, "successful hits should create visible impact effects at collision time");
 
 const xBeforeMove = game.state.playerX;
 game.moveHero(1);

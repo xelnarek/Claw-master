@@ -74,6 +74,17 @@ game.combatDefend();
 game.resolveEnemyTurn();
 assert.equal(hpBeforeGuard - game.state.hp, 1, "65% guard should reduce a 4-damage slime hit to 1");
 
+const levelBeforeDraft = game.profile.level;
+game.gainXp(levelBeforeDraft * 30);
+assert.equal(game.profile.level, levelBeforeDraft + 1, "XP threshold should grant a hero level");
+assert.equal(game.state.levelChoices.length, 3, "each level should offer three skill choices");
+assert.equal(new Set(game.state.levelChoices.map(skill => skill.id)).size, 3, "skill choices should not contain duplicates");
+const chosenSkill = game.state.levelChoices[0];
+assert.equal(game.chooseAbility(0), true, "choosing one skill should be accepted");
+assert.equal(game.state.runSkills[chosenSkill.id], 1, "chosen skill should be added to the current run build");
+assert.equal(game.state.levelChoices, null, "skill draft should close after one selection");
+
+
 assert.equal(game.purchaseUpgrade("attack"), false, "upgrade should reject insufficient funds");
 const coinsBefore = game.profile.coins;
 game.reward("coin");
@@ -122,6 +133,7 @@ assert.equal(game.state.damage, 4 + game.profile.attackRank, "permanent attack r
 
 console.log("PASS: first-stage onboarding encounter");
 console.log("PASS: turn-based attack, enemy phase and 65% defend reduction");
+console.log("PASS: three-choice level-up draft and run skill application");
 console.log("PASS: claw rewards persist between runs");
 console.log("PASS: permanent upgrade purchase and stat application");
 console.log("PASS: stage waves progress to one-time stage-clear rewards");

@@ -56,7 +56,7 @@ vm.runInNewContext(gameScript, sandbox, { timeout: 1500 });
 const game = window.__CLAW_TEST_API__;
 assert.ok(game, "test API must be exposed only when ?test=1 is present");
 assert.equal(game.state.screen, "title", "game should boot into a playable title screen");
-game.interact(225, 650);
+game.interact(225, 693);
 assert.equal(game.state.screen, "game", "touching the main start button should enter the game");
 assert.ok(game.state.enemies.length > 0, "starting from the title screen should spawn enemies");
 

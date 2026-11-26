@@ -98,6 +98,8 @@ guardTarget.attackCooldown = 0.01;
 game.state.playerInvuln = 0;
 const hpBeforeGuard = game.state.hp;
 game.update(0.02);
+assert.equal(guardTarget.action, "windup", "enemy should telegraph its attack before dealing damage");
+game.update(0.5);
 assert.equal(hpBeforeGuard - game.state.hp, 1, "guard should reduce a 4-damage slime attack to 1");
 
 game.spawnEnemy("slime");
@@ -108,6 +110,32 @@ game.state.skillReady = true;
 assert.equal(game.combatSkill(), true, "super ability should activate when ready");
 assert.ok(aoeTargets.every((enemy, index) => enemy.hp < aoeHp[index]), "super ability should damage all active enemies");
 assert.ok(game.state.skillCooldown > 0, "super ability should enter cooldown");
+
+game.startRun(1);
+game.spawnEnemy("slime");
+game.spawnEnemy("slime");
+const pierceTargets = game.state.enemies.slice(-2);
+pierceTargets[0].x = 200;
+pierceTargets[1].x = 260;
+for (const enemy of pierceTargets) {
+  enemy.y = 397;
+  enemy.speed = 0;
+  enemy.attackCooldown = 20;
+}
+game.state.enemies = pierceTargets;
+game.state.fireCooldown = 10;
+game.state.playerInvuln = 10;
+for (const enemy of pierceTargets) enemy.hp = 100;
+game.state.bullets = [{
+  x: 170, y: 378, vx: 780, vy: 0, damage: 1, radius: 3.5,
+  color: "#b6faff", type: "laser", life: 1.35, splash: 0,
+  pierce: 1, hitTargets: [], critical: false
+}];
+game.update(0.05);
+assert.equal(pierceTargets[0].hp, 99, "laser should damage the first enemy it reaches");
+game.update(0.05);
+assert.equal(pierceTargets[1].hp, 99, "laser should continue through one target and damage the next");
+assert.equal(game.state.bullets.length, 0, "piercing projectile should be removed after exhausting its pierce count");
 
 const previousWeapon = game.state.weaponId;
 const previousWeaponLevel = game.state.weaponLevel;

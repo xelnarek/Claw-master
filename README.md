@@ -69,3 +69,8 @@ The public Pages deployment is published at `https://xelnarek.github.io/Claw-mas
 ## Combat
 
 Turn order alternates between the player and enemy phases. Choose an enemy by tapping its sprite, then use Attack, Defend or Special. The special attack has a cooldown. Defending reduces incoming damage for the next enemy action.
+
+
+## Automated checks
+
+Run `node scripts/validate.mjs` with Node.js 22 to validate the Canvas game script, PWA manifest, service worker, menu/progression features and the gameplay smoke suite. The smoke suite checks the opening encounter, turn flow, 65% defend reduction, claw rewards, saved upgrades, stage unlocks and touch positioning.

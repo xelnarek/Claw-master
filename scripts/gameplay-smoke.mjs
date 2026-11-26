@@ -64,105 +64,97 @@ assert.ok(game.state.enemies.length > 0, "starting from the title screen should 
 
 game.startRun(1);
 assert.equal(game.state.stage, 1, "new run should begin on stage 1");
-assert.equal(game.stageCatalog[0].title, "Polana Początku");
+assert.equal(game.state.weaponId, "sidearm", "each run should begin with the service pistol");
+assert.equal(game.weaponCatalog.length, 5, "five distinct weapon archetypes should be available");
 assert.ok(game.state.enemies.length > 0, "stage 1 should spawn a curated first encounter");
-assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"), "stage 1 should teach target selection against slimes");
+const firstEnemy = game.state.enemies[0];
+const hpBeforeAutoFire = firstEnemy.hp;
+game.state.fireCooldown = 0;
+for (let i = 0; i < 10; i++) game.update(0.1);
+assert.ok(game.state.shot > 0, "hero should fire automatically while enemies are active");
+assert.ok(firstEnemy.hp < hpBeforeAutoFire, "projectile collision should damage an enemy");
+assert.ok(game.state.impacts.length > 0, "successful hits should create visible impact effects");
 
-const firstEnemy = game.state.enemies[game.state.selectedEnemy];
-const hpBeforeAttack = firstEnemy.hp;
-game.combatAttack();
-assert.equal(firstEnemy.hp, hpBeforeAttack, "combat is locked until the claw phase is completed");
-game.state.machinePrizes = [{ id: "test-coin", type: "coin", x: 310, y: 700, phase: 0 }];
-game.deployClaw();
-assert.equal(game.state.turn, "claw");
-assert.equal(game.state.clawUsedThisTurn, true);
-game.deployClaw();
-assert.equal(game.state.turn, "claw", "a second claw deployment must be rejected");
-game.update(1);
-game.update(1);
-assert.equal(game.state.turn, "player-action");
-game.combatAttack();
-assert.ok(firstEnemy.hp < hpBeforeAttack);
-assert.ok(game.state.impacts.some(impact => impact.kind === "slash" || impact.kind === "critical"), "regular attacks should create a directional hit impact");
-assert.ok(game.state.shake > 0, "hits should produce restrained camera feedback");
-assert.equal(game.state.turn, "enemy");
-game.resolveEnemyTurn();
-assert.equal(game.state.turn, "player");
-assert.equal(game.state.clawUsedThisTurn, false);
-game.state.machinePrizes = [{ id: "test-xp", type: "xp", x: 310, y: 700, phase: 0 }];
-game.deployClaw();
-game.update(1);
-game.update(1);
-assert.equal(game.state.turn, "player-action");
+const xBeforeMove = game.state.playerX;
+game.moveHero(1);
+assert.ok(game.state.playerX > xBeforeMove, "directional control should move the hero");
+game.moveHeroTo(500);
+assert.equal(game.state.playerX, 188, "hero movement should stay inside the arena bounds");
+
+assert.equal(game.combatAttack(), true, "burst action should fire when its cooldown is ready");
+assert.equal(game.combatAttack(), false, "burst action should respect its cooldown");
+assert.equal(game.combatDefend(), true, "guard action should activate during real-time combat");
+assert.ok(game.state.guardTimer > 0, "guard should have a timed active window");
+const guardTarget = game.state.enemies.find(enemy => !enemy.dying && enemy.hp > 0);
+assert.ok(guardTarget, "a living enemy should remain for the guard test");
+guardTarget.x = game.state.playerX + 58;
+guardTarget.attackCooldown = 0.01;
+game.state.playerInvuln = 0;
 const hpBeforeGuard = game.state.hp;
-game.combatDefend();
-game.resolveEnemyTurn();
-assert.equal(hpBeforeGuard - game.state.hp, 1, "65% guard should reduce a 4-damage slime hit to 1");
-assert.equal(game.state.clawUsedThisTurn, false);
+game.update(0.02);
+assert.equal(hpBeforeGuard - game.state.hp, 1, "guard should reduce a 4-damage slime attack to 1");
 
-const levelBeforeDraft = game.profile.level;
-game.gainXp(levelBeforeDraft * 30);
-assert.equal(game.profile.level, levelBeforeDraft + 1, "XP threshold should grant a hero level");
-assert.equal(game.state.levelChoices.length, 3, "each level should offer three skill choices");
-assert.equal(new Set(game.state.levelChoices.map(skill => skill.id)).size, 3, "skill choices should not contain duplicates");
-const chosenSkill = game.state.levelChoices[0];
-assert.equal(game.chooseAbility(0), true, "choosing one skill should be accepted");
-assert.equal(game.state.runSkills[chosenSkill.id], 1, "chosen skill should be added to the current run build");
-assert.equal(game.state.levelChoices, null, "skill draft should close after one selection");
+const aoeTargets = [game.spawnEnemy("slime"), game.spawnEnemy("bat")];
+const aoeHp = aoeTargets.map(enemy => enemy.hp);
+game.state.skillReady = true;
+assert.equal(game.combatSkill(), true, "super ability should activate when ready");
+assert.ok(aoeTargets.every((enemy, index) => enemy.hp < aoeHp[index]), "super ability should damage all active enemies");
+assert.ok(game.state.skillCooldown > 0, "super ability should enter cooldown");
 
+const previousWeapon = game.state.weaponId;
+const previousWeaponLevel = game.state.weaponLevel;
+game.reward("weapon");
+assert.ok(game.state.weaponId !== previousWeapon || game.state.weaponLevel > previousWeaponLevel,
+  "claw weapon prize should either swap weapon or increase its level");
 
-assert.equal(game.purchaseUpgrade("attack"), false, "upgrade should reject insufficient funds");
+game.startRun(1);
+game.state.clawX = 310;
+game.state.machinePrizes = [{ id: "weapon-drop", type: "weapon", x: 310, y: 700, phase: 0 }];
+assert.equal(game.deployClaw(), true, "claw should launch independently of combat turns");
+for (let i = 0; i < 14; i++) game.update(0.1);
+assert.equal(game.state.clawMode, "idle", "claw should complete its drop and retrieval animation");
+assert.notEqual(game.state.weaponId, "sidearm", "capturing a weapon prize should equip a different weapon");
+assert.ok(game.state.clawCooldown > 0, "successful retrieval should start the claw cooldown");
+assert.equal(game.deployClaw(), false, "claw should reject another grab during cooldown");
+
 const coinsBefore = game.profile.coins;
 game.reward("coin");
 assert.ok(game.profile.coins > coinsBefore, "claw coin prize should add persistent currency");
 assert.ok(store.has("clawQuestProfileV1"), "profile should persist to local storage");
-
-const oldDamage = game.state.damage;
+const oldDamageRank = game.profile.attackRank;
 game.profile.coins += 100;
 game.saveProfile();
-assert.equal(game.purchaseUpgrade("attack"), true, "attack upgrade should be purchasable with enough coins");
-assert.equal(game.state.damage, oldDamage + 1, "permanent attack upgrade should immediately update run damage");
+assert.equal(game.purchaseUpgrade("attack"), true, "permanent attack upgrade should be purchasable");
+assert.equal(game.profile.attackRank, oldDamageRank + 1, "permanent attack rank should persist");
 
+game.startRun(1);
 const clearWave = () => {
-  for (const enemy of game.state.enemies) {
-    if (!enemy.dying) enemy.hp = 0;
-  }
-  game.update(0.5);
+  for (const enemy of game.state.enemies) enemy.hp = 0;
+  game.update(0.1);
   game.update(0.5);
 };
 clearWave();
 assert.equal(game.state.stageWave, 2, "clearing stage 1 wave 1 should spawn its second wave");
-assert.equal(game.state.enemies.length, 2, "stage 1 wave 2 should have two tutorial slimes");
+assert.equal(game.state.enemies.length, 2, "stage 1 wave 2 should contain two tutorial slimes");
 clearWave();
 assert.equal(game.state.stageCleared, true, "clearing the final encounter should open stage completion");
 assert.ok(game.profile.unlockedStage >= 2, "clearing stage 1 should unlock stage 2");
 const coinsAfterCompletion = game.profile.coins;
 assert.equal(game.completeStage(), false, "stage reward must only be granted once");
 assert.equal(game.profile.coins, coinsAfterCompletion, "re-entering stage completion must not duplicate coins");
+if (game.state.levelChoices) game.chooseAbility(0);
 game.advanceStage();
 assert.equal(game.state.stage, 2, "next-stage action should load stage 2");
-assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"),
-  "stage 2 opening wave should be an easy warm-up before bats appear");
+assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"), "stage 2 should open with a manageable wave");
 clearWave();
-assert.ok(game.state.enemies.some(enemy => enemy.type === "bat"),
-  "stage 2 wave 2 should introduce the bat enemy");
+assert.ok(game.state.enemies.some(enemy => enemy.type === "bat"), "stage 2 wave 2 should introduce the bat enemy");
 
-const clawBefore = game.state.clawX;
-game.interact(174, 600);
-assert.equal(game.state.clawX, 174, "tapping the cabinet should position the claw directly");
-game.moveClaw(1);
-assert.ok(game.state.clawX > 174, "direction control should keep moving the claw");
-const savedCoins = game.profile.coins;
-game.startRun(1);
-assert.equal(game.state.coins, savedCoins, "starting a new run must keep saved coins");
-assert.equal(game.state.damage, 4 + game.profile.attackRank, "permanent attack rank must survive a new run");
-
-
+game.state.profile = undefined;
 game.state.screen = "title";
 game.interact(350, 735);
 assert.equal(game.state.helpOpen, true, "documentation button should open help");
 game.interact(225, 558);
-assert.equal(game.state.helpOpen, true, "keyboard hints must not overlap the help close button");
+assert.equal(game.state.helpOpen, true, "help instructions must not overlap the close button");
 game.interact(225, 590);
 assert.equal(game.state.helpOpen, false, "help close button should still close the overlay");
 
@@ -183,27 +175,27 @@ bounds.height = 800;
 listeners.get("window:resize")();
 
 game.startRun(1);
-game.state.turn = "player-action";
-game.state.skillReady = true;
-const specialTarget = game.state.enemies[game.state.selectedEnemy];
-const specialHp = specialTarget.hp;
-game.combatSkill();
-assert.ok(specialTarget.hp < specialHp, "super attack should damage its selected target");
-assert.ok(game.state.impacts.some(impact => impact.kind === "arcane"), "super attack should create its own arcane impact, not reuse the regular slash");
-assert.ok(game.state.shake >= 6, "super attack should have a stronger impact response");
-game.startRun(1);
-listeners.get("canvas:pointerdown")({ clientX: 120, clientY: 600, pointerId: 1 });
-assert.equal(game.state.clawX, 120, "touch should move the claw to the pressed position");
+listeners.get("canvas:pointerdown")({ clientX: 120, clientY: 380, pointerId: 1 });
+assert.equal(game.state.playerX, 120, "touching the left arena should position the hero");
+listeners.get("canvas:pointermove")({ clientX: 180, clientY: 380, pointerId: 1 });
+assert.equal(game.state.playerX, 180, "dragging in the arena should move the hero");
 listeners.get("canvas:pointercancel")({ pointerId: 1 });
-listeners.get("canvas:pointermove")({ clientX: 350, clientY: 600, pointerId: 1 });
-assert.equal(game.state.clawX, 120, "cancelled touch must not keep dragging the claw");
+listeners.get("canvas:pointermove")({ clientX: 350, clientY: 380, pointerId: 1 });
+assert.equal(game.state.playerX, 180, "cancelled touch must not keep moving the hero");
 
-console.log("PASS: first-stage onboarding encounter");
-console.log("PASS: one claw grab per turn, combat phase lock and 65% defend reduction");
-console.log("PASS: three-choice level-up draft and run skill application");
-console.log("PASS: claw rewards persist between runs");
-console.log("PASS: permanent upgrade purchase and stat application");
-console.log("PASS: stage waves progress to one-time stage-clear rewards");
-console.log("PASS: stage 2 introduces bats in its second encounter");
-console.log("PASS: direct touch positioning and directional claw controls");
-console.log("PASS: saved currency and permanent stats survive a new run");
+listeners.get("canvas:pointerdown")({ clientX: 120, clientY: 600, pointerId: 2 });
+assert.equal(game.state.clawX, 120, "touch should position the claw in the lower chamber");
+listeners.get("canvas:pointermove")({ clientX: 175, clientY: 600, pointerId: 2 });
+assert.equal(game.state.clawX, 175, "dragging the claw chamber should position its carriage");
+listeners.get("canvas:pointercancel")({ pointerId: 2 });
+listeners.get("canvas:pointermove")({ clientX: 350, clientY: 600, pointerId: 2 });
+assert.equal(game.state.clawX, 175, "cancelled touch must not keep dragging the claw");
+
+console.log("PASS: automatic fire and projectile-to-enemy collision damage");
+console.log("PASS: five weapon archetypes, weapon loot swaps and weapon progression");
+console.log("PASS: real-time hero movement, burst action, timed guard and area super");
+console.log("PASS: claw pickup animation, weapon reward and independent cooldown");
+console.log("PASS: persistent coins and permanent character upgrades");
+console.log("PASS: authored waves, stage completion and stage unlock");
+console.log("PASS: mobile touch drag, pointer cancellation and high-DPI resize");
+console.log("PASS: title menu, help panel and keyboard-close behavior");

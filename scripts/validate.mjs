@@ -17,12 +17,12 @@ if (!html.includes("#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh"
 }
 
 const requiredFeatures = [
-  "function drawTitle()", "function drawMenuScene()", "function drawSettingsOverlay()",
+  "function drawTitle()", "function drawMenuScene()", "function drawBackground()", "function drawModalFrame(", "function drawModalBackdrop()", "function drawSettingsOverlay()",
   "function drawHelpOverlay()", "function drawHealth()", "function drawUpgradeOverlay()",
   "function spawnStageWave()", "function completeStage()", "function advanceStage()",
   "function purchaseUpgrade(kind)", "function beginPlayerTurn()", "function planEnemyIntents()",
   "function resolveEnemyTurn()", "function checkEncounterClear()", "function generateMachinePrizes()",
-  "function drawClawMachine()", "function drawAttackFx()", "function drawBuildStrip()", "function drawCombatImpacts()", "function markDefeatedEnemies()",
+  "function drawClawMachine()", "function drawAttackFx()", "function drawBuildStrip()", "function drawHeader()", "function drawCombatImpacts()", "function markDefeatedEnemies()",
   "function applyEnemyHit(", "const stageCatalog=", "const abilityPool=",
   "function rollAbilityChoices()", "function chooseAbility(index)", "state.runSkills",
   'id:"bleed"', 'id:"ward"', 'id:"riposte"', 'id:"venom"', "state.runBleed", "state.runWard", "state.runCounterBonus",
@@ -31,7 +31,7 @@ const requiredFeatures = [
   "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
   "state.skillCooldownTurns", "state.turnPhase", "state.heroActionUsedThisTurn",
   "state.clawUsedThisTurn", "function beep(", "function spawnImpact(",
-  "function drawCombatImpacts()", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
+  "function drawCombatImpacts()", "CITADEL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
   "function combatAttack()", "function combatDefend()", "function combatSkill()", "function update(dt)"
 ];
 for (const feature of requiredFeatures) if (!gameScript.includes(feature)) throw new Error("Required feature missing: " + feature);
@@ -84,6 +84,7 @@ console.log("PASS: JavaScript syntax and responsive mobile layout");
 console.log("PASS: turn state machine — claw, one hero action, enemy phase");
 console.log("PASS: turn-based weapon profiles, status passives, blocks and enemy archetypes");
 console.log("PASS: dynamic claw prize pool and visual combat effects");
+console.log("PASS: cinematic biome backdrops, premium menu, modal, HUD and claw cabinet rendering");
 console.log("PASS: upgraded character/enemy art, preserved action feedback, menu and local profile");
 console.log("PASS: PWA manifest, icons and service-worker JavaScript");
 

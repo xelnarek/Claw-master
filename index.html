@@ -125,7 +125,7 @@ function drawHeader(){
  text("✦",35,37,20,"#493016",1000,"center");
  text("CLAW",61,28,15,"#fff5e4",1000);text("QUEST",61,47,10,"#76eeea",1000);
  rounded(164,20,91,34,11,"#1a3457","#7898bd",1.4);
- text("FALA",209,29,8,"#a9c5e5",900,"center");text(String(state.wave),209,43,14,"#ffe29a",1000,"center");
+ text("ETAP",209,29,8,"#a9c5e5",900,"center");text(String(state.stage),209,43,14,"#ffe29a",1000,"center");
  rounded(267,20,96,34,11,"#20395b","#718fb6",1.2);
  text("◆",282,37,12,"#ffd66d",1000,"center");text(String(state.coins),323,37,13,"#fff0c1",1000,"center");
  rounded(374,20,28,28,9,"#29476b","#91abc9",1.2);text(state.sound?"♫":"♪",388,34,15,"#f9fbff",900,"center");
@@ -334,7 +334,7 @@ function drawClawMachine(){
  rounded(35,735,380,15,6,"#0c1428","#6983ad",1);
  // bottom console
  rounded(31,753,388,26,10,"#23375e","#7893c1",1);
- text("STEROWANIE CHWYTAKIEM • ŁUPY",225,766,9,"#a9c8eb",900,"center");
+ text("DOTKNIJ / PRZECIĄGNIJ • USTAW I ZŁAP ŁUP",225,766,8,"#d1e7ee",900,"center");
  // controls under cabinet
  button(34,680,47,43,"◀","LEWO",false);
  button(91,680,47,43,"▶","PRAWO",false);
@@ -343,14 +343,14 @@ function drawClawMachine(){
  pill(164,684,123,state.clawMode==="idle"?"USTAW I ZŁAP":"CHWYTAK W RUCHU","#10213e",state.clawMode==="idle"?"#a8f8ea":"#ffe39b");
 }
 function drawMenuScene(){
- const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#101c42");sky.addColorStop(.47,"#29546e");sky.addColorStop(1,"#172b42");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#234f70");sky.addColorStop(.43,"#5599a2");sky.addColorStop(.72,"#427d68");sky.addColorStop(1,"#203d43");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
  glow(350,170,115,"#9bcbf5",.19);ctx.fillStyle="#f5e5ae";ctx.beginPath();ctx.arc(350,170,31,0,Math.PI*2);ctx.fill();
  ctx.globalAlpha=.18;ctx.fillStyle="#ffffff";ctx.beginPath();ctx.arc(339,159,9,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
- ctx.fillStyle="#1c3d5c";ctx.beginPath();ctx.moveTo(0,352);ctx.lineTo(75,245);ctx.lineTo(128,315);ctx.lineTo(214,220);ctx.lineTo(305,333);ctx.lineTo(384,255);ctx.lineTo(450,340);ctx.lineTo(450,560);ctx.lineTo(0,560);ctx.fill();
- ctx.fillStyle="#1b4c51";ctx.beginPath();ctx.moveTo(0,396);ctx.quadraticCurveTo(100,311,185,405);ctx.quadraticCurveTo(292,300,450,397);ctx.lineTo(450,590);ctx.lineTo(0,590);ctx.fill();
+ ctx.fillStyle="#28566a";ctx.beginPath();ctx.moveTo(0,352);ctx.lineTo(75,245);ctx.lineTo(128,315);ctx.lineTo(214,220);ctx.lineTo(305,333);ctx.lineTo(384,255);ctx.lineTo(450,340);ctx.lineTo(450,560);ctx.lineTo(0,560);ctx.fill();
+ ctx.fillStyle="#276b59";ctx.beginPath();ctx.moveTo(0,396);ctx.quadraticCurveTo(100,311,185,405);ctx.quadraticCurveTo(292,300,450,397);ctx.lineTo(450,590);ctx.lineTo(0,590);ctx.fill();
  for(let i=0;i<11;i++){const x=i*48-12,h=72+(i*37)%70;ctx.fillStyle="#0c303e";ctx.fillRect(x+16,405-h*.28,7,h*.6);ctx.fillStyle=i%2?"#12434a":"#16515a";for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+19,365-h*.62+k*23);ctx.lineTo(x-7-k*2,395-h*.62+k*23);ctx.lineTo(x+45+k*2,395-h*.62+k*23);ctx.closePath();ctx.fill()}}
- ctx.fillStyle="#20334c";ctx.beginPath();ctx.moveTo(0,474);ctx.quadraticCurveTo(80,431,160,469);ctx.quadraticCurveTo(255,420,350,467);ctx.lineTo(450,454);ctx.lineTo(450,800);ctx.lineTo(0,800);ctx.fill();
- ctx.fillStyle="#35566a";ctx.beginPath();ctx.ellipse(225,481,187,36,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#52736f";ctx.beginPath();ctx.ellipse(225,464,177,29,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#294857";ctx.beginPath();ctx.moveTo(0,474);ctx.quadraticCurveTo(80,431,160,469);ctx.quadraticCurveTo(255,420,350,467);ctx.lineTo(450,454);ctx.lineTo(450,800);ctx.lineTo(0,800);ctx.fill();
+ ctx.fillStyle="#547d6b";ctx.beginPath();ctx.ellipse(225,481,187,36,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#52736f";ctx.beginPath();ctx.ellipse(225,464,177,29,0,0,Math.PI*2);ctx.fill();
  glow(225,404,105,"#46e7dc",.25);ctx.strokeStyle="#7cefe0";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(225,406,53,73,0,Math.PI,Math.PI*2);ctx.stroke();
  ctx.strokeStyle="#e7c777";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(225,406,64,84,0,Math.PI,Math.PI*2);ctx.stroke();
  for(let i=0;i<17;i++){const a=(i/17)*Math.PI*2,x=225+Math.cos(a)*74,y=406+Math.sin(a)*91;glow(x,y,12,i%2?"#ffd978":"#6df0e4",.28);ctx.fillStyle=i%2?"#ffd978":"#6df0e4";ctx.beginPath();ctx.arc(x,y,2.2,0,Math.PI*2);ctx.fill()}
@@ -377,8 +377,8 @@ function drawSettingsOverlay(){
 function drawHelpOverlay(){
  ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
  rounded(36,204,378,404,23,"#12213d","#a6c3df",2);rounded(45,213,360,386,17,"#1c3454","#668aaa",1);
- text("JAK GRAĆ",225,250,22,"#fff6e7",1000,"center");text("WALKA TUROWA",225,286,11,"#8ef0df",1000,"center");
- const helpRows=[["1","DOTKNIJ WROGA","Wybierz cel przed wykonaniem ruchu."],["2","ATAK / OBRONA","Atak zadaje obrażenia, obrona zmniejsza otrzymane."],["3","SUPER","Silny cios odnawia się po czasie."],["4","CHWYTAK","Przesuń chwytak i złap monetę, klejnot lub bonus."]];
+ text("JAK GRAĆ",225,250,22,"#fff6e7",1000,"center");text("WALKA TUROWA  •  PIĘĆ ETAPÓW WPROWADZAJĄCYCH",225,286,9,"#8ef0df",1000,"center");
+ const helpRows=[["1","DOTKNIJ WROGA","Wybierz cel przed wykonaniem ruchu."],["2","ATAK / OBRONA","Atak zadaje obrażenia, obrona zmniejsza otrzymane."],["3","SUPER","Silny cios odnawia się po czasie."],["4","CHWYTAK","Dotknij komory, przeciągnij chwytak i naciśnij ZŁAP."]];
  let y=321;for(const r of helpRows){rounded(64,y-13,30,30,9,"#eab854","#ffedb1",1);text(r[0],79,y+2,12,"#4c3218",1000,"center");text(r[1],108,y-4,10,"#fff",1000);text(r[2],108,y+13,8.5,"#bed0e5",700);y+=54}
  rounded(64,541,322,26,9,"#142744","#6387ab",1);text("J / K / L  •  ATAK / OBRONA / SUPER",225,554,9,"#ffe29b",900,"center");button(112,565,226,34,"WRÓĆ","",true);
 }

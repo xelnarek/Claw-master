@@ -680,36 +680,70 @@ function generateMachinePrizes(){
  return prizes;
 }
 function drawClawMachine(){
- rounded(9,500,432,289,7,"#080c10","#98794f",2);
- rounded(15,506,420,277,5,"#1b2225","#5e5b50",1);
- rounded(21,512,408,265,4,"#0d1418","#8b704b",1);
- rounded(20,511,410,266,5,"#151d20","#645840",1.2);
- const glass=ctx.createLinearGradient(0,516,0,755);glass.addColorStop(0,"#28363a");glass.addColorStop(.75,"#1a272b");glass.addColorStop(1,"#10191d");
- rounded(27,518,396,230,4,glass,"#a08a6255",1.5);
- glow(100,598,120,"#b18a50",.11);glow(355,630,110,"#557d77",.09);
- for(let i=0;i<5;i++)glow(38+i*94,532,18,i%2?"#c19a59":"#78928c",.1);
- ctx.save();ctx.globalAlpha=.07;ctx.fillStyle="#e8fbff";ctx.beginPath();ctx.moveTo(35,522);ctx.lineTo(142,522);ctx.lineTo(270,744);ctx.lineTo(190,744);ctx.closePath();ctx.fill();ctx.restore();
- for(let i=0;i<21;i++){const x=42+(i*71)%370,y=535+(i*43)%181;ctx.globalAlpha=.23;ctx.fillStyle="#d8c9a8";ctx.beginPath();ctx.arc(x,y,1+(i%3)*.7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
- rounded(108,515,234,21,4,"#171e20","#9a7d52",1);text("CLAW  /  SKARBNICA ŁUPÓW",225,526,9,"#d8c7a5",1000,"center");
- rounded(41,541,368,10,3,"#5a5b55","#c3a36d",1);rounded(state.clawX-19,524,38,21,4,"#b68d50","#e4c88e",1.5);
- line(state.clawX,545,state.clawX,state.clawY-22,"#c7b48a",3);rounded(state.clawX-12,state.clawY-25,24,18,4,"#7d8986","#d8c49b",1.5);
- ctx.strokeStyle="#c7b48a";ctx.lineWidth=4;ctx.lineCap="round";const spread=state.clawMode==="down"?22:state.clawMode==="return"?7:19;
- ctx.beginPath();ctx.moveTo(state.clawX-6,state.clawY-10);ctx.lineTo(state.clawX-spread,state.clawY+9);ctx.stroke();
- ctx.beginPath();ctx.moveTo(state.clawX+6,state.clawY-10);ctx.lineTo(state.clawX+spread,state.clawY+9);ctx.stroke();
+ // Forged cabinet shell, layered bevels and corner hardware.
+ const shell=ctx.createLinearGradient(0,500,0,790);shell.addColorStop(0,"#66706a");shell.addColorStop(.08,"#252f31");shell.addColorStop(.5,"#111a1d");shell.addColorStop(1,"#05090c");
+ rounded(8,500,434,289,8,shell,"#c2a16b",2);
+ rounded(13,505,424,279,6,"#0a1115","#6e7772",1.2);
+ rounded(19,510,412,268,5,"#202a2c","#a68c61",1);
+ ctx.save();ctx.globalAlpha=.24;ctx.strokeStyle="#e4d4af";ctx.lineWidth=1;
+ ctx.strokeRect(24,515,402,255);ctx.beginPath();ctx.moveTo(24,752);ctx.lineTo(426,752);ctx.stroke();ctx.restore();
+ // Rivets, corner clamps and side ventilation.
+ for(const [x,y] of [[19,514],[431,514],[19,775],[431,775],[31,529],[419,529]]){
+  glow(x,y,9,"#d6b77f",.12);ctx.fillStyle="#8b8d7c";ctx.beginPath();ctx.arc(x,y,3.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#e0c89c";ctx.lineWidth=.8;ctx.stroke();line(x-1.5,y,x+1.5,y,"#293236",.8);
+ }
+ for(let i=0;i<6;i++){const y=560+i*7;line(15,y,20,y,"#a3a59a",1);line(430,y,435,y,"#a3a59a",1)}
+ // Glass chamber with depth, floor reflection and restrained highlight.
+ const glass=ctx.createLinearGradient(0,518,0,751);glass.addColorStop(0,"#304248");glass.addColorStop(.28,"#1d2b30");glass.addColorStop(.72,"#172327");glass.addColorStop(1,"#0c1418");
+ rounded(27,518,396,230,4,glass,"#a7b6ab77",1.3);
+ glow(98,608,120,"#b18a50",.12);glow(358,631,110,"#557d77",.1);
+ ctx.save();ctx.globalAlpha=.11;ctx.fillStyle="#e6f5ed";ctx.beginPath();ctx.moveTo(36,520);ctx.lineTo(99,520);ctx.lineTo(230,744);ctx.lineTo(158,744);ctx.closePath();ctx.fill();
+ ctx.globalAlpha=.07;ctx.fillStyle="#d8c39a";ctx.beginPath();ctx.moveTo(393,520);ctx.lineTo(414,520);ctx.lineTo(300,744);ctx.lineTo(277,744);ctx.closePath();ctx.fill();ctx.restore();
+ // Internal glass reflections and a dark capsule well.
+ ctx.save();ctx.globalAlpha=.14;ctx.strokeStyle="#d1e2d9";ctx.lineWidth=1;for(let i=0;i<7;i++){const x=40+i*62;ctx.beginPath();ctx.moveTo(x,548);ctx.lineTo(x+20,573);ctx.stroke()}ctx.restore();
+ const well=ctx.createLinearGradient(0,661,0,737);well.addColorStop(0,"#10191d00");well.addColorStop(.4,"#050b0ee0");well.addColorStop(1,"#030608");
+ ctx.fillStyle=well;ctx.fillRect(30,659,390,83);
+ ctx.fillStyle="#141c1e";ctx.beginPath();ctx.ellipse(225,726,173,22,0,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#a18a62";ctx.globalAlpha=.35;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(225,723,162,15,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+ // Header rail, machine identity and indicator diodes.
+ rounded(106,514,238,24,4,"#0c1216","#b49869",1.1);
+ line(116,517,334,517,"#fff0c766",.8);text("CLAW  /  SKARBNICA ŁUPÓW",225,526,9,"#e6d4ae",1000,"center");
+ for(let i=0;i<3;i++){glow(123+i*102,526,12,i===1?"#83d5c9":"#d6a55f",.14);ctx.fillStyle=i===1?"#91d9cf":"#d9b06a";ctx.beginPath();ctx.arc(123+i*102,526,1.7,0,Math.PI*2);ctx.fill()}
+ // Overhead carriage and motor housing.
+ rounded(38,539,374,13,3,"#5b625d","#c5ad7c",1.2);
+ rounded(41,541,368,7,2,"#141d20","#8d7955",.7);
+ for(let i=0;i<10;i++)line(52+i*38,543,52+i*38,547,"#c2aa7b66",1);
+ const carriage=ctx.createLinearGradient(state.clawX-20,0,state.clawX+20,0);carriage.addColorStop(0,"#554735");carriage.addColorStop(.5,"#d1aa67");carriage.addColorStop(1,"#584832");
+ rounded(state.clawX-20,524,40,24,4,carriage,"#f0d59c",1.4);
+ rounded(state.clawX-8,528,16,5,2,"#212d30","#91a09b",.8);glow(state.clawX,536,13,"#e9c47d",.15);
+ // Suspension wire and machined claw head.
+ line(state.clawX,548,state.clawX,state.clawY-24,"#11191c",5);line(state.clawX-1,548,state.clawX-1,state.clawY-24,"#c7b88e",1.2);
+ rounded(state.clawX-14,state.clawY-27,28,19,4,"#53605e","#c8b58e",1.5);
+ rounded(state.clawX-9,state.clawY-23,18,7,2,"#111b20","#8ea09a",.8);
+ glow(state.clawX,state.clawY-17,14,state.clawMode==="down"?"#e8b65e":"#8dc8bf",.15);
+ ctx.strokeStyle="#c9b88e";ctx.lineWidth=4;ctx.lineCap="round";
+ const spread=state.clawMode==="down"?22:state.clawMode==="return"?7:19;
+ ctx.beginPath();ctx.moveTo(state.clawX-7,state.clawY-11);ctx.quadraticCurveTo(state.clawX-spread*.65,state.clawY+1,state.clawX-spread,state.clawY+10);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(state.clawX+7,state.clawY-11);ctx.quadraticCurveTo(state.clawX+spread*.65,state.clawY+1,state.clawX+spread,state.clawY+10);ctx.stroke();
+ line(state.clawX-spread,state.clawY+10,state.clawX-spread+2,state.clawY+5,"#f3dfb7",1.5);line(state.clawX+spread,state.clawY+10,state.clawX+spread-2,state.clawY+5,"#f3dfb7",1.5);
+ // Capsules cast a soft contact shadow and carry a type-coloured rim.
  const edges={coin:"#eac46b",gem:"#6bdfe6",heart:"#ed7590",star:"#eccb72",bomb:"#f28f71",xp:"#74cfff",ammo:"#8be0b2",weapon:"#96dce9",skill:"#b8a2ff"};
  for(const p of state.machinePrizes||[]){
   const caught=state.grabbed&&state.grabbed.id===p.id;if(caught)continue;
-  const y=p.y+Math.sin(state.time*2.5+p.phase)*2.2,r=p.radius||15;
-  glow(p.x,y,r*2,edges[p.type]||"#b9c4c4",.18);
-  const shell=ctx.createRadialGradient(p.x-r*.35,y-r*.45,2,p.x,y,r*1.5);
-  shell.addColorStop(0,"#ffffffa8");shell.addColorStop(.26,"#d8e0d7");shell.addColorStop(.62,"#6e7c7c");shell.addColorStop(1,"#263239");
-  ctx.fillStyle=shell;ctx.beginPath();ctx.arc(p.x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle=edges[p.type]||"#d5c7a2";ctx.lineWidth=1.5;ctx.stroke();
+  const y=p.y+Math.sin(state.time*2.5+p.phase)*2.2,r=p.radius||15,edge=edges[p.type]||"#b9c4c4";
+  ctx.save();ctx.globalAlpha=.38;ctx.fillStyle="#030608";ctx.beginPath();ctx.ellipse(p.x,y+r*.78,r*.92,r*.23,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  glow(p.x,y,r*2.2,edge,.2);
+  const shell=ctx.createRadialGradient(p.x-r*.38,y-r*.48,1,p.x,y,r*1.5);
+  shell.addColorStop(0,"#ffffffd0");shell.addColorStop(.2,"#e6e8dd");shell.addColorStop(.52,"#87938e");shell.addColorStop(.82,"#4c5a5b");shell.addColorStop(1,"#18252b");
+  ctx.fillStyle=shell;ctx.beginPath();ctx.arc(p.x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle=edge;ctx.lineWidth=1.7;ctx.stroke();
   ctx.save();ctx.beginPath();ctx.arc(p.x,y,r-2,0,Math.PI*2);ctx.clip();drawPrize(p.type,p.x,y,.64*(p.size||1));ctx.restore();
-  ctx.globalAlpha=.28;ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.beginPath();ctx.arc(p.x,y,r-4,-2.4,-.7);ctx.stroke();ctx.globalAlpha=1;
+  ctx.save();ctx.globalAlpha=.38;ctx.strokeStyle="#fff";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(p.x,y,r-4,-2.45,-.66);ctx.stroke();ctx.restore();
  }
- if(state.grabbed&&state.clawMode==="return")drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72);
- rounded(35,735,380,15,3,"#0a1014","#786347",1);rounded(31,753,388,26,4,"#1a2225","#786647",1);
- text("JEDEN CHWYT W TURZE  •  POŁÓW ZMIENIA SIĘ CO RUNDĘ",225,766,7.4,"#cfc2a7",900,"center");
+ if(state.grabbed&&state.clawMode==="return"){glow(state.clawX,state.clawY+15,31,edges[state.grabbed.type]||"#fff",.28);drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72)}
+ // Lower faceplate and engraved status rail.
+ rounded(27,735,396,15,3,"#080e11","#9e8357",1);
+ rounded(31,753,388,26,4,"#10191d","#8f7955",1);
+ line(40,756,410,756,"#e6c98e33",1);
+ text("JEDEN CHWYT W TURZE  •  POŁÓW ZMIENIA SIĘ CO RUNDĘ",225,766,7.4,"#d8c7a7",900,"center");
  const clawReady=state.turnPhase==="claw"&&state.clawMode==="idle"&&!state.clawUsedThisTurn;
  button(34,680,47,43,"◀","PAZUR",clawReady);button(91,680,47,43,"▶","PAZUR",clawReady);
  const clawLabel=state.clawMode==="down"?"CHWYT...":state.clawMode==="return"?"POWRÓT":clawReady?"ZŁAP ŁUP":"ZUŻYTO";

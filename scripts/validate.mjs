@@ -15,6 +15,10 @@ if (scriptStart < 0 || scriptEnd < 0) {
 const gameScript = html.slice(scriptStart + 8, scriptEnd);
 new Function(gameScript);
 
+if (!html.includes("#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh") || !html.includes("canvas{display:block;width:100%;height:100%")) {
+  throw new Error("Mobile layout must fill tall phone viewports without letterboxing.");
+}
+
 const requiredVisualFeatures = [
   "function drawTitle()",
   "function drawMenuScene()",

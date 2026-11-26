@@ -254,7 +254,7 @@ function drawHealth(){
  rounded(13,77,424,44,13,"#14334cdd","#c4edf377",1.2);text("♥",29,99,17,"#ff7188",1000,"center");rounded(49,89,229,19,9,"#243b50","#8aa6b5",1);
  const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(49,0,278,0);gr.addColorStop(0,"#ff6b7d");gr.addColorStop(.58,"#ff9b69");gr.addColorStop(1,"#ffe07b");if(pct>0)rounded(50,90,227*pct,17,8,gr);
  for(let i=1;i<5;i++)line(49+i*45.8,91,49+i*45.8,106,"#142a3d88",1);text(Math.ceil(state.hp)+" / "+state.maxHp,163,99,10,"#fff",1000,"center");
- rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("DMG "+currentWeaponDamage(),322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");if(state.poisonTurns>0)text("TRUCIZNA "+state.poisonTurns,398,116,6.5,"#b9ec86",1000,"center");
+ rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("DMG "+currentWeaponDamage(),322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");if(state.shield>0)text("TARCZA "+state.shield,322,116,6.5,"#a9eaff",1000,"center");if(state.poisonTurns>0)text("TRUCIZNA "+state.poisonTurns,398,116,6.5,"#b9ec86",1000,"center");
 }
 function drawHero(x,y){
  const duration=Math.max(.001,state.playerActionDuration||.42);
@@ -516,6 +516,20 @@ function drawAttackFx(){
  }
  ctx.restore();
 }
+function drawBuildStrip(){
+ const active=abilityPool.filter(a=>(state.runSkills[a.id]||0)>0);
+ if(!active.length)return;
+ rounded(14,202,422,23,4,"#0b1219d9","#a98a5a66",1);
+ text("BUILD",23,216,7,"#bda477",1000);
+ const shown=active.slice(0,3);let x=63;
+ const short={execution:"KRYT",reaper:"REGEN",bulwark:"AEGIS",fortune:"ŁUP",venom:"TOKSYNA",bleed:"KRWAW",riposte:"RIPOSTA",ward:"TARCZA",storm:"SUPER",claw:"CLAW",edge:"ATAK",vital:"HP"};
+ for(const perk of shown){
+  rounded(x,206,68,15,3,perk.color+"20",perk.color+"88",.8);
+  text((short[perk.id]||perk.tag)+" "+state.runSkills[perk.id],x+34,217,6.1,perk.color,900,"center");x+=72;
+ }
+ if(active.length>3){rounded(x,206,31,15,3,"#242c31","#7e8a8b",.8);text("+"+(active.length-3),x+15.5,217,6.5,"#e9e2d4",900,"center")}
+ if(state.runVenom>0&&state.runBleed>0){rounded(361,205,70,17,3,"#34412a","#a5e477",.8);text("KOROZJA",396,216,6.2,"#c8f39b",1000,"center")}
+}
 function drawArena(){
  drawBackground();const def=stageDefinition();
  rounded(14,126,252,27,5,"#11252ddd","#c2d19f88",1);text("STREFA  "+String(state.stage).padStart(2,"0")+"  •  "+def.title.toUpperCase(),140,140,9,"#f3f1df",1000,"center");
@@ -523,6 +537,7 @@ function drawArena(){
  text(def.objective,225,166,8,"#f1f5e5d9",800,"center");
  const weapon=weaponForRun();
  rounded(115,178,220,20,4,"#0b151bdc","#78918a77",1);text(weapon.name.toUpperCase()+"  •  POZ. "+state.weaponLevel,225,188,8,weapon.color,900,"center");
+ drawBuildStrip();
  glow(405,365,48,"#d47fff",.12);line(14,416,436,416,"#e2f4d533",1);line(14,505,436,505,"#d4bd80aa",2);
  ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();drawHero(state.playerX,state.playerY);
  for(let i=0;i<state.enemies.length;i++){

@@ -50,11 +50,11 @@ resizeCanvas();
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const state={
- started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],
+ started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,
  time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,grabbed:null,heroActionUsedThisTurn:false,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
- enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,
+ enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,runBleed:0,runWard:0,runCounterBonus:0,
  stage:1,stageWave:0,stageCleared:false,stageReward:0,stageXp:0,runDamageBonus:0,threatEnemy:null,upgradesOpen:false,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
@@ -91,12 +91,30 @@ const abilityPool=[
  {id:"storm",name:"Burza eteru",tag:"SUPER",desc:"+4 obrażenia superataku",color:"#b69aff",max:4},
  {id:"claw",name:"Magnes skarbów",tag:"CHWYTAK",desc:"+12 px tolerancji chwytu",color:"#72e8dd",max:4},
  {id:"fortune",name:"Złoty instynkt",tag:"ŁUP",desc:"+50% monet z chwytaka",color:"#ffd36c",max:3},
- {id:"venom",name:"Zatruty sztych",tag:"DOT",desc:"Każdy atak dodaje 2 obrażenia",color:"#a5e477",max:4}
+ {id:"venom",name:"Zatruty sztych",tag:"DOT",desc:"Każdy atak dodaje 2 obrażenia",color:"#a5e477",max:4},
+ {id:"bleed",name:"Krwawy znak",tag:"KRWAWIENIE",desc:"Ataki krwawią przez 2 fazy wrogów",color:"#ff8194",max:3},
+ {id:"ward",name:"Żelazna przysięga",tag:"TARCZA",desc:"Odnów 2 pkt. tarczy na początku tury",color:"#9fc9ff",max:4},
+ {id:"riposte",name:"Runa riposty",tag:"KONTRATAK",desc:"+2 obrażeń w kontrataku",color:"#82e5f2",max:4}
 ];
 function rollAbilityChoices(){const available=abilityPool.filter(a=>(state.runSkills[a.id]||0)<a.max),pool=[...available],choices=[];while(pool.length&&choices.length<3){const i=Math.floor(Math.random()*pool.length);choices.push(pool.splice(i,1)[0])}if(!choices.length){state.pendingLevelUps=0;state.levelChoices=null;notify("WSZYSTKIE UMIEJĘTNOŚCI MAKSYMALNE");return}state.levelChoices=choices;beep(740,.14,"sine",.045);notify("AWANS! WYBIERZ JEDNĄ UMIEJĘTNOŚĆ")}
-function chooseAbility(index){if(!state.levelChoices||!state.levelChoices[index])return false;const a=state.levelChoices[index];state.runSkills[a.id]=(state.runSkills[a.id]||0)+1;
- if(a.id==="edge")state.runDamageBonus+=2;if(a.id==="vital"){state.maxHp+=20;state.hp=Math.min(state.maxHp,state.hp+20)}if(a.id==="bulwark")state.shield+=18;if(a.id==="execution")state.runCrit+=.08;if(a.id==="reaper")state.runHealOnKill+=3;if(a.id==="storm")state.runSkillBonus+=4;if(a.id==="claw")state.runClawBonus+=12;if(a.id==="fortune")state.runLootBonus+=.5;if(a.id==="venom")state.runVenom+=2;
- state.damage=effectiveDamage();state.pendingLevelUps=Math.max(0,state.pendingLevelUps-1);state.levelChoices=null;beep(980,.1,"triangle",.05);if(state.pendingLevelUps>0)rollAbilityChoices();else notify(a.name.toUpperCase()+" • WYBRANO");return true}
+function chooseAbility(index){
+ if(!state.levelChoices||!state.levelChoices[index])return false;
+ const a=state.levelChoices[index];state.runSkills[a.id]=(state.runSkills[a.id]||0)+1;
+ if(a.id==="edge")state.runDamageBonus+=2;
+ if(a.id==="vital"){state.maxHp+=20;state.hp=Math.min(state.maxHp,state.hp+20)}
+ if(a.id==="bulwark")state.shield+=18;
+ if(a.id==="execution")state.runCrit+=.08;
+ if(a.id==="reaper")state.runHealOnKill+=3;
+ if(a.id==="storm")state.runSkillBonus+=4;
+ if(a.id==="claw")state.runClawBonus+=12;
+ if(a.id==="fortune")state.runLootBonus+=.5;
+ if(a.id==="venom")state.runVenom+=2;
+ if(a.id==="bleed")state.runBleed+=1;
+ if(a.id==="ward")state.runWard+=1;
+ if(a.id==="riposte")state.runCounterBonus+=2;
+ state.damage=effectiveDamage();state.pendingLevelUps=Math.max(0,state.pendingLevelUps-1);state.levelChoices=null;
+ beep(980,.1,"triangle",.05);if(state.pendingLevelUps>0)rollAbilityChoices();else notify(a.name.toUpperCase()+" • WYBRANO");return true;
+}
 function gainXp(amount){profile.xp+=Math.max(0,Math.floor(amount));let levels=0;while(profile.xp>=profile.level*30){profile.xp-=profile.level*30;profile.level++;levels++}if(levels){state.pendingLevelUps+=levels;rollAbilityChoices()}saveProfile();return levels}
 function effectiveDamage(){return 4+profile.attackRank+state.runDamageBonus}
 function effectiveMaxHp(){return 100+profile.vitalityRank*15}
@@ -113,10 +131,11 @@ function planEnemyIntents(){
 }
 function beginPlayerTurn(){
  if(state.over||state.stageCleared)return false;
+ if(state.poisonTurns>0){state.hp=Math.max(0,state.hp-state.poisonDamage);state.poisonTurns--;popText("TRUCIZNA -"+state.poisonDamage,state.playerX,state.playerY-78,"#a8e77c");if(state.hp<=0){state.hp=0;state.over=true;state.turnPhase="over";profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=profile.bestScore;profile.bestStage=Math.max(profile.bestStage,state.stage);saveProfile();return false}}
+ if(state.runWard>0){const gain=state.runWard*2;state.shield=Math.min(40,state.shield+gain);popText("TARCZA +"+gain,state.playerX,state.playerY-82,"#9fc9ff")}
  state.turn="player";state.turnPhase="claw";state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;
  state.defending=false;state.clawMode="idle";state.clawY=565;state.grabbed=null;
  state.clawX=clamp(225+rand(-55,55),58,392);state.machinePrizes=generateMachinePrizes();
- state.playerAction="idle";state.playerActionTimer=0;state.attackFx=null;
  planEnemyIntents();state.skillReady=state.skillCooldownTurns<=0;
  notify("TURA "+state.turnNumber+" • USTAW I UŻYJ CHWYTAKA");
  return true;
@@ -145,11 +164,11 @@ function startRun(stage=profile.unlockedStage){
  state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;state.guardTurns=0;
  state.skillCooldownTurns=0;
  state.weaponId="sidearm";state.weaponLevel=1;state.prizeRefreshTimer=0;state.machinePrizes=generateMachinePrizes();
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.shot=0;
+ state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.shot=0;state.poisonTurns=0;state.poisonDamage=2;
  state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.defending=false;state.selectedEnemy=0;
  state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;
  state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;
- state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;
+ state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;state.runBleed=0;state.runWard=0;state.runCounterBonus=0;
  state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;
  state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;
  state.enemies=[];state.bullets=[];state.particles=[];state.impacts=[];state.attackFx=null;state.shake=0;state.floaters=[];
@@ -656,7 +675,7 @@ function drawLevelChoiceOverlay(){
   rounded(49,y,352,94,4,"#111920","#5b6260",1);
   ctx.fillStyle=a.color;ctx.fillRect(49,y,3,94);
   rounded(60,y+12,40,40,4,a.color+"20",a.color,1);
-  text(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠"][abilityPool.findIndex(v=>v.id===a.id)],80,y+32,20,a.color,1000,"center");
+  text(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠","✹","◈","↯"][abilityPool.findIndex(v=>v.id===a.id)],80,y+32,20,a.color,1000,"center");
   text(a.tag,114,y+18,8,a.color,1000);
   text(a.name,114,y+39,13,"#eee8dc",1000);
   text(a.desc,114,y+62,9,"#a7b0b0",800);
@@ -721,7 +740,7 @@ function spawnEnemy(typeOverride=null){
  const step={slime:28,bat:52,goblin:38,porcupine:20,boss:26}[type]||30;
  const range={slime:122,bat:148,goblin:136,porcupine:116,boss:178}[type]||122;
  const every={slime:2,bat:1,goblin:1,porcupine:2,boss:2}[type]||1;
- state.enemies.push({x,y,baseY:y,type,hp:max,maxHp:max,speed:step,approachStep:step,range,attackEvery:every,nextAttackTurn:state.turnNumber+1,damage:stats.damage+Math.floor(scale/3),attackCooldown:0,attackWindup:.38,attackInterval:every,windupTimer:0,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0,intent:"advance"});
+ state.enemies.push({x,y,baseY:y,type,hp:max,maxHp:max,speed:step,approachStep:step,range,attackEvery:every,nextAttackTurn:state.turnNumber+1,damage:stats.damage+Math.floor(scale/3),guard:0,bleedTurns:0,bleedDamage:0,lastThornsTurn:-1,enraged:false,spinesActive:false,attackCooldown:0,attackWindup:.38,attackInterval:every,windupTimer:0,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0,intent:"advance"});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
@@ -785,16 +804,16 @@ function findCombatTarget(){
 function applyWeaponDamage(target,damage,weapon,critical=false){
  if(!target||target.dying||target.hp<=0)return;
  const finalDamage=Math.max(1,Math.ceil(damage*(critical?1.7:1)));
- target.hp-=finalDamage;target.hit=.28;state.score+=1;
+ let remaining=finalDamage;if(target.guard>0){const absorbed=Math.min(target.guard,remaining);target.guard-=absorbed;remaining-=absorbed;if(absorbed)popText("PANCERZ -"+absorbed,target.x,target.y-55,"#9cddff")}if(remaining>0)target.hp-=remaining;target.hit=.28;state.score+=1;if(remaining>0&&state.runBleed>0){target.bleedTurns=Math.max(target.bleedTurns||0,2);target.bleedDamage=Math.max(target.bleedDamage||0,state.runBleed)}if(target.type==="porcupine"&&target.spinesActive&&target.lastThornsTurn!==state.turnNumber){target.lastThornsTurn=state.turnNumber;state.hp=Math.max(0,state.hp-2);popText("KOLCE -2",state.playerX,state.playerY-67,"#ffbd82");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",2)}
  const kind=critical?"critical":weapon.id==="cannon"?"arcane":"slash";
  spawnImpact(target,kind,finalDamage);
  popText((critical?"KRYTYK ":"-")+finalDamage,target.x,target.y-45,critical?"#ff9b63":weapon.color);
 }
-function fireWeapon(){
+function fireWeapon(counter=false){
  if(!canHeroAct())return false;
  const weapon=weaponForRun(),target=findCombatTarget();
  if(!target)return false;
- const base=currentWeaponDamage()+state.runVenom,active=state.enemies.filter(e=>!e.dying&&e.hp>0);
+ const base=currentWeaponDamage()+state.runVenom+(counter?state.runCounterBonus:0),active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  const critical=Math.random()<state.runCrit;
  applyWeaponDamage(target,base,weapon,critical);
  if(weapon.id==="repeater")applyWeaponDamage(target,Math.ceil(base*.55),weapon,false);
@@ -829,7 +848,7 @@ function shootVolley(){return combatAttack()}
 function combatDefend(){
  if(!canHeroAct())return false;
  state.guardTurns=1;state.defending=true;popText("KONTRATAK + OSŁONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
- fireWeapon();finishPlayerAction("counter");return true;
+ fireWeapon(true);finishPlayerAction("counter");return true;
 }
 function combatSkill(){
  if(!canHeroAct()||state.skillCooldownTurns>0)return false;
@@ -846,10 +865,11 @@ function combatSkill(){
 function applyEnemyHit(e){
  if(state.over||!e||e.dying||e.hp<=0)return 0;
  e.action="attack";e.actionDuration=.38;e.actionTimer=.38;
- const raw=e.type==="boss"?Math.ceil(e.damage/3):e.damage;
+ const raw=e.type==="boss"?Math.ceil(e.damage/3)+(e.enraged?2:0):e.damage;
  const dmg=Math.max(1,Math.ceil(raw*(state.guardTurns>0?.5:1)));
  if(state.shield>0){const absorbed=Math.min(state.shield,dmg);state.shield-=absorbed;const left=dmg-absorbed;popText("TARCZA -"+absorbed,state.playerX,state.playerY-65,"#83f6e9");if(left>0)state.hp=Math.max(0,state.hp-left)}
  else state.hp=Math.max(0,state.hp-dmg);
+ if(e.type==="slime"){state.poisonTurns=Math.max(state.poisonTurns,2);state.poisonDamage=2;popText("ZATRUCIE",state.playerX,state.playerY-90,"#baff88")}
  popText("-"+dmg,state.playerX,state.playerY-65,state.guardTurns>0?"#9fe9ff":"#ff8d9e");
  spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",dmg);
  state.playerHit=.2;state.playerAction=state.guardTurns>0?"defend":"hurt";state.playerActionDuration=.3;state.playerActionTimer=.3;
@@ -860,28 +880,24 @@ function resolveEnemyTurn(){
  const active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  for(const e of active){
   if(state.hp<=0)break;
+  if(e.bleedTurns>0&&e.hp>0){const wound=e.bleedDamage||1;e.hp-=wound;e.bleedTurns--;popText("KRWAWIENIE -"+wound,e.x,e.y-64,"#ff8998");spawnImpact(e,"critical",wound)}
+  if(e.hp<=0)continue;
   if(e.intent==="attack"&&state.turnNumber>=e.nextAttackTurn){
-   applyEnemyHit(e);e.nextAttackTurn=state.turnNumber+(e.attackEvery||1);
+   if(e.type==="bat"){e.x=Math.max(state.playerX+66,e.x-18);e.action="dive"}
+   else if(e.type==="boss")e.action="slam";
+   applyEnemyHit(e);e.action=e.type==="bat"?"dive":e.type==="boss"?"slam":e.action;e.actionTimer=.36;e.actionDuration=.36;
+   e.nextAttackTurn=state.turnNumber+(e.enraged?1:(e.attackEvery||1));
+   if(e.type==="bat")e.x=Math.max(state.playerX+105,e.x+34);
   }else if(e.intent==="advance"){
-   const step=e.approachStep||e.speed||28;
-   e.x=Math.max(state.playerX+74,e.x-step);e.action="advance";e.actionTimer=.22;e.actionDuration=.22;
+   const step=e.approachStep||e.speed||28;e.x=Math.max(state.playerX+74,e.x-step);e.action="advance";e.actionTimer=.22;e.actionDuration=.22;
    const range=e.range||122;if(e.x-state.playerX<=range)e.nextAttackTurn=Math.min(e.nextAttackTurn,state.turnNumber+1);
-  }else{
-   e.action="idle";e.nextAttackTurn=Math.min(e.nextAttackTurn,state.turnNumber+1);
-  }
+  }else{e.action="idle";e.nextAttackTurn=Math.min(e.nextAttackTurn,state.turnNumber+1)}
  }
- if(state.guardTurns>0)state.guardTurns--;
- state.defending=false;
- if(state.skillCooldownTurns>0)state.skillCooldownTurns--;
- state.skillReady=state.skillCooldownTurns<=0;
+ if(state.guardTurns>0)state.guardTurns--;state.defending=false;
+ if(state.skillCooldownTurns>0)state.skillCooldownTurns--;state.skillReady=state.skillCooldownTurns<=0;
  markDefeatedEnemies();
- if(state.hp<=0){
-  state.hp=0;state.over=true;state.turnPhase="over";profile.bestScore=Math.max(profile.bestScore,state.score);
-  state.bestScore=profile.bestScore;profile.bestStage=Math.max(profile.bestStage,state.stage);saveProfile();return true;
- }
- if(!state.enemies.some(e=>!e.dying&&e.hp>0)){
-  state.turnPhase="transition";state.turn="enemy";return checkEncounterClear();
- }
+ if(state.hp<=0){state.hp=0;state.over=true;state.turnPhase="over";profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=profile.bestScore;profile.bestStage=Math.max(profile.bestStage,state.stage);saveProfile();return true}
+ if(!state.enemies.some(e=>!e.dying&&e.hp>0)){state.turnPhase="transition";state.turn="enemy";return checkEncounterClear()}
  state.turnNumber++;beginPlayerTurn();return true;
 }
 function checkEncounterClear(){

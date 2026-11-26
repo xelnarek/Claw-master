@@ -41,6 +41,15 @@ const forbiddenRealtime = [
 ];
 for (const fragment of forbiddenRealtime) if (gameScript.includes(fragment) || html.includes(fragment)) throw new Error("Realtime gameplay logic or copy remains: " + fragment);
 
+const obsoleteTimerFields = [
+  "state.fireCooldown", "state.burstCooldown", "state.clawCooldown",
+  "state.guardTimer", "state.playerInvuln", "state.skillCooldown=",
+  "state.turnTimer", "state.clawTimer"
+];
+for (const field of obsoleteTimerFields) {
+  if (gameScript.includes(field)) throw new Error("Obsolete real-time timer remains: " + field);
+}
+
 const animationFeatures = [
   'playerAction:"idle"', "playerActionTimer", "function updateCharacterAnimations(dt)",
   "e.actionTimer", "e.deathTimer", "e.dying", "function drawHero(", "function drawEnemy("

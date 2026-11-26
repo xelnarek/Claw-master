@@ -29,6 +29,22 @@ for (const feature of requiredVisualFeatures) {
   }
 }
 
+const requiredAnimationFeatures = [
+  'playerAction:"idle"',
+  "playerActionTimer",
+  "function updateCharacterAnimations(dt)",
+  "e.actionTimer",
+  "e.deathTimer",
+  "e.dying",
+  "function drawHero(",
+  "function drawEnemy("
+];
+for (const feature of requiredAnimationFeatures) {
+  if (!gameScript.includes(feature)) {
+    throw new Error("Character animation feature is missing: " + feature);
+  }
+}
+
 const manifest = JSON.parse(read("manifest.webmanifest"));
 if (manifest.display !== "standalone" || manifest.orientation !== "portrait") {
   throw new Error("Manifest must target an installed portrait app.");
@@ -46,5 +62,6 @@ new Function(read("sw.js"));
 
 console.log("PASS: game JavaScript syntax");
 console.log("PASS: illustrated menu, settings, help and local preferences");
+console.log("PASS: character action, hit and defeat animations");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");

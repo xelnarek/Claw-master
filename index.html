@@ -228,6 +228,22 @@ function button(x,y,w,h,label,sub,active=false){
  if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#e0c99e":"#8f9b9e",800,"center");
  ctx.restore();
 }
+function drawModalFrame(x,y,w,h,accent="#b89560"){
+ ctx.save();ctx.shadowColor="#000000cc";ctx.shadowBlur=24;ctx.shadowOffsetY=8;
+ const g=ctx.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,"#263037");g.addColorStop(.18,"#121c22");g.addColorStop(1,"#070d12");
+ rounded(x,y,w,h,8,g,accent,1.5);ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ rounded(x+5,y+5,w-10,h-10,5,"#0c1419cc","#ffffff20",.8);
+ ctx.fillStyle=accent;ctx.globalAlpha=.9;ctx.fillRect(x,y+12,3,h-24);ctx.globalAlpha=1;
+ ctx.strokeStyle="#ffffff20";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+14,y+7);ctx.lineTo(x+w-14,y+7);ctx.stroke();
+ for(const [sx,sy] of [[x+13,y+13],[x+w-13,y+13],[x+13,y+h-13],[x+w-13,y+h-13]]){
+  ctx.fillStyle="#8d9992";ctx.beginPath();ctx.arc(sx,sy,2,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#263238";ctx.lineWidth=.7;ctx.stroke();
+ }
+ ctx.restore();
+}
+function drawModalBackdrop(){
+ ctx.fillStyle="#02060bd9";ctx.fillRect(0,0,W,H);
+ const haze=ctx.createRadialGradient(225,365,35,225,365,390);haze.addColorStop(0,"#9b78451a");haze.addColorStop(1,"#00000000");ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
+}
 function drawBackground(){
  const def=stageDefinition(),biome=def.biome,palettes={
   meadow:{sky:["#7caeb0","#587d79","#233c40"],sun:"#f3d49a",far:"#546f69",mid:"#31574c",near:"#183a33",floor:["#726b4e","#303d35"],accent:"#d0ae70",fog:"#c6d9bb"},
@@ -857,8 +873,8 @@ function drawTitle(){
  text("ZAPIS LOKALNY  •  REKORD "+profile.bestScore,225,780,7.5,"#899694",800,"center");
 }
 function drawSettingsOverlay(){
- ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
- rounded(35,226,380,354,5,"#0c1117","#9a7848",1);
+ drawModalBackdrop();
+ drawModalFrame(35,226,380,354);
  ctx.fillStyle="#b78c50";ctx.fillRect(35,226,380,3);
  text("USTAWIENIA SYSTEMU",225,264,19,"#eee8dc",1000,"center");
  text("KONFIGURACJA SESJI",225,285,8,"#aa916c",900,"center");
@@ -880,8 +896,8 @@ function drawSettingsOverlay(){
  button(112,523,226,42,"ZAMKNIJ USTAWIENIA","",true);
 }
 function drawHelpOverlay(){
- ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
- rounded(32,198,386,414,5,"#0c1117","#9a7848",1);ctx.fillStyle="#b78c50";ctx.fillRect(32,198,386,3);
+ drawModalBackdrop();
+ drawModalFrame(32,198,386,414);ctx.fillStyle="#b78c50";ctx.fillRect(32,198,386,3);
  text("INSTRUKCJA OPERACYJNA",225,236,18,"#eee8dc",1000,"center");
  text("JEDNA TURA  /  TRZY KROKI",225,258,8,"#aa916c",900,"center");line(59,278,391,278,"#ffffff20",1);
  const rows=[
@@ -897,8 +913,8 @@ function drawHelpOverlay(){
  button(112,575,226,28,"WRÓĆ DO BAZY","",true);
 }
 function drawUpgradeOverlay(){
- ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
- rounded(32,202,386,410,5,"#0c1117","#9a7848",1);
+ drawModalBackdrop();
+ drawModalFrame(32,202,386,410);
  ctx.fillStyle="#b78c50";ctx.fillRect(32,202,386,3);
  text("ARSENAŁ / ROZWÓJ",225,241,19,"#eee8dc",1000,"center");
  text("STAŁE MODYFIKACJE BOHATERA",225,263,8,"#aa916c",900,"center");
@@ -923,9 +939,9 @@ function drawUpgradeOverlay(){
  button(113,562,224,36,"WRÓĆ DO BAZY","",true);
 }
 function drawLevelChoiceOverlay(){
- ctx.fillStyle="#030609ed";ctx.fillRect(0,0,W,H);
+ drawModalBackdrop();
  const panel=ctx.createLinearGradient(0,170,0,625);panel.addColorStop(0,"#20262b");panel.addColorStop(1,"#0b1014");
- rounded(25,170,400,455,5,panel,"#b18a50",1.5);
+ drawModalFrame(25,170,400,455,"#c2a16e");
  ctx.fillStyle="#b18a50";ctx.fillRect(25,170,400,3);
  text("AWANS BOHATERA",225,211,21,"#eee8dc",1000,"center");
  text("WYBIERZ JEDEN MODYFIKATOR NA TĘ WYPRAWĘ",225,238,8,"#bba078",900,"center");
@@ -947,8 +963,8 @@ function drawLevelChoiceOverlay(){
 }
 function drawOverlay(){
  if(state.paused&&state.screen==="game"){
-  ctx.fillStyle="#030609dd";ctx.fillRect(0,0,W,H);
-  rounded(49,271,352,274,5,"#11171c","#a88450",1.5);
+  drawModalBackdrop();
+  drawModalFrame(49,271,352,274);
   ctx.fillStyle="#b18a50";ctx.fillRect(49,271,352,3);
   text("PAUZA",225,319,24,"#eee8dc",1000,"center");
   text("WYPRAWA WSTRZYMANA",225,344,9,"#bba078",900,"center");
@@ -959,8 +975,8 @@ function drawOverlay(){
  }
  if(state.levelChoices)drawLevelChoiceOverlay();
  if(state.stageCleared){
-  ctx.fillStyle="#030609e3";ctx.fillRect(0,0,W,H);
-  rounded(38,270,374,250,5,"#11181d","#b18a50",1.5);
+  drawModalBackdrop();
+  drawModalFrame(38,270,374,250);
   ctx.fillStyle="#b18a50";ctx.fillRect(38,270,374,3);
   glow(225,330,108,"#c39a5d",.12);
   text("ETAP UKOŃCZONY",225,315,21,"#eee8dc",1000,"center");
@@ -972,8 +988,8 @@ function drawOverlay(){
   button(101,458,248,50,"NASTĘPNY ETAP","",true);
  }
  if(state.over){
-  ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
-  rounded(38,272,374,251,5,"#11171c","#966a55",1.5);
+  drawModalBackdrop();
+  drawModalFrame(38,272,374,251,"#a66e61");
   ctx.fillStyle="#a65d53";ctx.fillRect(38,272,374,3);
   glow(225,330,115,"#d16b5d",.12);
   text("KONIEC WYPRAWY",225,321,21,"#eee8dc",1000,"center");

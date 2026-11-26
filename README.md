@@ -41,3 +41,16 @@ The current art is drawn procedurally with Canvas 2D vector shapes and gradients
 5. Tune mobile performance, accessibility, balancing and Android packaging.
 
 The project is inspired by the broad 2D arcade/roguelike claw-machine genre. It does not use the name, source code or proprietary assets of another game.
+
+## Install and publish
+
+The project includes a web-app manifest and an offline service worker. Once hosted over HTTPS, a compatible Android browser can offer installation to the home screen.
+
+To publish with GitHub Pages:
+1. Open **Settings → Pages** in this repository.
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+3. Re-run the **Deploy Claw Quest to GitHub Pages** workflow, or push another commit to `main`.
+
+Expected project URL after Pages is enabled: `https://xelnarek.github.io/Claw-master/`.
+
+The current repository has Pages disabled, so the deployment workflow cannot publish yet. This is a repository setting, not a game-code error.

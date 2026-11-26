@@ -31,7 +31,7 @@ const requiredFeatures = [
   "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
   "state.skillCooldownTurns", "state.turnPhase", "state.heroActionUsedThisTurn",
   "state.clawUsedThisTurn", "function beep(", "function spawnImpact(",
-  "function drawCombatImpacts()", "CITADEL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
+  "function drawCombatImpacts()", "const tx=rx+5", "rounded(-17,-5+step,14,7", "Enemy intent is visible on the floor", "Contact shadow, grounding every creature", "CITADEL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
   "function combatAttack()", "function combatDefend()", "function combatSkill()", "function update(dt)"
 ];
 for (const feature of requiredFeatures) if (!gameScript.includes(feature)) throw new Error("Required feature missing: " + feature);

@@ -322,6 +322,7 @@ for (const [weaponId, impactKind] of weaponVisuals) {
   assert.ok(game.state.attackFx.targets.length >= 1, weaponId + " should retain its resolved hit point for the visual trail");
   assert.ok(game.state.impacts.some(fx => fx.kind === impactKind), weaponId + " should create its own impact style");
   assert.ok(game.state.shotFxTimer > 0, weaponId + " should start its independent recoil/muzzle animation");
+  assert.equal(game.state.shotFxWeaponId, weaponId, weaponId + " should retain its own silhouette through the recoil animation");
   assert.equal(game.state.turnPhase, "claw", weaponId + " should still pass to the next turn after one attack");
 }
 

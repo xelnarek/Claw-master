@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#101b35">
+<meta name="theme-color" content="#101619">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Claw Quest — turowy roguelite: jeden chwyt łupów, jedna akcja bohatera i odpowiedź przeciwników.">
-<title>Claw Quest — Turn-Based Roguelite</title>
+<title>Claw Quest — Relic Vault Roguelite</title>
 <style>
 :root{color-scheme:dark;--ink:#fff8eb;--muted:#aebbd5;--panel:#172541;--line:rgba(255,255,255,.16);--gold:#ffd166;--cyan:#67e8e5;--navy:#101a34;--blue:#29466f}
 *{box-sizing:border-box}
@@ -27,8 +27,8 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 </style>
 </head>
 <body>
-<main id="game-wrap" aria-label="Claw Master Arcade Quest">
-<canvas id="game" width="450" height="800" aria-label="Gra Claw Master Arcade Quest"></canvas>
+<main id="game-wrap" aria-label="Claw Quest — Relic Vault">
+<canvas id="game" width="450" height="800" aria-label="Claw Quest — turowy roguelite"></canvas>
 <div id="toast" role="status"></div>
 <div id="hint">TURA: CHWYTAK → JEDNA AKCJA BOHATERA → PRZECIWNICY • A/D LUB ←/→ USTAW PAZUR • SPACJA ZŁAP</div>
 </main>
@@ -1314,7 +1314,7 @@ function frame(ts){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,render:draw};
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 draw();requestAnimationFrame(frame);
 })();

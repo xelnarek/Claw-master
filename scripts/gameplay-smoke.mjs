@@ -86,16 +86,29 @@ game.saveProfile();
 assert.equal(game.purchaseUpgrade("attack"), true, "attack upgrade should be purchasable with enough coins");
 assert.equal(game.state.damage, oldDamage + 1, "permanent attack upgrade should immediately update run damage");
 
-game.completeStage();
-assert.equal(game.state.stageCleared, true, "stage completion should open reward state");
+const clearWave = () => {
+  for (const enemy of game.state.enemies) {
+    if (!enemy.dying) enemy.hp = 0;
+  }
+  game.update(0.5);
+  game.update(0.5);
+};
+clearWave();
+assert.equal(game.state.stageWave, 2, "clearing stage 1 wave 1 should spawn its second wave");
+assert.equal(game.state.enemies.length, 2, "stage 1 wave 2 should have two tutorial slimes");
+clearWave();
+assert.equal(game.state.stageCleared, true, "clearing the final encounter should open stage completion");
 assert.ok(game.profile.unlockedStage >= 2, "clearing stage 1 should unlock stage 2");
 const coinsAfterCompletion = game.profile.coins;
 assert.equal(game.completeStage(), false, "stage reward must only be granted once");
 assert.equal(game.profile.coins, coinsAfterCompletion, "re-entering stage completion must not duplicate coins");
 game.advanceStage();
 assert.equal(game.state.stage, 2, "next-stage action should load stage 2");
-assert.ok(game.state.enemies.some(enemy => enemy.type === "bat" || enemy.type === "slime"),
-  "stage 2 should introduce a second enemy type");
+assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"),
+  "stage 2 opening wave should be an easy warm-up before bats appear");
+clearWave();
+assert.ok(game.state.enemies.some(enemy => enemy.type === "bat"),
+  "stage 2 wave 2 should introduce the bat enemy");
 
 const clawBefore = game.state.clawX;
 game.interact(174, 600);
@@ -111,7 +124,7 @@ console.log("PASS: first-stage onboarding encounter");
 console.log("PASS: turn-based attack, enemy phase and 65% defend reduction");
 console.log("PASS: claw rewards persist between runs");
 console.log("PASS: permanent upgrade purchase and stat application");
-console.log("PASS: stage completion unlocks the next stage");
-console.log("PASS: stage 2 introduces a new enemy type");
+console.log("PASS: stage waves progress to one-time stage-clear rewards");
+console.log("PASS: stage 2 introduces bats in its second encounter");
 console.log("PASS: direct touch positioning and directional claw controls");
 console.log("PASS: saved currency and permanent stats survive a new run");

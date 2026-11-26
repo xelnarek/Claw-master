@@ -144,14 +144,24 @@ function drawEnemy(e){
   ctx.fillStyle="#8069bd";ctx.beginPath();ctx.moveTo(-7,-12);ctx.quadraticCurveTo(-33,-44,-34,-12);ctx.quadraticCurveTo(-18,-9,-8,3);ctx.quadraticCurveTo(0,10,8,3);ctx.quadraticCurveTo(18,-9,34,-12);ctx.quadraticCurveTo(33,-44,7,-12);ctx.fill();
   ctx.fillStyle="#ba9cff";ctx.beginPath();ctx.ellipse(0,-12,16,18,0,0,Math.PI*2);ctx.fill();
   text("•", -6,-14,14,"#ffefb1",1000);text("•",6,-14,14,"#ffefb1",1000);
+ }else if(e.type==="boss"){
+  glow(0,-15,62,"#ff6b8f",.28);
+  // horned guardian: deliberately larger than regular enemies
+  ctx.fillStyle="#623f80";ctx.beginPath();ctx.moveTo(-28,-28);ctx.lineTo(-41,-53);ctx.quadraticCurveTo(-17,-49,-12,-36);ctx.quadraticCurveTo(0,-46,12,-36);ctx.quadraticCurveTo(25,-53,41,-53);ctx.lineTo(28,-20);ctx.closePath();ctx.fill();
+  const bg=ctx.createLinearGradient(0,-47,0,18);bg.addColorStop(0,"#d67bd2");bg.addColorStop(1,"#743e9a");
+  ctx.fillStyle=bg;ctx.beginPath();ctx.moveTo(-32,4);ctx.quadraticCurveTo(-38,-26,-24,-42);ctx.quadraticCurveTo(0,-57,24,-42);ctx.quadraticCurveTo(38,-26,32,4);ctx.quadraticCurveTo(0,22,-32,4);ctx.fill();ctx.strokeStyle="#f4b6ff";ctx.lineWidth=2;ctx.stroke();
+  rounded(-20,-27,14,13,5,"#ffe8a1");rounded(6,-27,14,13,5,"#ffe8a1");
+  rounded(-15,-24,6,8,2,"#7b254d");rounded(9,-24,6,8,2,"#7b254d");
+  ctx.fillStyle="#54264f";ctx.beginPath();ctx.moveTo(-10,-4);ctx.lineTo(-5,5);ctx.lineTo(0,-3);ctx.lineTo(5,5);ctx.lineTo(10,-4);ctx.closePath();ctx.fill();
+  rounded(-43,-51,86,7,3,"#251735");rounded(-43,-51,86*clamp(e.hp/e.maxHp,0,1),7,3,"#ff799c");
  }else{
   rounded(-21,-35,42,40,13,"#d68a58","#ffd0a0",2);rounded(-15,-28,12,15,4,"#fff2cf");rounded(3,-28,12,15,4,"#fff2cf");
   rounded(-11,-24,5,8,2,"#573b42");rounded(7,-24,5,8,2,"#573b42");
   text("⌁",0,-5,15,"#633d3e",1000,"center");
   rounded(-24,-42,48,9,5,"#7e4f44");rounded(-12,-49,24,9,4,"#ffcc63");
  }
- // health bar
- rounded(-23,-54,46,5,3,"#15213d");rounded(-23,-54,46*clamp(e.hp/e.maxHp,0,1),5,3,"#ff7088");
+ // regular enemy health bars
+ if(e.type!=="boss"){rounded(-23,-54,46,5,3,"#15213d");rounded(-23,-54,46*clamp(e.hp/e.maxHp,0,1),5,3,"#ff7088");}
  ctx.restore();
 }
 function drawArena(){
@@ -202,6 +212,7 @@ function drawClawMachine(){
  // prizes in machine, bounce slightly
  const prizes=[{type:"coin",x:78},{type:"gem",x:145},{type:"star",x:214},{type:"heart",x:284},{type:"gem",x:360}];
  for(const p of prizes){const caught=state.grabbed&&state.grabbed.x===p.x; if(!caught)drawPrize(p.type,p.x,704+Math.sin(state.time*3+p.x)*2,.9)}
+ if(state.grabbed&&state.clawMode==="return")drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72);
  // floor tray
  rounded(35,735,380,15,6,"#0c1428","#6983ad",1);
  // bottom console

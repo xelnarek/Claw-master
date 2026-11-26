@@ -27,7 +27,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <main id="game-wrap" aria-label="Claw Master Arcade Quest">
 <canvas id="game" width="450" height="800" aria-label="Gra Claw Master Arcade Quest"></canvas>
 <div id="toast" role="status"></div>
-<div id="hint">STEROWANIE DOTYKOWE • STRZAŁKI / A D • SPACJA = CHWYTAK</div>
+<div id="hint">TUROWA WALKA • J ATAK • K OBRONA • L SUPER • CHWYTAK NA DOLE</div>
 </main>
 <script>
 (() => {
@@ -39,7 +39,7 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const state={
  started:false,paused:false,over:false,sound:false,
- time:0,last:0,spawn:0,shot:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
+ time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,
  enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],
@@ -176,15 +176,17 @@ function drawArena(){
  glow(405,365,48,"#d47fff",.14);
  // floor details and player
  drawHero(state.playerX,state.playerY);
- for(const e of state.enemies)drawEnemy(e);
+ for(let i=0;i<state.enemies.length;i++){const e=state.enemies[i];drawEnemy(e);if(i===state.selectedEnemy){ctx.strokeStyle="#fff3a6";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(e.x,e.y-17,35,42,0,0,Math.PI*2);ctx.stroke();text("▼",e.x,e.y-69,14,"#fff3a6",1000,"center")}}
  for(const b of state.bullets){
   glow(b.x,b.y,18,"#79f5ff",.4);ctx.fillStyle="#b9ffff";ctx.beginPath();ctx.ellipse(b.x,b.y,8,4,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#58dfe3";ctx.lineWidth=2;ctx.stroke();
  }
  for(const p of state.particles){ctx.globalAlpha=p.life/p.max;glow(p.x,p.y,p.size*2,p.color,.3);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
  for(const f of state.floaters){ctx.globalAlpha=clamp(f.life,0,1);text(f.label,f.x,f.y,12,f.color,1000,"center");ctx.globalAlpha=1}
- // joystick-style movement controls
- button(20,442,74,42,"◀","RUCH",false);button(101,442,74,42,"▶","RUCH",false);
- rounded(334,441,96,43,12,"#243b62","#6b8ac0");text("ATAK AUTO",382,463,10,"#c9f8ed",1000,"center");
+ // strategic turn-based combat actions
+ pill(18,432,110,state.turn==="player"?"TWOJA TURA":"TURA WROGA","#173653",state.turn==="player"?"#a8fff0":"#ffb2b2");
+ button(137,435,88,48,"ATAK","",state.turn==="player");
+ button(231,435,88,48,"OBRONA","",state.turn==="player");
+ button(325,435,105,48,"UMIEJĘT.",""+(state.skillReady?"GOTOWA":"ŁADUJE"),state.turn==="player"&&state.skillReady);
 }
 function drawPrize(type,x,y,scale=1){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
@@ -221,7 +223,7 @@ function drawClawMachine(){
  rounded(35,735,380,15,6,"#0c1428","#6983ad",1);
  // bottom console
  rounded(31,753,388,26,10,"#23375e","#7893c1",1);
- text("STEROWANIE CHWYTAKIEM",225,766,9,"#a9c8eb",900,"center");
+ text("STEROWANIE CHWYTAKIEM • ŁUPY",225,766,9,"#a9c8eb",900,"center");
  // controls under cabinet
  button(34,680,47,43,"◀","LEWO",false);
  button(91,680,47,43,"▶","PRAWO",false);
@@ -260,8 +262,8 @@ function draw(){
 function spawnEnemy(){
  const wave=state.wave;const boss=wave%5===0&&!state.bossSpawned;
  const type=boss?"boss":pick(["slime","slime","bat","goblin"]);
- const max=boss?14+wave*2:3+Math.floor(wave*.7);
- state.enemies.push({x:boss?405:rand(370,435),y:boss?363:rand(352,398),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+wave*1.1,damage:boss?22:9+wave,phase:rand(0,6),hit:0});
+ const max=boss?32+wave*4:10+Math.floor(wave*1.6);
+ state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+wave*1.1,damage:boss?22:6+wave,phase:rand(0,6),hit:0});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
@@ -285,6 +287,40 @@ function reward(type){
  if(type==="bomb"){for(const e of state.enemies)e.hp-=5;state.score+=40;popText("BOMBA!",225,633,"#ffad82")}
  beep(900,.12,"sine");
 }
+function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":"Goblin"}
+function combatAttack(){
+ if(state.turn!=="player"||!state.started||state.over||!state.enemies.length)return;
+ const e=state.enemies[state.selectedEnemy]||state.enemies[0];
+ const dmg=state.damage+(e.type==="bat"?1:0);
+ e.hp-=dmg;e.hit=.2;state.playerHit=.15;
+ for(let i=0;i<7;i++)particle(e.x,e.y,"#ffdd91",rand(2,4));
+ popText("-"+dmg,e.x,e.y-45,"#ffe38b");state.score+=5;
+ state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
+}
+function combatDefend(){
+ if(state.turn!=="player"||!state.started||state.over)return;
+ state.defending=true;state.turn="enemy";state.turnTimer=.65;popText("OBRONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
+}
+function combatSkill(){
+ if(state.turn!=="player"||!state.started||state.over||!state.skillReady)return;
+ const e=state.enemies[state.selectedEnemy]||state.enemies[0];if(!e)return;
+ const dmg=state.damage*3+4;e.hp-=dmg;state.skillReady=false;
+ state.playerHit=.25;for(let i=0;i<18;i++)particle(e.x,e.y,pick(["#a7ffff","#ffdb78","#ff9bbd"]),rand(3,6));
+ popText("SUPER -"+dmg,e.x,e.y-48,"#ffb8ff");notify("MOCNY CIOS!");state.turn="enemy";state.turnTimer=.85;state.defending=false;beep(880,.15,"sawtooth");
+ setTimeout(()=>{state.skillReady=true},4500);
+}
+function resolveEnemyTurn(){
+ if(state.turn!=="enemy")return;
+ if(state.enemies.length){
+  const target=state.enemies.reduce((a,b)=>a.x>b.x?a:b);
+  const raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;
+  const dmg=state.defending?Math.max(1,Math.ceil(raw*.35)):raw;
+  if(state.shield>0){state.shield=Math.max(0,state.shield-dmg);popText("TARCZA",state.playerX,state.playerY-65,"#83f6e9")}
+  else {state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;beep(170,.12,"sawtooth")}
+  if(target.type==="boss"&&Math.random()<.3&&!state.defending){state.hp=Math.max(0,state.hp-4);popText("MOC BOSS +4",state.playerX,state.playerY-90,"#ff9cbd")}
+ }
+ state.defending=false;state.turn="player";state.selectedEnemy=clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));notify("TWOJA TURA");
+}
 function deployClaw(){
  if(!state.started||state.over||state.paused||state.clawMode!=="idle")return;
  state.clawMode="down";state.clawTimer=0;state.grabbed=null;beep(310,.08,"triangle");
@@ -292,7 +328,7 @@ function deployClaw(){
 function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;notify("WYPRAWA ROZPOCZĘTA!");
+ state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;notify("WYPRAWA ROZPOCZĘTA!");
 }
 function interact(x,y){
  if(state.screen==="title"){if(x>70&&x<380&&y>430&&y<530){reset()}else reset();return}
@@ -300,9 +336,10 @@ function interact(x,y){
  if(state.paused){state.paused=false;return}
  if(y<60&&x>400){state.paused=true;return}
  if(y<60&&x>365){state.sound=!state.sound;beep(520,.05);return}
- if(y>435&&y<490){if(x<98)state.playerX=clamp(state.playerX-24,55,170);else if(x<190)state.playerX=clamp(state.playerX+24,55,170);return}
+ if(y>435&&y<490){if(x<225)combatAttack();else if(x<320)combatDefend();else combatSkill();return}
  if(y>675&&y<735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
- if(y>=500&&y<=675){moveClaw(x<state.clawX?-1:1)}
+ if(y>=500&&y<=675){moveClaw(x<state.clawX?-1:1);return}
+ if(y>330&&y<430&&state.turn==="player"&&state.enemies.length){let near=0,best=1e9;state.enemies.forEach((en,i)=>{let d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(best<110){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]));}}
 }
 let pointerStart=null;
 canvas.addEventListener("pointerdown",e=>{
@@ -321,21 +358,17 @@ window.addEventListener("keydown",e=>{
  if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")moveClaw(-1);
  if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")moveClaw(1);
  if(e.key===" "||e.key.toLowerCase()==="f")deployClaw();
+ if(e.key.toLowerCase()==="j")combatAttack();if(e.key.toLowerCase()==="k")combatDefend();if(e.key.toLowerCase()==="l")combatSkill();
 });
 function update(dt){
  state.time+=dt;
  if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
  if(state.screen!=="game"||state.paused||state.over)return;
- state.spawn-=dt;if(state.spawn<=0&&state.enemies.length<7){spawnEnemy();state.spawn=Math.max(.8,2.6-state.wave*.1)}
- state.shot-=dt;
- if(state.shot<=0&&state.enemies.length){
-  const e=state.enemies.reduce((a,b)=>a.x<b.x?a:b);
-  state.bullets.push({x:state.playerX+29,y:state.playerY-28,vx:310,damage:state.damage});state.shot=Math.max(.26,.8-state.damage*.035);beep(410,.025,"square",.012);
- }
- for(const b of state.bullets){b.x+=b.vx*dt;for(const e of state.enemies){if(!b.dead&&Math.abs(b.x-e.x)<22&&Math.abs(b.y-e.y)<33){e.hp-=b.damage;e.hit=.12;b.dead=true;for(let i=0;i<4;i++)particle(e.x,e.y,"#bafcff",2);popText("-"+b.damage,e.x,e.y-42,"#c8ffff")}}}
- state.bullets=state.bullets.filter(b=>b.x<W+10&&!b.dead);
- for(const e of state.enemies){e.x-=e.speed*dt;if(e.hit>0)e.hit-=dt;if(e.x<state.playerX+24){if(state.shield<=0)state.hp-=e.damage;else state.shield-=dt;e.x=rand(370,430);e.hp-=2;state.playerHit=.15;beep(160,.09,"sawtooth")}}
+ // visual-only idle movement of enemy bodies; actions are resolved in discrete turns.
+ for(const e of state.enemies){e.phase+=dt*2;if(e.hit>0)e.hit-=dt}
+ if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
  const alive=[];for(const e of state.enemies){if(e.hp<=0)defeat(e);else alive.push(e)}state.enemies=alive;
+ if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;state.damage+=state.wave>1?0:0;for(let i=0;i<Math.min(3+Math.floor(state.wave/2),5);i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • NOWI WROGOWIE");}
  if(state.hp<=0){state.hp=0;state.over=true;return}
  if(state.playerHit>0)state.playerHit-=dt;
  if(state.shield>0)state.shield-=dt;
@@ -343,7 +376,6 @@ function update(dt){
  state.particles=state.particles.filter(p=>p.life>0);
  for(const f of state.floaters){f.y-=22*dt;f.life-=dt}
  state.floaters=state.floaters.filter(f=>f.life>0);
- // claw cycle: lower, grab nearest prize row, raise
  if(state.clawMode==="down"){
   state.clawY=Math.min(713,state.clawY+250*dt);
   if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}];const nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a);if(Math.abs(nearest.x-state.clawX)<42){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}

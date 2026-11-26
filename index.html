@@ -399,51 +399,108 @@ function drawMenuScene(){
  const vignette=ctx.createRadialGradient(225,390,130,225,390,560);vignette.addColorStop(0,"#00000000");vignette.addColorStop(1,"#020407d9");ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
 }
 function drawTitle(){
- drawMenuScene();const stage=profile.unlockedStage,def=stageDefinition(stage);
- // Compact editorial masthead.
- rounded(20,20,410,104,8,"#0b1119ed","#927449",1);
- ctx.fillStyle="#b48b50";ctx.fillRect(20,20,4,104);
- text("CLAW",43,53,30,"#eee8dc",1000);text("QUEST",43,82,30,"#eee8dc",1000);
+ drawMenuScene();
+ const stage=profile.unlockedStage,def=stageDefinition(stage);
+ // Editorial campaign masthead: identity, current operation and persistent profile.
+ rounded(20,20,410,104,7,"#0a0e13f2","#98794c",1);
+ ctx.fillStyle="#bd9558";ctx.fillRect(20,20,3,104);
+ text("CLAW",43,51,30,"#eee8dc",1000);text("QUEST",43,81,30,"#eee8dc",1000);
  text("DARK ARCADE ROGUELITE",45,105,8,"#b89a6c",900);
- line(250,38,250,106,"#a98a5a66",1);
- text("WYPRAWA  /  "+String(stage).padStart(2,"0"),273,51,10,"#d9c39b",900);
- text(def.title.toUpperCase(),273,74,12,"#f0ece3",900);
- text("TUROWA WALKA  •  ŁUP  •  ROZWÓJ",273,96,7.5,"#9ca8ad",800);
- // Mission panel.
- rounded(26,520,398,244,7,"#0b1119f4","#806b4d",1);
- ctx.fillStyle="#a77c43";ctx.fillRect(26,520,398,3);
- text("CENTRUM OPERACYJNE",47,545,10,"#d8c39b",1000);
- text("POSTĘP KAMPANII",47,568,8,"#83919b",900);
- const progress=clamp((stage-1)/Math.max(1,Math.max(profile.unlockedStage,5)-1),0,1);
- rounded(47,582,356,4,2,"#29343c");rounded(47,582,356*progress,4,2,"#b48b50");
- // Stats: restrained typography, no toy-like badges.
- const stats=[["RANGA",String(profile.level)],["ROZDZIAŁ",String(stage)],["KREDYTY",String(profile.coins)]];
- for(let i=0;i<3;i++){const x=47+i*122; if(i)line(x-12,601,x-12,646,"#ffffff20",1);text(stats[i][0],x,611,7,"#82909a",900);text(stats[i][1],x,635,17,i===2?"#d8b36d":"#e8e5de",1000)}
- line(47,657,403,657,"#ffffff20",1);
- button(47,671,356,45,"ROZPOCZNIJ WYPRAWĘ",def.title.toUpperCase(),true);
- button(47,724,110,29,"ARSENAŁ","ROZWÓJ",false);button(170,724,110,29,"USTAWIENIA","SYSTEM",false);button(293,724,110,29,"DOKUMENTACJA","ZASADY",false);
- text("REKORD  "+profile.bestScore,225,777,8,"#89949b",800,"center");
+ line(250,37,250,107,"#a98a5a55",1);
+ text("AKTYWNA KAMPANIA",273,45,8,"#a88b61",900);
+ text("ROZDZIAŁ  /  "+String(stage).padStart(2,"0"),273,65,10,"#d9c39b",900);
+ text(def.title.toUpperCase(),273,84,11,"#f0ece3",900);
+ text("ETAP ODBLOKOWANY",273,103,7,"#89969d",800);
+ // Mission control panel.
+ rounded(26,520,398,244,6,"#090e14f5","#766348",1);
+ ctx.fillStyle="#b58a4d";ctx.fillRect(26,520,398,3);
+ text("BAZA OPERACYJNA",47,544,10,"#d8c39b",1000);
+ text("POSTĘP KAMPANII",47,566,8,"#89949a",900);
+ const progress=clamp((stage-1)/Math.max(1,stage),0,1);
+ rounded(47,580,356,5,2,"#252d33");rounded(47,580,356*progress,5,2,"#b48b50");
+ const stats=[["RANGA",String(profile.level)],["NAJLEPSZY ETAP",String(profile.bestStage)],["KREDYTY",String(profile.coins)]];
+ for(let i=0;i<3;i++){const x=47+i*122;if(i)line(x-12,600,x-12,644,"#ffffff1c",1);text(stats[i][0],x,610,7,"#82909a",900);text(stats[i][1],x,634,16,i===2?"#d8b36d":"#e8e5de",1000)}
+ line(47,655,403,655,"#ffffff20",1);
+ button(47,668,356,47,"ROZPOCZNIJ WYPRAWĘ",def.title.toUpperCase(),true);
+ button(47,723,110,30,"ARSENAŁ","ULEPSZENIA",false);
+ button(170,723,110,30,"USTAWIENIA","DŹWIĘK / EFEKTY",false);
+ button(293,723,110,30,"DOKUMENTACJA","STEROWANIE",false);
+ text("ZAPIS LOKALNY  •  REKORD "+profile.bestScore,225,777,8,"#89949b",800,"center");
 }
 function drawSettingsOverlay(){
- ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
- rounded(38,234,374,340,23,"#12213d","#a6c3df",2);rounded(47,243,356,322,17,"#1c3454","#668aaa",1);
- text("USTAWIENIA",225,279,22,"#fff6e7",1000,"center");text("DOPASUJ WRAŻENIA Z GRY",225,303,9,"#9ed8df",900,"center");line(72,324,378,324,"#d9edff33",1);
- rounded(67,340,316,61,13,"#142744","#6e91b7",1);text("DŹWIĘK",86,360,12,"#fff",1000);text("Efekty i sygnały audio",86,382,9,"#a9bdd7",700);button(285,351,84,37,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound);
- rounded(67,416,316,61,13,"#142744","#6e91b7",1);text("EFEKTY WIZUALNE",86,436,12,"#fff",1000);text("Poświaty i drobne cząsteczki",86,458,9,"#a9bdd7",700);button(285,427,84,37,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects);
- text("Ustawienia zapisują się na tym urządzeniu.",225,497,9,"#b8cce3",700,"center");button(112,516,226,41,"ZAMKNIJ","",true);
+ ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
+ rounded(35,226,380,354,5,"#0c1117","#9a7848",1);
+ ctx.fillStyle="#b78c50";ctx.fillRect(35,226,380,3);
+ text("USTAWIENIA SYSTEMU",225,264,19,"#eee8dc",1000,"center");
+ text("KONFIGURACJA SESJI",225,285,8,"#aa916c",900,"center");
+ line(62,306,388,306,"#ffffff20",1);
+ // Audio control.
+ rounded(57,323,336,69,4,"#151d24","#4b5358",1);
+ ctx.fillStyle="#b18a50";ctx.fillRect(57,323,3,69);
+ text("01  /  DŹWIĘK",76,345,11,"#e9e4d9",1000);
+ text("Sygnały interfejsu i efekty audio",76,369,8.5,"#929da2",700);
+ button(284,338,96,39,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound);
+ // Visual effects control.
+ rounded(57,405,336,69,4,"#151d24","#4b5358",1);
+ ctx.fillStyle="#b18a50";ctx.fillRect(57,405,3,69);
+ text("02  /  EFEKTY WIZUALNE",76,427,11,"#e9e4d9",1000);
+ text("Poświaty, cząsteczki i drobne animacje",76,451,8.2,"#929da2",700);
+ button(284,420,96,39,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects);
+ line(62,490,388,490,"#ffffff20",1);
+ text("Zmiany są zapisywane automatycznie na tym urządzeniu.",225,508,8,"#879399",700,"center");
+ button(112,523,226,42,"ZAMKNIJ USTAWIENIA","",true);
 }
 function drawHelpOverlay(){
- ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
- rounded(36,204,378,404,23,"#12213d","#a6c3df",2);rounded(45,213,360,386,17,"#1c3454","#668aaa",1);
- text("JAK GRAĆ",225,250,22,"#fff6e7",1000,"center");text("WALKA TUROWA  •  PIĘĆ ETAPÓW WPROWADZAJĄCYCH",225,286,9,"#8ef0df",1000,"center");
- const helpRows=[["1","DOTKNIJ WROGA","Wybierz cel przed wykonaniem ruchu."],["2","ATAK / OBRONA","Atak zadaje obrażenia, obrona zmniejsza otrzymane."],["3","SUPER","Silny cios odnawia się po czasie."],["4","CHWYTAK","Dotknij komory, przeciągnij chwytak i naciśnij ZŁAP."]];
- let y=321;for(const r of helpRows){rounded(64,y-13,30,30,9,"#eab854","#ffedb1",1);text(r[0],79,y+2,12,"#4c3218",1000,"center");text(r[1],108,y-4,10,"#fff",1000);text(r[2],108,y+13,8.5,"#bed0e5",700);y+=54}
- rounded(64,541,322,26,9,"#142744","#6387ab",1);text("J / K / L  •  ATAK / OBRONA / SUPER",225,554,9,"#ffe29b",900,"center");button(112,565,226,34,"WRÓĆ","",true);
+ ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
+ rounded(32,198,386,414,5,"#0c1117","#9a7848",1);
+ ctx.fillStyle="#b78c50";ctx.fillRect(32,198,386,3);
+ text("INSTRUKCJA OPERACYJNA",225,236,18,"#eee8dc",1000,"center");
+ text("PĘTLA ROZGRYWKI  /  STEROWANIE",225,258,8,"#aa916c",900,"center");
+ line(59,278,391,278,"#ffffff20",1);
+ const rows=[
+  ["01","WYBIERZ CEL","Dotknij przeciwnika na arenie, aby go oznaczyć."],
+  ["02","WYKONAJ CHWYT","Przesuń chwytak i uruchom go przyciskiem ZŁAP."],
+  ["03","WYKORZYSTAJ TURĘ","Po chwycie wybierz atak, obronę lub superatak."],
+  ["04","ROZWIJAJ POSTAĆ","Zbieraj XP, wybieraj umiejętności i kupuj ulepszenia."]
+ ];
+ let y=311;
+ for(const r of rows){
+  text(r[0],65,y,9,"#c29a5e",1000);
+  text(r[1],98,y-3,10,"#e9e4d9",1000);
+  text(r[2],98,y+15,8,"#929da2",700);
+  line(98,y+29,386,y+29,"#ffffff14",1);
+  y+=57;
+ }
+ rounded(59,544,332,28,3,"#151d24","#4b5358",1);
+ text("KLAWIATURA  /  A-D RUCH • SPACJA CHWYT",225,558,8,"#c8b28d",900,"center");
+ text("J ATAK   /   K OBRONA   /   L SUPER   /   ESC MENU",225,587,7,"#879399",800,"center");
+ button(112,565,226,34,"WRÓĆ DO BAZY","",true);
 }
 function drawUpgradeOverlay(){
- ctx.fillStyle="#061626d9";ctx.fillRect(0,0,W,H);rounded(32,202,386,410,23,"#16435b","#f1d180",2);rounded(41,211,368,392,17,"#2b6580","#8ec7ba",1);text("ROZWÓJ BOHATERA",225,247,20,"#fff7df",1000,"center");text("ULEPSZENIA ZOSTAJĄ NA STAŁE",225,270,9,"#bff9e8",900,"center");
- const items=[{rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń za poziom",cost:30+profile.attackRank*20},{rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20},{rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18}];
- let y=292;for(const item of items){rounded(57,y,336,75,13,"#17405d","#8eb9b9",1);text(item.title,72,y+17,10,"#fff5df",1000);text(item.desc,72,y+39,8,"#c5e6df",700);text("POZ. "+item.rank,72,y+59,8,"#ffdd87",900);button(285,y+17,93,41,String(item.cost),"MONET",profile.coins>=item.cost);y+=82}text("MONETY: "+profile.coins,225,548,10,"#ffe39a",1000,"center");button(113,562,224,36,"WRÓĆ DO BAZY","",true);
+ ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);
+ rounded(32,202,386,410,5,"#0c1117","#9a7848",1);
+ ctx.fillStyle="#b78c50";ctx.fillRect(32,202,386,3);
+ text("ARSENAŁ / ROZWÓJ",225,241,19,"#eee8dc",1000,"center");
+ text("STAŁE MODYFIKACJE BOHATERA",225,263,8,"#aa916c",900,"center");
+ line(58,282,392,282,"#ffffff20",1);
+ const items=[
+  {rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń za poziom",cost:30+profile.attackRank*20,code:"ATK"},
+  {rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20,code:"HP"},
+  {rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18,code:"CLAW"}
+ ];
+ let y=297;
+ for(const item of items){
+  rounded(57,y,336,74,4,"#151d24","#4b5358",1);
+  ctx.fillStyle="#b18a50";ctx.fillRect(57,y,3,74);
+  text(item.code,76,y+20,8,"#c29a5e",1000);
+  text(item.title,111,y+18,10,"#e9e4d9",1000);
+  text(item.desc,111,y+38,8,"#929da2",700);
+  text("POZIOM  "+item.rank,111,y+57,7,"#a88b61",900);
+  button(285,y+16,96,42,String(item.cost),"KREDYTÓW",profile.coins>=item.cost);
+  y+=81;
+ }
+ text("DOSTĘPNE KREDYTY  /  "+profile.coins,225,548,9,"#d8b36d",900,"center");
+ button(113,562,224,36,"WRÓĆ DO BAZY","",true);
 }
 function drawLevelChoiceOverlay(){
  ctx.fillStyle="#030a17df";ctx.fillRect(0,0,W,H);glow(225,185,170,"#62d8ee",.14);rounded(25,170,400,455,24,"#0c1c32","#8ac6df",2);rounded(34,179,382,437,18,"#183550","#557f9c",1);text("AWANS BOHATERA",225,211,21,"#fff4dc",1000,"center");text("WYBIERZ JEDNĄ Z TRZECH UMIEJĘTNOŚCI",225,238,9,"#a8f3e8",900,"center");

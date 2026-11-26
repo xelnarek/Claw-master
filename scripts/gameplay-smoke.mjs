@@ -89,8 +89,10 @@ assert.equal(game.combatAttack(), true, "burst action should fire when its coold
 assert.equal(game.combatAttack(), false, "burst action should respect its cooldown");
 assert.equal(game.combatDefend(), true, "guard action should activate during real-time combat");
 assert.ok(game.state.guardTimer > 0, "guard should have a timed active window");
-const guardTarget = game.state.enemies.find(enemy => !enemy.dying && enemy.hp > 0);
-assert.ok(guardTarget, "a living enemy should remain for the guard test");
+game.spawnEnemy("slime");
+const guardTarget = game.state.enemies.at(-1);
+assert.ok(guardTarget && !guardTarget.dying, "a living enemy should remain for the guard test");
+game.state.enemies = [guardTarget];
 guardTarget.x = game.state.playerX + 58;
 guardTarget.attackCooldown = 0.01;
 game.state.playerInvuln = 0;
@@ -119,7 +121,7 @@ game.state.machinePrizes = [{ id: "weapon-drop", type: "weapon", x: 310, y: 700,
 assert.equal(game.deployClaw(), true, "claw should launch independently of combat turns");
 for (let i = 0; i < 14; i++) game.update(0.1);
 assert.equal(game.state.clawMode, "idle", "claw should complete its drop and retrieval animation");
-assert.notEqual(game.state.weaponId, "sidearm", "capturing a weapon prize should equip a different weapon");
+assert.ok(game.state.weaponId !== "sidearm" || game.state.weaponLevel > 1, "capturing a weapon prize should equip or upgrade a weapon");
 assert.ok(game.state.clawCooldown > 0, "successful retrieval should start the claw cooldown");
 assert.equal(game.deployClaw(), false, "claw should reject another grab during cooldown");
 

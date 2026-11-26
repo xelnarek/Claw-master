@@ -140,7 +140,7 @@ function drawBackground(){
  forest:{sky1:"#213840",sky2:"#263c35",sky3:"#101f20",hill:"#1e3b30",tree:"#10281f",tree2:"#1d3a2d",floor1:"#52664c",floor2:"#273d32",line:"#9f956a"},
  cave:{sky1:"#303849",sky2:"#272e3e",sky3:"#101820",hill:"#303747",tree:"#202a35",tree2:"#2a3544",floor1:"#53515b",floor2:"#292d3a",line:"#a18d70"},
  ruins:{sky1:"#50534d",sky2:"#3a4540",sky3:"#1b2323",hill:"#4d5146",tree:"#303b34",tree2:"#434a3d",floor1:"#82775b",floor2:"#4a5144",line:"#b7a06f"},
- boss:{sky1:"#3f303e",sky2:"#302632",sky3:"#11151e",hill:"#342b38",tree:"#211b2b",tree2:"#372c3b",floor1:"#58404a",floor2:"#2e2937",line:"#c08b5a"};
+ boss:{sky1:"#3f303e",sky2:"#302632",sky3:"#11151e",hill:"#342b38",tree:"#211b2b",tree2:"#372c3b",floor1:"#58404a",floor2:"#2e2937",line:"#c08b5a"}};
  const p=palettes[def.biome]||palettes.forest,g=ctx.createLinearGradient(0,80,0,505);g.addColorStop(0,p.sky1);g.addColorStop(.55,p.sky2);g.addColorStop(1,p.sky3);
  ctx.fillStyle=g;ctx.fillRect(0,75,W,430);glow(345,170,125,def.biome==="boss"?"#ff947d":"#ffe39b",.2);
  for(let i=0;i<4;i++){const x=((i*137-state.time*5)%570+570)%570-60,y=135+(i%2)*54;ctx.globalAlpha=.12;ctx.fillStyle="#f4ffff";ctx.beginPath();ctx.ellipse(x,y,38,11,0,0,Math.PI*2);ctx.ellipse(x+20,y-7,22,12,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}

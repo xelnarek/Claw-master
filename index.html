@@ -447,7 +447,7 @@ function combatSkill(){
 function resolveEnemyTurn(){
  if(state.turn!=="enemy")return;const active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  if(active.length){const target=active.reduce((a,b)=>!a||b.x>a.x?b:a,null);state.threatEnemy=target;target.action="attack";target.actionDuration=.38;target.actionTimer=.38;
-  const guarded=state.defending,raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;let dmg=guarded?Math.max(1,Math.ceil(raw*.35)):raw;
+  const guarded=state.defending,raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;let dmg=guarded?Math.max(1,Math.max(1,Math.floor(raw*.35))):raw;
   if(state.shield>0){const absorbed=Math.min(state.shield,dmg);state.shield-=absorbed;dmg-=absorbed;popText("TARCZA -"+absorbed,state.playerX,state.playerY-65,"#83f6e9")}
   if(dmg>0){state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;state.playerAction=guarded?"defend":"hurt";state.playerActionDuration=guarded?.34:.3;state.playerActionTimer=guarded?.34:.3;beep(170,.12,"sawtooth")}
   if(target.type==="boss"&&!guarded&&Math.random()<.25){state.hp=Math.max(0,state.hp-3);popText("MOC BOSS +3",state.playerX,state.playerY-90,"#ff9cbd")}

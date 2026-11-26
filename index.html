@@ -446,16 +446,25 @@ function drawCombatImpacts(){
  if(!state.effects)return;
  for(const fx of state.impacts){
   const t=clamp(1-fx.life/fx.max,0,1),alpha=1-t;
-  const radius=fx.radius+t*(fx.kind==="arcane"?48:34);
+  const radius=fx.radius+t*(fx.kind==="arcane"?48:fx.kind==="heavy"?58:34);
   ctx.save();ctx.translate(fx.x,fx.y);ctx.globalAlpha=alpha;
-  if(fx.kind==="arcane"){
-   ctx.strokeStyle=fx.color;ctx.lineWidth=4*(1-t)+1;ctx.beginPath();ctx.arc(0,0,radius*.78,0,Math.PI*2);ctx.stroke();
-   ctx.strokeStyle="#fff3cb";ctx.lineWidth=2.5*(1-t)+.5;ctx.beginPath();ctx.arc(0,0,radius,Math.PI*.15,Math.PI*1.72);ctx.stroke();
-   ctx.strokeStyle=fx.color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-radius*.7,-radius*.45);ctx.lineTo(-radius*.22,-radius*.12);ctx.lineTo(-radius*.38,radius*.18);ctx.lineTo(radius*.55,radius*.58);ctx.stroke();
-   ctx.beginPath();ctx.moveTo(radius*.62,-radius*.56);ctx.lineTo(radius*.2,-radius*.2);ctx.lineTo(radius*.44,radius*.08);ctx.lineTo(-radius*.38,radius*.58);ctx.stroke();
+  if(fx.kind==="arcane"||fx.kind==="heavy"){
+   ctx.strokeStyle=fx.color;ctx.lineWidth=(fx.kind==="heavy"?7:4)*(1-t)+1;ctx.beginPath();ctx.arc(0,0,radius*.78,0,Math.PI*2);ctx.stroke();
+   ctx.strokeStyle="#fff3cb";ctx.lineWidth=2.5*(1-t)+.5;ctx.beginPath();ctx.arc(0,0,radius,Math.PI*.15+t,Math.PI*1.72+t);ctx.stroke();
+   for(let i=0;i<4;i++){const a=i*Math.PI/2+t*.35;line(Math.cos(a)*radius*.3,Math.sin(a)*radius*.3,Math.cos(a)*radius,Math.sin(a)*radius,fx.color,fx.kind==="heavy"?3:2)}
   }else if(fx.kind==="incoming"){
    ctx.strokeStyle=fx.color;ctx.lineWidth=4*(1-t)+1;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
    ctx.strokeStyle="#fff0d8";ctx.lineWidth=2;for(let i=0;i<4;i++){const a=i*Math.PI/2+t*.7;line(Math.cos(a)*radius*.45,Math.sin(a)*radius*.45,Math.cos(a)*radius,Math.sin(a)*radius,fx.color,2)}
+  }else if(fx.kind==="pierce"){
+   ctx.rotate(t*.6);ctx.strokeStyle=fx.color;ctx.lineWidth=3.5*(1-t)+.8;ctx.beginPath();ctx.ellipse(0,0,radius*.72,radius*.35,0,0,Math.PI*2);ctx.stroke();
+   line(-radius,-radius*.24,radius,radius*.24,"#efffff",1.5*(1-t)+.3);
+  }else if(fx.kind==="pellet"){
+   for(let i=0;i<4;i++){const a=i*Math.PI/2+t*.4;ctx.fillStyle=i%2?"#fff1d0":fx.color;ctx.beginPath();ctx.arc(Math.cos(a)*radius*.55,Math.sin(a)*radius*.55,2.3*(1-t)+.5,0,Math.PI*2);ctx.fill()}
+   ctx.strokeStyle=fx.color;ctx.lineWidth=3*(1-t)+.6;ctx.beginPath();ctx.arc(0,0,radius*.72,-.7+t,.7+t);ctx.stroke();
+  }else if(fx.kind==="pulse"){
+   ctx.strokeStyle=fx.color;ctx.lineWidth=3*(1-t)+.5;ctx.beginPath();ctx.arc(0,0,radius*.5,0,Math.PI*2);ctx.stroke();
+   ctx.fillStyle="#efffff";ctx.beginPath();ctx.arc(0,0,3.8*(1-t)+.7,0,Math.PI*2);ctx.fill();
+   for(let i=0;i<4;i++){const a=i*Math.PI/2+t;line(Math.cos(a)*radius*.35,Math.sin(a)*radius*.35,Math.cos(a)*radius,Math.sin(a)*radius,fx.color,1.5)}
   }else{
    ctx.rotate(-.6+t*.45);ctx.strokeStyle=fx.color;ctx.lineWidth=fx.kind==="critical"?6:4;ctx.lineCap="round";
    ctx.beginPath();ctx.arc(0,0,radius,-1.05,.78);ctx.stroke();
@@ -467,19 +476,43 @@ function drawCombatImpacts(){
 }
 function drawAttackFx(){
  const fx=state.attackFx;if(!fx||!state.effects)return;
- const a=clamp(fx.life/fx.max,0,1),dx=fx.x2-fx.x1,dy=fx.y2-fx.y1;
- ctx.save();ctx.globalAlpha=a;ctx.lineCap="round";
- if(fx.type==="laser"){
-  line(fx.x1,fx.y1,fx.x2,fx.y2,fx.color,7);line(fx.x1,fx.y1,fx.x2,fx.y2,"#f4ffff",2);
-  line(fx.x1+2,fx.y1-5,fx.x2+2,fx.y2-5,fx.color,1.5);
- }else if(fx.type==="cannon"){
-  line(fx.x1,fx.y1,fx.x2,fx.y2,fx.color,12);line(fx.x1,fx.y1,fx.x2,fx.y2,"#fff0bd",3);glow(fx.x2,fx.y2,48,fx.color,.5*a);
- }else if(fx.type==="scatter"){
-  for(let i=-1;i<=1;i++){line(fx.x1,fx.y1,fx.x2,fx.y2+i*17,fx.color,3);glow(fx.x2,fx.y2+i*17,13,fx.color,.32*a)}
+ const t=clamp(1-fx.life/fx.max,0,1),fade=clamp(fx.life/fx.max,0,1);
+ const dx=fx.x2-fx.x1,dy=fx.y2-fx.y1;
+ const px=p=>fx.x1+dx*p,py=p=>fx.y1+dy*p;
+ ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+ if(fx.type==="sidearm"){
+  const p=clamp(t*1.55,0,1),x=px(p),y=py(p);
+  ctx.globalAlpha=fade;line(px(Math.max(0,p-.12)),py(Math.max(0,p-.12)),x,y,fx.color,4);line(px(Math.max(0,p-.08)),py(Math.max(0,p-.08)),x,y,"#fff6d7",1.4);
+  glow(x,y,8,fx.color,.45*fade);ctx.fillStyle="#fff6dc";ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();
+  if(t<.16)glow(fx.x1,fx.y1,19*(1-t*3),fx.color,.7);
  }else if(fx.type==="repeater"){
-  line(fx.x1,fx.y1-4,fx.x2,fx.y2-4,fx.color,3);line(fx.x1,fx.y1+4,fx.x2,fx.y2+4,"#f3ffff",2);
+  for(let i=0;i<2;i++){
+   const p=clamp((t-i*.19)*1.7,0,1),x=px(p),y=py(p)+(i===0?-3:3);
+   if(t>=i*.19){ctx.globalAlpha=fade;line(px(Math.max(0,p-.13)),py(Math.max(0,p-.13))+(i===0?-3:3),x,y,fx.color,3.8);glow(x,y,8,fx.color,.46*fade);ctx.fillStyle="#f2ffff";ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill()}
+  }
+  if(t<.14)glow(fx.x1,fx.y1,20,fx.color,.65);
+ }else if(fx.type==="scatter"){
+  const target=fx.targets?.[0]||{x:fx.x2,y:fx.y2};
+  for(let i=-1;i<=1;i++){
+   const p=clamp(t*1.7,0,1),spread=i*13*(1-p),sx=fx.x1,sy=fx.y1,ex=target.x,ey=target.y+i*9;
+   const x=sx+(ex-sx)*p,y=sy+(ey-sy)*p+spread;
+   ctx.globalAlpha=fade;line(sx+(ex-sx)*Math.max(0,p-.15),sy+(ey-sy)*Math.max(0,p-.15)+spread,x,y,fx.color,2.4);
+   glow(x,y,6.5,fx.color,.42*fade);ctx.fillStyle="#fff0cf";ctx.beginPath();ctx.arc(x,y,1.7,0,Math.PI*2);ctx.fill();
+  }
+  if(t<.18)glow(fx.x1,fx.y1,25,fx.color,.72);
+  if(t>.72)glow(target.x,target.y,17+(t-.72)*42,fx.color,.25*fade);
+ }else if(fx.type==="cannon"){
+  const p=clamp(t*1.22,0,1),x=px(p),y=py(p),r=5+10*Math.sin(Math.min(1,p)*Math.PI);
+  ctx.globalAlpha=fade;line(px(Math.max(0,p-.13)),py(Math.max(0,p-.13)),x,y,fx.color,6);glow(x,y,r*2.1,fx.color,.55*fade);
+  ctx.fillStyle=fx.color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff3d3";ctx.lineWidth=2;ctx.stroke();
+  if(t>.66){const hit=fx.targets?.[0]||{x:fx.x2,y:fx.y2},blast=clamp((t-.66)/.34,0,1);ctx.globalAlpha=fade*(1-blast*.45);ctx.strokeStyle=fx.color;ctx.lineWidth=5*(1-blast)+1;ctx.beginPath();ctx.arc(hit.x,hit.y,12+blast*38,0,Math.PI*2);ctx.stroke();glow(hit.x,hit.y,20+blast*30,fx.color,.3*fade)}
+ }else if(fx.type==="laser"){
+  const pulse=1+Math.sin(t*26)*.12;ctx.globalAlpha=fade;ctx.shadowColor=fx.color;ctx.shadowBlur=18;
+  line(fx.x1,fx.y1,fx.x2,fx.y2,fx.color,7*pulse);line(fx.x1,fx.y1,fx.x2,fx.y2,"#f4ffff",2.3);line(fx.x1+2,fx.y1-5,fx.x2+2,fx.y2-5,fx.color,1.5);
+  const orb=clamp(t*1.6,0,1);glow(px(orb),py(orb),13,fx.color,.5*fade);
+  if(t>.45&&fx.targets?.length>1){const b=fx.targets[1];ctx.globalAlpha=fade*.75;line(fx.x2,fx.y2,b.x,b.y,fx.color,3);glow(b.x,b.y,15,fx.color,.32*fade)}
  }else{
-  line(fx.x1,fx.y1,fx.x2,fx.y2,fx.color,4);line(fx.x1,fx.y1,fx.x2,fx.y2,"#fff4d8",1.2);
+  ctx.globalAlpha=fade;line(fx.x1,fx.y1,fx.x2,fx.y2,fx.color,4);line(fx.x1,fx.y1,fx.x2,fx.y2,"#fff4d8",1.2);
  }
  ctx.restore();
 }
@@ -868,23 +901,33 @@ function fireWeapon(counter=false){
  const weapon=weaponForRun(),target=findCombatTarget();
  if(!target)return false;
  const base=currentWeaponDamage()+(counter?state.runCounterBonus:0),active=state.enemies.filter(e=>!e.dying&&e.hp>0);
- const critical=Math.random()<state.runCrit;
- applyWeaponDamage(target,base,weapon,critical);
- if(weapon.id==="repeater")applyWeaponDamage(target,Math.ceil(base*.55),weapon,false);
+ const critical=Math.random()<state.runCrit,traceTargets=[];
+ const hit=(enemy,amount,isCritical=false)=>{
+  if(!enemy||enemy.dying||enemy.hp<=0)return;
+  applyWeaponDamage(enemy,amount,weapon,isCritical);
+  traceTargets.push({x:enemy.x,y:enemy.y-22,critical:isCritical});
+ };
+ hit(target,base,critical);
+ if(weapon.id==="repeater"){
+  hit(target,Math.ceil(base*.55),false);
+  traceTargets.push({x:target.x,y:target.y-22,echo:true});
+ }
  if(weapon.id==="scatter"){
   const extra=active.filter(e=>e!==target).sort((a,b)=>Math.abs(a.x-target.x)-Math.abs(b.x-target.x)).slice(0,2);
-  for(const e of extra)applyWeaponDamage(e,Math.ceil(base*.62),weapon,false);
+  for(const enemy of extra)hit(enemy,Math.ceil(base*.62),false);
  }
  if(weapon.id==="cannon"){
-  for(const e of active){if(e!==target&&Math.abs(e.x-target.x)<78)applyWeaponDamage(e,Math.ceil(base*.55),weapon,false)}
+  for(const enemy of active){if(enemy!==target&&Math.abs(enemy.x-target.x)<78)hit(enemy,Math.ceil(base*.55),false)}
  }
  if(weapon.id==="laser"){
   const next=active.filter(e=>e!==target&&e.x>target.x).sort((a,b)=>a.x-b.x)[0];
-  if(next)applyWeaponDamage(next,Math.ceil(base*.7),weapon,false);
+  if(next)hit(next,Math.ceil(base*.7),false);
  }
- state.attackFx={type:weapon.id,x1:state.playerX+28,y1:state.playerY-28,x2:target.x,y2:target.y-22,color:weapon.color,life:.28,max:.28};
- state.playerAction="attack";state.playerActionDuration=.24;state.playerActionTimer=.24;state.shot++;
- beep(weapon.id==="cannon"?150:weapon.id==="laser"?760:weapon.id==="repeater"?540:360,.09,weapon.id==="cannon"?"sawtooth":"square",.024);
+ const duration=weapon.id==="laser"?.36:weapon.id==="cannon"?.52:weapon.id==="scatter"?.42:.46;
+ state.attackFx={type:weapon.id,x1:state.playerX+28,y1:state.playerY-28,x2:target.x,y2:target.y-22,color:weapon.color,life:duration,max:duration,targets:traceTargets};
+ state.playerAction="attack";state.playerActionDuration=weapon.id==="cannon"?.46:weapon.id==="scatter"?.34:.3;state.playerActionTimer=state.playerActionDuration;state.shot++;
+ const pitch=weapon.id==="cannon"?120:weapon.id==="laser"?780:weapon.id==="repeater"?610:weapon.id==="scatter"?240:390;
+ beep(pitch,.11,weapon.id==="cannon"?"sawtooth":weapon.id==="laser"?"triangle":"square",.03);
  markDefeatedEnemies();return true;
 }
 function finishPlayerAction(action){

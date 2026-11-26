@@ -546,7 +546,7 @@ function interact(x,y){
  if(state.settingsOpen){if(y>=345&&y<=400&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}if(y>=415&&y<=480&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}beep(420,.05);return}if(y>=500&&y<=565){state.settingsOpen=false;return}return}
  if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){state.upgradesOpen=false;return}return}
  if(state.helpOpen){if(y>=545&&y<=610){state.helpOpen=false;return}return}
- if(state.screen==="title"){if(y>=625&&y<=680){startRun(profile.unlockedStage);return}if(y>=680&&y<=735){if(x<155)state.upgradesOpen=true;else if(x<285)state.settingsOpen=true;else state.helpOpen=true;return}return}
+ if(state.screen==="title"){if(y>=665&&y<=720){startRun(profile.unlockedStage);return}if(y>=720&&y<=770){if(x<160)state.upgradesOpen=true;else if(x<285)state.settingsOpen=true;else state.helpOpen=true;return}return}
  if(state.over){if(y>430&&y<510)reset();return}
  if(state.stageCleared){if(y>=435&&y<=505){advanceStage();return}return}
  if(state.paused){if(y>=365&&y<=420){state.paused=false;return}if(y>=425&&y<=480){state.settingsOpen=true;return}if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.enemies=[];state.particles=[];state.floaters=[];return}return}

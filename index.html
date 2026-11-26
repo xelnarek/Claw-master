@@ -604,7 +604,6 @@ function drawEnemy(e){
  }
  ctx.restore();
  }
-}
 function drawAttackFx(){
  const fx=state.attackFx;if(!fx||!state.effects)return;
  const t=clamp(1-fx.life/fx.max,0,1),fade=clamp(fx.life/fx.max,0,1);

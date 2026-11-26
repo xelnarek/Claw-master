@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -65,3 +66,5 @@ console.log("PASS: illustrated menu, settings, help and local preferences");
 console.log("PASS: character action, hit and defeat animations");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");
+
+execFileSync(process.execPath, [path.join(root, "scripts", "gameplay-smoke.mjs")], { stdio: "inherit" });

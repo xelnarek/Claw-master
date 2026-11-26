@@ -20,7 +20,7 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 
 Open `index.html` in a modern browser, or serve the repository with any static web server.
 
-For GitHub Pages, select **Deploy from a branch**, choose `main` and the root folder in the repository's Pages settings.
+For GitHub Pages, select **GitHub Actions** as the deployment source in the repository's Pages settings.
 
 ## Controls
 

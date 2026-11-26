@@ -204,17 +204,29 @@ function line(x1,y1,x2,y2,color,width=2){
  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap="round";ctx.stroke();
 }
 function pill(x,y,w,label,fill="#263a60",color="#fff"){
- rounded(x,y,w,25,12,fill,"#ffffff22");text(label,x+w/2,y+13,10,color,900,"center");
+ ctx.save();
+ const g=ctx.createLinearGradient(x,y,x,y+25);g.addColorStop(0,fill);g.addColorStop(1,"#0b1118");
+ rounded(x,y,w,25,5,g,"#d7c09255",1);
+ ctx.fillStyle=color;ctx.globalAlpha=.72;ctx.fillRect(x+5,y+6,2,13);ctx.globalAlpha=1;
+ ctx.strokeStyle="#ffffff20";ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x+11,y+3);ctx.lineTo(x+w-7,y+3);ctx.stroke();
+ text(label,x+w/2+2,y+13,9.2,color,900,"center");
+ ctx.restore();
 }
 function button(x,y,w,h,label,sub,active=false){
- const top=active?"#c99a55":"#303b46",bottom=active?"#80552e":"#151d26",edge=active?"#e1bd7b":"#65717a";
- rounded(x,y+4,w,h,5,"#020508cc");
- const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,top);g.addColorStop(1,bottom);
- rounded(x,y,w,h,5,g,edge,1);
- ctx.fillStyle=active?"#f0d7a4":"#a8b1b5";ctx.fillRect(x+7,y+5,2,h-10);
- ctx.save();ctx.shadowColor=active?"#d29a4e55":"#00000088";ctx.shadowBlur=active?9:3;
- text(label,x+w/2,y+h*(sub?.39:.52),Math.min(13,w/Math.max(7,label.length*.62)),active?"#1c1710":"#e4e7e5",1000,"center");ctx.restore();
- if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#5b4126":"#a2adb1",800,"center");
+ ctx.save();
+ const top=active?"#e0bd78":"#46525a",mid=active?"#a77a42":"#29343a",bottom=active?"#60452b":"#11191e";
+ ctx.shadowColor="#000000a8";ctx.shadowBlur=active?12:6;ctx.shadowOffsetY=3;
+ const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,top);g.addColorStop(.13,mid);g.addColorStop(1,bottom);
+ rounded(x,y,w,h,6,g,active?"#f0d49a":"#78858a",1);
+ ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.strokeStyle=active?"#fff0c044":"#ffffff18";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+9,y+3);ctx.lineTo(x+w-9,y+3);ctx.stroke();
+ ctx.fillStyle=active?"#f4d69a":"#819095";ctx.globalAlpha=.82;ctx.fillRect(x+6,y+7,2,h-14);ctx.globalAlpha=1;
+ ctx.fillStyle=active?"#24190e":"#aeb9b9";ctx.beginPath();ctx.arc(x+w-9,y+9,1.7,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle=active?"#eac88b77":"#ffffff12";ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x+8,y+h-5);ctx.lineTo(x+w-8,y+h-5);ctx.stroke();
+ ctx.save();ctx.shadowColor=active?"#f0c77b66":"#00000099";ctx.shadowBlur=active?7:2;
+ text(label,x+w/2,y+h*(sub?.39:.52),Math.min(13,w/Math.max(7,label.length*.62)),active?"#fff1cf":"#d8dfdc",1000,"center");ctx.restore();
+ if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#e0c99e":"#8f9b9e",800,"center");
+ ctx.restore();
 }
 function drawBackground(){
  const def=stageDefinition(),biome=def.biome,palettes={
@@ -764,31 +776,44 @@ function drawMenuScene(){
 function drawTitle(){
  drawMenuScene();
  const stage=profile.unlockedStage,def=stageDefinition(stage);
- // Editorial campaign masthead: identity, current operation and persistent profile.
- rounded(20,20,410,104,7,"#0a0e13f2","#98794c",1);
- ctx.fillStyle="#bd9558";ctx.fillRect(20,20,3,104);
- text("CLAW",43,51,30,"#eee8dc",1000);text("QUEST",43,81,30,"#eee8dc",1000);
- text("DARK ARCADE ROGUELITE",45,105,8,"#b89a6c",900);
- line(250,37,250,107,"#a98a5a55",1);
- text("AKTYWNA KAMPANIA",273,45,8,"#a88b61",900);
- text("ROZDZIAŁ  /  "+String(stage).padStart(2,"0"),273,65,10,"#d9c39b",900);
- text(def.title.toUpperCase(),273,84,11,"#f0ece3",900);
- text("ETAP ODBLOKOWANY",273,103,7,"#89969d",800);
- // Mission control panel.
- rounded(26,520,398,244,6,"#090e14f5","#766348",1);
- ctx.fillStyle="#b58a4d";ctx.fillRect(26,520,398,3);
- text("BAZA OPERACYJNA",47,544,10,"#d8c39b",1000);
- text("POSTĘP KAMPANII",47,566,8,"#89949a",900);
- const progress=clamp((stage-1)/Math.max(1,stage),0,1);
- rounded(47,580,356,5,2,"#252d33");rounded(47,580,356*progress,5,2,"#b48b50");
- const stats=[["RANGA",String(profile.level)],["NAJLEPSZY ETAP",String(profile.bestStage)],["KREDYTY",String(profile.coins)]];
- for(let i=0;i<3;i++){const x=47+i*122;if(i)line(x-12,600,x-12,644,"#ffffff1c",1);text(stats[i][0],x,610,7,"#82909a",900);text(stats[i][1],x,634,16,i===2?"#d8b36d":"#e8e5de",1000)}
- line(47,655,403,655,"#ffffff20",1);
- button(47,668,356,47,"ROZPOCZNIJ WYPRAWĘ",def.title.toUpperCase(),true);
- button(47,723,110,30,"ARSENAŁ","ULEPSZENIA",false);
- button(170,723,110,30,"USTAWIENIA","DŹWIĘK / EFEKTY",false);
- button(293,723,110,30,"DOKUMENTACJA","STEROWANIE",false);
- text("ZAPIS LOKALNY  •  REKORD "+profile.bestScore,225,777,8,"#89949b",800,"center");
+ // Framed title plate with a deliberate editorial hierarchy.
+ rounded(17,16,416,116,8,"#080c11eF","#c09a60",1.4);
+ rounded(22,21,406,106,6,"#111820b8","#ffffff20",.8);
+ ctx.fillStyle="#c7a36a";ctx.fillRect(17,16,4,116);ctx.fillRect(429,16,4,116);
+ text("CITADEL ARCADE  /  ROGUELITE",39,35,7.5,"#c4a575",1000);
+ text("CLAW",39,68,35,"#f3eee2",1000);text("QUEST",151,68,35,"#d5b47c",1000);
+ text("THE RELIC VAULT",42,102,8,"#9ba9a7",900);
+ line(265,34,265,111,"#c5a87855",1);
+ text("AKTYWNA KAMPANIA",286,42,7.5,"#b99a69",900);
+ text("ROZDZIAŁ  /  "+String(stage).padStart(2,"0"),286,62,10,"#ead7b3",1000);
+ text(def.title.toUpperCase(),286,82,10.5,"#f2eee3",1000);
+ rounded(286,98,125,5,2,"#252b2c");rounded(286,98,125*clamp((stage-1)/Math.max(1,stage),.04,1),5,2,"#bd965d");
+ text("ETAP ODBLOKOWANY",286,115,6.5,"#8e9b99",800);
+ // Mission board; persistent account values are separated into tactile stat cells.
+ rounded(23,517,404,251,8,"#05090ddf","#b89560",1.4);
+ rounded(28,522,394,241,5,"#11191deF","#ffffff18",.8);
+ ctx.fillStyle="#b89560";ctx.fillRect(23,517,404,3);
+ ctx.fillStyle="#c4a36d";ctx.fillRect(38,539,3,20);
+ text("01  /  TABLICA MISJI",52,546,9,"#d7c19a",1000);
+ text("BAZA OPERACYJNA",410,546,7,"#7f8e91",900,"right");
+ text(def.title.toUpperCase(),43,575,17,"#f0e8d8",1000);
+ ctx.fillStyle="#aeb8ad";ctx.font="700 7.4px Inter,system-ui,sans-serif";ctx.textAlign="left";ctx.textBaseline="middle";
+ ctx.fillText(def.objective,43,596,350);
+ rounded(43,611,364,6,3,"#293237","#617071",.7);
+ const prog=clamp((stage-1)/Math.max(1,stage),0,1);rounded(44,612,362*prog,4,2,"#b99761");
+ const stats=[["RANGA",String(profile.level),"#c9b17e"],["REKORD ETAPU",String(profile.bestStage),"#9daeb0"],["KREDYTY",String(profile.coins),"#e0bd76"]];
+ for(let i=0;i<3;i++){
+  const x=43+i*123;rounded(x,628,113,34,4,"#1a2529","#59645f",.8);
+  text(stats[i][0],x+8,638,6.4,"#879595",900);
+  text(stats[i][1],x+8,652,12,stats[i][2],1000);
+  if(i<2)line(x+113,635,x+113,656,"#ffffff16",1);
+ }
+ line(43,671,407,671,"#c5a87533",1);
+ button(43,681,364,42,"ROZPOCZNIJ WYPRAWĘ","MISJA  /  "+def.title.toUpperCase(),true);
+ button(43,731,114,29,"ARSENAŁ","ULEPSZENIA",false);
+ button(168,731,114,29,"USTAWIENIA","DŹWIĘK / EFEKTY",false);
+ button(293,731,114,29,"DOKUMENTACJA","STEROWANIE",false);
+ text("ZAPIS LOKALNY  •  REKORD "+profile.bestScore,225,780,7.5,"#899694",800,"center");
 }
 function drawSettingsOverlay(){
  ctx.fillStyle="#030609e8";ctx.fillRect(0,0,W,H);

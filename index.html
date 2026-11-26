@@ -42,7 +42,7 @@ const state={
  time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,
- enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],
+ enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,
  toastTimer:0,screen:"title",bossSpawned:false
 };
 const COLORS={navy:"#111d39",deep:"#0b1530",panel:"#1a2a4b",cyan:"#57e5e8",gold:"#ffd166",orange:"#ff8b55",pink:"#ff6ba8",violet:"#9d82ff",green:"#7ce6a2"};
@@ -275,7 +275,7 @@ function defeat(e){
  const reward=e.type==="boss"?8:1;state.coins+=reward;
  for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));
  popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a");
- if(e.type==="boss"){state.wave++;state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP");}
+ if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP");}
  if(e.type!=="boss"&&state.kills>0&&state.kills%8===0){state.wave++;notify("NOWA FALA "+state.wave);state.damage++;state.hp=Math.min(state.maxHp,state.hp+8)}
  beep(680,.09,"triangle");
 }
@@ -328,7 +328,7 @@ function deployClaw(){
 function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;notify("WYPRAWA ROZPOCZĘTA!");
+ state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
 }
 function interact(x,y){
  if(state.screen==="title"){if(x>70&&x<380&&y>430&&y<530){reset()}else reset();return}
@@ -368,7 +368,7 @@ function update(dt){
  for(const e of state.enemies){e.phase+=dt*2;if(e.hit>0)e.hit-=dt}
  if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
  const alive=[];for(const e of state.enemies){if(e.hp<=0)defeat(e);else alive.push(e)}state.enemies=alive;
- if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;state.damage+=state.wave>1?0:0;for(let i=0;i<Math.min(3+Math.floor(state.wave/2),5);i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • NOWI WROGOWIE");}
+ if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;const count=state.wave%5===0?1:Math.min(2+Math.floor(state.wave/2),5);for(let i=0;i<count;i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • "+(state.wave%5===0?"BOSS":"NOWI WROGOWIE"));}
  if(state.hp<=0){state.hp=0;state.over=true;return}
  if(state.playerHit>0)state.playerHit-=dt;
  if(state.shield>0)state.shield-=dt;

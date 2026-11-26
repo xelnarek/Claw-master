@@ -14,6 +14,21 @@ if (scriptStart < 0 || scriptEnd < 0) {
 const gameScript = html.slice(scriptStart + 8, scriptEnd);
 new Function(gameScript);
 
+const requiredVisualFeatures = [
+  "function drawTitle()",
+  "function drawMenuScene()",
+  "function drawSettingsOverlay()",
+  "function drawHelpOverlay()",
+  'localStorage.setItem("clawQuestSound"',
+  'localStorage.setItem("clawQuestEffects"',
+  'localStorage.setItem("clawQuestBest"'
+];
+for (const feature of requiredVisualFeatures) {
+  if (!gameScript.includes(feature)) {
+    throw new Error("Visual/menu feature is missing: " + feature);
+  }
+}
+
 const manifest = JSON.parse(read("manifest.webmanifest"));
 if (manifest.display !== "standalone" || manifest.orientation !== "portrait") {
   throw new Error("Manifest must target an installed portrait app.");
@@ -30,5 +45,6 @@ if (!html.includes('rel="manifest"') || !html.includes('serviceWorker.register("
 new Function(read("sw.js"));
 
 console.log("PASS: game JavaScript syntax");
+console.log("PASS: illustrated menu, settings, help and local preferences");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");

@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Claw Quest — kolorowa gra arcade 2D z walką i automatem z chwytakiem.">
+<meta name="description" content="Claw Quest — mobilny 2D roguelite: turowa walka, chwytak z łupami i wybór umiejętności przy każdym awansie.">
 <title>Claw Quest — Arcade Roguelite</title>
 <style>
 :root{color-scheme:dark;--ink:#fff8eb;--muted:#aebbd5;--panel:#172541;--line:rgba(255,255,255,.16);--gold:#ffd166;--cyan:#67e8e5;--navy:#101a34;--blue:#29466f}
@@ -88,7 +88,13 @@ let audio=null;
 try{state.coins=profile.coins;state.bestScore=profile.bestScore;state.sound=localStorage.getItem("clawQuestSound")!=="false";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
 function beep(freq=440,duration=.07,type="sine",volume=.035){
  if(!state.sound)return;
- try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.value=volume;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.stop(audio.currentTime+duration)}catch(e){}
+ try{
+  audio=audio||new(window.AudioContext||window.webkitAudioContext)();
+  if(audio.state==="suspended")audio.resume();
+  const now=audio.currentTime;
+  const voice=(hz,gain,shape,detune=0)=>{const o=audio.createOscillator(),g=audio.createGain();o.type=shape;o.frequency.setValueAtTime(hz,now);o.detune.setValueAtTime(detune,now);g.gain.setValueAtTime(.001,now);g.gain.exponentialRampToValueAtTime(Math.max(.001,gain),now+.012);g.gain.exponentialRampToValueAtTime(.001,now+duration);o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+duration+.015)};
+  voice(freq,volume,type);voice(freq*2,volume*.2,"sine",5);
+ }catch(e){}
 }
 function rounded(x,y,w,h,r,fill,stroke,lw=1){
  ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.lineWidth=lw;ctx.strokeStyle=stroke;ctx.stroke()}
@@ -303,6 +309,8 @@ function drawEnemy(e){
 function drawArena(){
  drawBackground();const def=stageDefinition();rounded(14,126,252,27,10,"#12344ddd","#b1e7d688",1);text("ETAP "+state.stage+"  •  "+def.title.toUpperCase(),140,140,9,"#f4ffea",1000,"center");
  rounded(343,127,92,25,9,"#213d58dd","#d4e5a277",1);text("FALA "+state.wave+"/"+def.waves.length,389,140,9,"#ffe8a2",1000,"center");text(def.objective,225,166,8,"#efffe9cc",800,"center");
+ const build=abilityPool.filter(a=>(state.runSkills[a.id]||0)>0).map(a=>a.name.toUpperCase()+" "+state.runSkills[a.id]);
+ if(build.length){rounded(72,177,306,19,8,"#081a2dcc","#8cbac277",1);text("BUILD  •  "+build.slice(0,3).join("  /  "),225,187,7.5,"#d9f8f1",900,"center")}
  glow(405,365,48,"#d47fff",.17);line(14,416,436,416,"#c8ffd233",1);line(14,505,436,505,"#b5e7bd88",2);ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();drawHero(state.playerX,state.playerY);
  const threat=state.enemies.filter(e=>!e.dying).reduce((a,b)=>!a||b.x>a.x?b:a,null);
  for(let i=0;i<state.enemies.length;i++){const e=state.enemies[i];drawEnemy(e);if(i===state.selectedEnemy&&!e.dying){ctx.save();ctx.strokeStyle="#fff0a3";ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.beginPath();ctx.ellipse(e.x,e.y-17,e.type==="boss"?48:35,e.type==="boss"?54:42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);glow(e.x,e.y+17,37,"#ffdc83",.12);text("▼",e.x,e.y-(e.type==="boss"?78:69),14,"#fff1a8",1000,"center");ctx.restore()}if(e===threat&&!e.dying&&state.turn==="player")pill(e.x-34,e.y-(e.type==="boss"?91:82),68,"ZAMIERZA!","#713c4d","#ffe5a5")}
@@ -453,7 +461,7 @@ function combatAttack(){
  const critical=Math.random()<state.runCrit,dmg=(state.damage+(e.type==="bat"?1:0))*(critical?2:1);
  e.hp-=dmg+state.runVenom;e.hit=.26;state.playerHit=.15;state.playerAction="attack";state.playerActionDuration=.42;state.playerActionTimer=.42;
  for(let i=0;i<7;i++)particle(e.x,e.y,"#ffdd91",rand(2,4));
- popText((critical?"KRYTYK ":"-")+dmg,e.x,e.y-45,critical?"#ff9b63":"#ffe38b");state.score+=5;
+ popText((critical?"KRYTYK ":"-")+(dmg+state.runVenom),e.x,e.y-45,critical?"#ff9b63":"#ffe38b");state.score+=5;
  state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
 }
 function combatDefend(){

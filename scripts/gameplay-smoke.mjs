@@ -94,7 +94,9 @@ const hpBeforeGuard = game.state.hp;
 game.update(0.02);
 assert.equal(hpBeforeGuard - game.state.hp, 1, "guard should reduce a 4-damage slime attack to 1");
 
-const aoeTargets = [game.spawnEnemy("slime"), game.spawnEnemy("bat")];
+game.spawnEnemy("slime");
+game.spawnEnemy("bat");
+const aoeTargets = game.state.enemies.slice(-2);
 const aoeHp = aoeTargets.map(enemy => enemy.hp);
 game.state.skillReady = true;
 assert.equal(game.combatSkill(), true, "super ability should activate when ready");
@@ -149,7 +151,6 @@ assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"), "stage 2 sh
 clearWave();
 assert.ok(game.state.enemies.some(enemy => enemy.type === "bat"), "stage 2 wave 2 should introduce the bat enemy");
 
-game.state.profile = undefined;
 game.state.screen = "title";
 game.interact(350, 735);
 assert.equal(game.state.helpOpen, true, "documentation button should open help");

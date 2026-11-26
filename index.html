@@ -124,9 +124,12 @@ function planEnemyIntents(){
  for(const e of active){
   const range=e.type==="boss"?178:e.type==="bat"?148:e.type==="goblin"?136:122;
   const close=e.x-state.playerX<=range;
+  e.enraged=e.type==="boss"&&e.hp<=e.maxHp*.5;
   if(close&&state.turnNumber>=e.nextAttackTurn)e.intent="attack";
   else if(close)e.intent="brace";
   else e.intent="advance";
+  e.spinesActive=e.type==="porcupine"&&e.intent==="brace";
+  if(e.type==="goblin"&&e.intent==="brace"&&e.guard<=0)e.guard=3;
  }
 }
 function beginPlayerTurn(){
@@ -251,7 +254,7 @@ function drawHealth(){
  rounded(13,77,424,44,13,"#14334cdd","#c4edf377",1.2);text("♥",29,99,17,"#ff7188",1000,"center");rounded(49,89,229,19,9,"#243b50","#8aa6b5",1);
  const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(49,0,278,0);gr.addColorStop(0,"#ff6b7d");gr.addColorStop(.58,"#ff9b69");gr.addColorStop(1,"#ffe07b");if(pct>0)rounded(50,90,227*pct,17,8,gr);
  for(let i=1;i<5;i++)line(49+i*45.8,91,49+i*45.8,106,"#142a3d88",1);text(Math.ceil(state.hp)+" / "+state.maxHp,163,99,10,"#fff",1000,"center");
- rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("DMG "+currentWeaponDamage(),322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");
+ rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("DMG "+currentWeaponDamage(),322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");if(state.poisonTurns>0)text("TRUCIZNA "+state.poisonTurns,398,116,6.5,"#b9ec86",1000,"center");
 }
 function drawHero(x,y){
  const duration=Math.max(.001,state.playerActionDuration||.42);
@@ -337,10 +340,10 @@ function drawHero(x,y){
 function drawEnemy(e){
  ctx.save();ctx.translate(e.x,e.y);
  const dyingProgress=e.dying?clamp(1-(e.deathTimer||0)/.46,0,1):0;
- const attackProgress=e.action==="attack"||e.action==="windup"?clamp(1-(e.actionTimer||0)/Math.max(.001,e.actionDuration||.38),0,1):0;
+ const attackProgress=e.action==="attack"||e.action==="windup"||e.action==="dive"||e.action==="slam"?clamp(1-(e.actionTimer||0)/Math.max(.001,e.actionDuration||.38),0,1):0;
  const bob=Math.sin(state.time*(e.type==="bat"?7:4.6)+e.phase)* (e.type==="bat"?5:2.6);
  const shake=e.hit>0?Math.sin(state.time*91+e.phase)*2.8:0;
- const lunge=e.action==="attack"?-Math.sin(attackProgress*Math.PI)*13:e.action==="windup"?-Math.sin(attackProgress*Math.PI)*4:0;
+ const lunge=e.action==="dive"?-Math.sin(attackProgress*Math.PI)*19:e.action==="slam"?-Math.sin(attackProgress*Math.PI)*5:e.action==="attack"?-Math.sin(attackProgress*Math.PI)*13:e.action==="windup"?-Math.sin(attackProgress*Math.PI)*4:0;
  ctx.translate(lunge+shake,bob-(e.dying?dyingProgress*9:0));
  if(e.dying){ctx.globalAlpha=1-dyingProgress;ctx.rotate(dyingProgress*.72);ctx.scale(1-dyingProgress*.54,1-dyingProgress*.38)}
  if(e.type==="slime"){
@@ -485,7 +488,11 @@ function drawArena(){
   }
   drawEnemy(e);
   if(!e.dying&&e.hp>0&&state.turnPhase!=="enemy"){
-   if(e.intent==="attack")pill(e.x-36,e.y-82,72,"ZAMACH","#743e42","#ffe6bd");
+   if(e.type==="porcupine"&&e.spinesActive)pill(e.x-36,e.y-82,72,"KOLCE","#70442f","#ffe2aa");
+   else if(e.type==="goblin"&&e.guard>0)pill(e.x-36,e.y-82,72,"PANCERZ","#31516a","#d8f4ff");
+   else if(e.type==="bat"&&e.intent==="attack")pill(e.x-36,e.y-82,72,"NURKOWANIE","#513b70","#f0dcff");
+   else if(e.type==="boss"&&e.enraged)pill(e.x-36,e.y-82,72,"GNIEW","#76343b","#ffe0d5");
+   else if(e.intent==="attack")pill(e.x-36,e.y-82,72,"ZAMACH","#743e42","#ffe6bd");
    else if(e.intent==="advance")pill(e.x-36,e.y-82,72,"NADCHODZI","#374b4c","#d7eadb");
    else pill(e.x-36,e.y-82,72,"SZYKUJE CIOS","#4a4550","#d9d0e6");
   }

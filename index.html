@@ -42,7 +42,7 @@ const state={
  time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
- enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,skillCooldown:0,
+ enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,skillCooldown:0,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,
  stage:1,stageWave:0,stageCleared:false,stageReward:0,stageXp:0,runDamageBonus:0,threatEnemy:null,upgradesOpen:false,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
@@ -61,16 +61,31 @@ let profile=loadProfile();
 function saveProfile(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));return true}catch(e){return false}}
 function stageDefinition(stage=state.stage){if(stage<=stageCatalog.length)return stageCatalog[Math.max(0,stage-1)];const n=stage-stageCatalog.length;return {title:"Dzika Knieja "+n,biome:n%3===0?"ruins":n%3===1?"forest":"cave",objective:"Przetrwaj kolejne fale i zbieraj łupy.",waves:[["slime","bat","goblin"],["porcupine","goblin","bat"],["porcupine","goblin","slime","bat"]],coins:55+n*8,xp:45+n*5}}
 function gainCoins(amount){const n=Math.max(0,Math.floor(amount));profile.coins+=n;state.coins=profile.coins;saveProfile();return n}
-function gainXp(amount){profile.xp+=Math.max(0,Math.floor(amount));let levels=0;while(profile.xp>=profile.level*30){profile.xp-=profile.level*30;profile.level++;levels++}if(levels)notify("POZIOM BOHATERA "+profile.level+"!");saveProfile();return levels}
+const abilityPool=[
+ {id:"edge",name:"Ostrze runiczne",tag:"ATAK",desc:"+2 do obrażeń każdego ataku",color:"#ffb65c",max:4},
+ {id:"vital",name:"Serce olbrzyma",tag:"ŻYWOTNOŚĆ",desc:"+20 maks. HP i natychmiastowe leczenie",color:"#ff7798",max:4},
+ {id:"bulwark",name:"Aegis",tag:"OBRONA",desc:"+18 punktów tarczy",color:"#71dfff",max:4},
+ {id:"execution",name:"Precyzyjne cięcie",tag:"KRYTYK",desc:"+8% szansy na podwójne obrażenia",color:"#f6db7b",max:5},
+ {id:"reaper",name:"Głód łowcy",tag:"REGENERACJA",desc:"Odzyskaj 3 HP za pokonanego wroga",color:"#8de6a8",max:4},
+ {id:"storm",name:"Burza eteru",tag:"SUPER",desc:"+4 obrażenia superataku",color:"#b69aff",max:4},
+ {id:"claw",name:"Magnes skarbów",tag:"CHWYTAK",desc:"+12 px tolerancji chwytu",color:"#72e8dd",max:4},
+ {id:"fortune",name:"Złoty instynkt",tag:"ŁUP",desc:"+50% monet z chwytaka",color:"#ffd36c",max:3},
+ {id:"venom",name:"Zatruty sztych",tag:"DOT",desc:"Każdy atak dodaje 2 obrażenia",color:"#a5e477",max:4}
+];
+function rollAbilityChoices(){const available=abilityPool.filter(a=>(state.runSkills[a.id]||0)<a.max),pool=[...available],choices=[];while(pool.length&&choices.length<3){const i=Math.floor(Math.random()*pool.length);choices.push(pool.splice(i,1)[0])}state.levelChoices=choices;state.turnTimer=0;beep(740,.14,"sine",.045);notify("AWANS! WYBIERZ JEDNĄ UMIEJĘTNOŚĆ")}
+function chooseAbility(index){if(!state.levelChoices||!state.levelChoices[index])return false;const a=state.levelChoices[index];state.runSkills[a.id]=(state.runSkills[a.id]||0)+1;
+ if(a.id==="edge")state.runDamageBonus+=2;if(a.id==="vital"){state.maxHp+=20;state.hp=Math.min(state.maxHp,state.hp+20)}if(a.id==="bulwark")state.shield+=18;if(a.id==="execution")state.runCrit+=.08;if(a.id==="reaper")state.runHealOnKill+=3;if(a.id==="storm")state.runSkillBonus+=4;if(a.id==="claw")state.runClawBonus+=12;if(a.id==="fortune")state.runLootBonus+=.5;if(a.id==="venom")state.runVenom+=2;
+ state.damage=effectiveDamage();state.pendingLevelUps=Math.max(0,state.pendingLevelUps-1);state.levelChoices=null;beep(980,.1,"triangle",.05);if(state.pendingLevelUps>0)rollAbilityChoices();else notify(a.name.toUpperCase()+" • WYBRANO");return true}
+function gainXp(amount){profile.xp+=Math.max(0,Math.floor(amount));let levels=0;while(profile.xp>=profile.level*30){profile.xp-=profile.level*30;profile.level++;levels++}if(levels){state.pendingLevelUps+=levels;rollAbilityChoices()}saveProfile();return levels}
 function effectiveDamage(){return 4+profile.attackRank+state.runDamageBonus}
 function effectiveMaxHp(){return 100+profile.vitalityRank*15}
 function purchaseUpgrade(kind){const cfg={attack:{rank:"attackRank",base:30,step:20},vitality:{rank:"vitalityRank",base:35,step:20},claw:{rank:"clawRank",base:25,step:18}}[kind];if(!cfg)return false;const rank=profile[cfg.rank],cost=cfg.base+rank*cfg.step;if(profile.coins<cost)return false;profile.coins-=cost;profile[cfg.rank]++;state.coins=profile.coins;const oldMax=state.maxHp;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();if(kind==="vitality"&&state.started)state.hp=Math.min(state.maxHp,state.hp+state.maxHp-oldMax);saveProfile();beep(620,.08,"triangle");return true}
 function spawnStageWave(){const def=stageDefinition();if(state.stageWave>=def.waves.length){completeStage();return}const types=def.waves[state.stageWave++];state.wave=state.stageWave;state.enemies=[];state.selectedEnemy=0;state.threatEnemy=null;for(const type of types)spawnEnemy(type);notify("ETAP "+state.stage+" • FALA "+state.wave)}
 function completeStage(){if(state.stageCleared)return false;const def=stageDefinition();state.stageCleared=true;state.stageReward=def.coins;state.stageXp=def.xp;gainCoins(def.coins);gainXp(def.xp);profile.unlockedStage=Math.max(profile.unlockedStage,state.stage+1);profile.bestStage=Math.max(profile.bestStage,state.stage);profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=Math.max(state.bestScore,state.score);saveProfile();state.hp=Math.min(state.maxHp,state.hp+15);notify("ETAP UKOŃCZONY • NAGRODA ODEBRANA");return true}
 function advanceStage(){if(!state.stageCleared)return false;state.stage++;state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.enemies=[];state.selectedEnemy=0;state.turn="player";state.turnTimer=0;state.defending=false;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();state.hp=Math.min(state.maxHp,state.hp);spawnStageWave();return true}
-function startRun(stage=profile.unlockedStage){state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.runDamageBonus=0;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;spawnStageWave();notify("WYPRAWA ROZPOCZĘTA!")}
+function startRun(stage=profile.unlockedStage){state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;spawnStageWave();notify("WYPRAWA ROZPOCZĘTA!")}
 let audio=null;
-try{state.coins=profile.coins;state.bestScore=profile.bestScore;state.sound=localStorage.getItem("clawQuestSound")==="true";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
+try{state.coins=profile.coins;state.bestScore=profile.bestScore;state.sound=localStorage.getItem("clawQuestSound")!=="false";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
 function beep(freq=440,duration=.07,type="sine",volume=.035){
  if(!state.sound)return;
  try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.value=volume;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.stop(audio.currentTime+duration)}catch(e){}
@@ -116,7 +131,12 @@ function drawBackground(){
  for(let i=0;i<9;i++){const x=i*59-14,high=65+(i*31)%65;ctx.fillStyle=p.tree;ctx.fillRect(x+16,365-high*.5,10,high*.7);ctx.fillStyle=i%2?p.tree2:p.tree;ctx.beginPath();ctx.arc(x+21,360-high*.55,30+(i%3)*5,0,Math.PI*2);ctx.fill()}
  const floor=ctx.createLinearGradient(0,405,0,505);floor.addColorStop(0,p.floor1);floor.addColorStop(1,p.floor2);ctx.fillStyle=floor;ctx.fillRect(0,405,W,100);
  for(let i=0;i<18;i++){const x=i*29+(i%2)*8;ctx.fillStyle=i%2?"#ffffff24":"#fff2bf30";ctx.beginPath();ctx.ellipse(x,455+(i%3)*10,7,2,0,0,Math.PI*2);ctx.fill()}
- line(0,503,450,503,p.line,3);for(const mote of state.stars){ctx.globalAlpha=mote.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(mote.x,mote.y,mote.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ line(0,503,450,503,p.line,3);
+ // Environmental depth: foreground stones, roots and biome-specific silhouettes.
+ ctx.save();ctx.globalAlpha=.32;for(let i=0;i<16;i++){const x=((i*83-state.time*7)%520+520)%520-35,y=465+(i%4)*8;ctx.fillStyle=i%2?p.line:p.tree2;ctx.beginPath();ctx.ellipse(x,y,13+(i%3)*4,3+(i%2)*2,(i%3-.8)*.12,0,Math.PI*2);ctx.fill()}ctx.restore();
+ for(let i=0;i<12;i++){const x=((i*47-state.time*(def.biome==="cave"?2:8))%490+490)%490-20;ctx.strokeStyle=p.line;ctx.globalAlpha=.3;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,500);ctx.quadraticCurveTo(x-8,484,x+3,470-(i%3)*7);ctx.stroke();ctx.globalAlpha=1}
+ if(def.biome==="cave"||def.biome==="ruins"){for(let i=0;i<7;i++){const x=i*76+12;ctx.fillStyle=def.biome==="cave"?"#252b4c":"#7a806d";ctx.beginPath();ctx.moveTo(x,405);ctx.lineTo(x+14,376+(i%2)*12);ctx.lineTo(x+30,405);ctx.closePath();ctx.fill()}}
+ for(const mote of state.stars){ctx.globalAlpha=mote.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(mote.x,mote.y,mote.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
 }
 function drawHeader(){
  rounded(10,9,430,59,16,"#0c1730eF","#8ca9ce66",1.5);
@@ -387,8 +407,13 @@ function drawUpgradeOverlay(){
  const items=[{rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń za poziom",cost:30+profile.attackRank*20},{rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20},{rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18}];
  let y=292;for(const item of items){rounded(57,y,336,75,13,"#17405d","#8eb9b9",1);text(item.title,72,y+17,10,"#fff5df",1000);text(item.desc,72,y+39,8,"#c5e6df",700);text("POZ. "+item.rank,72,y+59,8,"#ffdd87",900);button(285,y+17,93,41,String(item.cost),"MONET",profile.coins>=item.cost);y+=82}text("MONETY: "+profile.coins,225,548,10,"#ffe39a",1000,"center");button(113,562,224,36,"WRÓĆ DO BAZY","",true);
 }
+function drawLevelChoiceOverlay(){
+ ctx.fillStyle="#030a17df";ctx.fillRect(0,0,W,H);glow(225,185,170,"#62d8ee",.14);rounded(25,170,400,455,24,"#0c1c32","#8ac6df",2);rounded(34,179,382,437,18,"#183550","#557f9c",1);text("AWANS BOHATERA",225,211,21,"#fff4dc",1000,"center");text("WYBIERZ JEDNĄ Z TRZECH UMIEJĘTNOŚCI",225,238,9,"#a8f3e8",900,"center");
+ const cards=state.levelChoices||[];for(let i=0;i<cards.length;i++){const a=cards[i],y=270+i*108;ctx.save();ctx.shadowColor=a.color+"66";ctx.shadowBlur=14;rounded(49,y,352,94,14,"#102941","#ffffff35",1.2);ctx.restore();rounded(59,y+10,42,42,12,a.color+"28",a.color,1.5);text(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠"][abilityPool.findIndex(v=>v.id===a.id)],80,y+31,21,a.color,1000,"center");text(a.tag,114,y+19,8,a.color,1000);text(a.name,114,y+39,13,"#fff5e7",1000);text(a.desc,114,y+62,9,"#d7e8f3",800);text("POZ. "+((state.runSkills[a.id]||0)+1)+"/"+a.max,382,y+78,8,"#b5cbe0",900,"right");button(325,y+9,62,28,"WYBIERZ","",true)}text("DECYZJA WPŁYNIE NA TĘ WYPRAWĘ",225,603,8,"#b3cce0",900,"center");
+}
 function drawOverlay(){
  if(state.paused&&state.screen==="game"){ctx.fillStyle="#050d1cbb";ctx.fillRect(0,0,W,H);rounded(49,271,352,274,23,"#16405a","#c4e4d5",2);rounded(58,280,334,256,17,"#2b5d77","#88b8af",1);text("PAUZA",225,319,24,"#fff5e7",1000,"center");text("WYPRAWA WSTRZYMANA",225,344,9,"#b4f1e2",900,"center");button(107,370,236,45,"WRÓĆ DO GRY","",true);button(107,428,236,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);button(107,483,236,43,"MENU GŁÓWNE","ZAKOŃCZ TĘ WYPRAWĘ",false)}
+ if(state.levelChoices)drawLevelChoiceOverlay();
  if(state.stageCleared){ctx.fillStyle="#071a28c9";ctx.fillRect(0,0,W,H);rounded(38,270,374,250,23,"#1a4a61","#f0d17e",2);rounded(47,279,356,232,17,"#347b83","#a9d8bd",1);glow(225,330,108,"#ffd166",.18);text("ETAP UKOŃCZONY!",225,315,22,"#fff5d9",1000,"center");text(stageDefinition().title,225,342,12,"#c8fff0",900,"center");text("+"+state.stageReward+" MONET    +"+state.stageXp+" XP",225,385,14,"#ffe18a",1000,"center");text("NOWY ETAP: "+(state.stage+1),225,414,10,"#e5fff1",900,"center");button(101,444,248,50,"NASTĘPNY ETAP","",true)}
  if(state.over){ctx.fillStyle="#050d1ccc";ctx.fillRect(0,0,W,H);rounded(38,272,374,251,23,"#17213d","#e8be71",2);rounded(47,281,356,233,17,"#25334f","#8c9bb8",1);glow(225,330,115,"#ff9a71",.17);text("KONIEC WYPRAWY",225,321,22,"#fff3e8",1000,"center");text("WYNIK  "+state.score,225,367,18,"#ffdf86",1000,"center");text("POKONANI WROGOWIE: "+state.kills,225,395,10,"#dce7ff",900,"center");text("REKORD: "+profile.bestScore,225,416,10,"#9cebdd",900,"center");button(101,448,248,48,"ZAGRAJ PONOWNIE","",true)}
  if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();
@@ -411,10 +436,10 @@ function popText(label,x,y,color="#fff"){state.floaters.push({label,x,y,life:1,c
 function defeat(e){
  state.kills++;state.score+=e.type==="boss"?250:e.type==="porcupine"?35:20;gainCoins(e.type==="boss"?8:1);gainXp(e.type==="boss"?22:e.type==="porcupine"?7:4);
  for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a");
- if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP")}beep(680,.09,"triangle");
+ if(state.runHealOnKill)state.hp=Math.min(state.maxHp,state.hp+state.runHealOnKill);if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP")}beep(680,.09,"triangle");
 }
 function reward(type){
- if(type==="coin"){gainCoins(5);state.score+=30;popText("+5 MONET",225,633,"#ffdf79")}
+ if(type==="coin"){const amount=Math.round(5*(1+state.runLootBonus));gainCoins(amount);state.score+=30;popText("+"+amount+" MONET",225,633,"#ffdf79")}
  if(type==="gem"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=50;popText("ATAK +1",225,633,"#80fff0")}
  if(type==="heart"){state.hp=Math.min(state.maxHp,state.hp+28);state.score+=20;popText("+28 ŻYCIA",225,633,"#ff8eae")}
  if(type==="star"){state.shield+=18;state.score+=40;popText("TARCZA +18",225,633,"#ffe18a")}
@@ -425,10 +450,10 @@ function combatAttack(){
  if(state.turn!=="player"||!state.started||state.over||!state.enemies.length)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];
  if(e.dying)return;
- const dmg=state.damage+(e.type==="bat"?1:0);
- e.hp-=dmg;e.hit=.26;state.playerHit=.15;state.playerAction="attack";state.playerActionDuration=.42;state.playerActionTimer=.42;
+ const critical=Math.random()<state.runCrit,dmg=(state.damage+(e.type==="bat"?1:0))*(critical?2:1);
+ e.hp-=dmg+state.runVenom;e.hit=.26;state.playerHit=.15;state.playerAction="attack";state.playerActionDuration=.42;state.playerActionTimer=.42;
  for(let i=0;i<7;i++)particle(e.x,e.y,"#ffdd91",rand(2,4));
- popText("-"+dmg,e.x,e.y-45,"#ffe38b");state.score+=5;
+ popText((critical?"KRYTYK ":"-")+dmg,e.x,e.y-45,critical?"#ff9b63":"#ffe38b");state.score+=5;
  state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
 }
 function combatDefend(){
@@ -439,7 +464,7 @@ function combatSkill(){
  if(state.turn!=="player"||!state.started||state.over||state.stageCleared||!state.skillReady)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];if(!e)return;
  if(e.dying)return;
- const dmg=state.damage*2+3;e.hp-=dmg;state.skillReady=false;state.skillCooldown=4.5;state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
+ const dmg=state.damage*2+3+state.runSkillBonus;e.hp-=dmg;state.skillReady=false;state.skillCooldown=Math.max(2.2,4.5-(state.runSkills.storm||0)*.25);state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
  state.playerHit=.25;for(let i=0;i<18;i++)particle(e.x,e.y,pick(["#a7ffff","#ffdb78","#ff9bbd"]),rand(3,6));
  popText("SUPER -"+dmg,e.x,e.y-48,"#ffb8ff");notify("MOCNY CIOS!");state.turn="enemy";state.turnTimer=.85;state.defending=false;beep(880,.15,"sawtooth");
  setTimeout(()=>{state.skillReady=true},4500);
@@ -477,6 +502,7 @@ function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
 function reset(){return startRun(profile.unlockedStage)}
 function interact(x,y){
+ if(state.levelChoices){if(y>=270&&y<=600){const index=clamp(Math.floor((y-270)/108),0,2);chooseAbility(index)}return}
  if(state.settingsOpen){if(y>=345&&y<=400&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}if(y>=415&&y<=480&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}beep(420,.05);return}if(y>=500&&y<=565){state.settingsOpen=false;return}return}
  if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){state.upgradesOpen=false;return}return}
  if(state.helpOpen){if(y>=545&&y<=610){state.helpOpen=false;return}return}
@@ -520,7 +546,7 @@ window.addEventListener("keydown",e=>{
 });
 function update(dt){
  state.time+=dt;if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
- if(state.screen!=="game"||state.paused||state.over||state.stageCleared)return;
+ if(state.screen!=="game"||state.paused||state.over||state.stageCleared||state.levelChoices)return;
  updateCharacterAnimations(dt);for(const e of state.enemies)e.phase+=dt*2;
  if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
  const alive=[];for(const e of state.enemies){if(e.hp<=0&&!e.dying){defeat(e);e.dying=true;e.action="death";e.deathTimer=.46;e.actionTimer=0}if(e.dying&&e.deathTimer<=0)continue;alive.push(e)}state.enemies=alive;
@@ -530,7 +556,7 @@ function update(dt){
  if(state.playerHit>0)state.playerHit-=dt;
  for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}state.particles=state.particles.filter(p=>p.life>0);if(!state.effects)state.particles=[];
  for(const f of state.floaters){f.y-=22*dt;f.life-=dt}state.floaters=state.floaters.filter(f=>f.life>0);
- if(state.clawMode==="down"){state.clawY=Math.min(713,state.clawY+250*dt);if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}],nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a),tolerance=42+profile.clawRank*4;if(Math.abs(nearest.x-state.clawX)<tolerance){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}}
+ if(state.clawMode==="down"){state.clawY=Math.min(713,state.clawY+250*dt);if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}],nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a),tolerance=42+profile.clawRank*4+state.runClawBonus;if(Math.abs(nearest.x-state.clawX)<tolerance){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}}
  else if(state.clawMode==="return"){state.clawY=Math.max(565,state.clawY-280*dt);if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null}}
  for(const s of state.stars){s.y+=s.v*dt;if(s.y>500)s.y=85}
 }
@@ -540,7 +566,7 @@ function frame(ts){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveClaw,deployClaw,interact,update,stageDefinition};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveClaw,deployClaw,interact,update,stageDefinition};
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 draw();requestAnimationFrame(frame);
 })();

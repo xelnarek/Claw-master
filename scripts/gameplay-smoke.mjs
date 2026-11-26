@@ -178,6 +178,104 @@ game.reward("skill");
 assert.equal(game.state.skillCooldownTurns, 0, "skill prize should restore the turn-based skill charge");
 assert.ok(game.state.runSkillBonus >= 2, "skill prize should also improve the skill build");
 
+// Run passives and enemy archetypes must create visible, turn-bound mechanics.
+game.startRun(1);
+const bleedTarget = game.state.enemies[0];
+bleedTarget.hp = 100;
+bleedTarget.maxHp = 100;
+bleedTarget.x = game.state.playerX + 90;
+bleedTarget.nextAttackTurn = game.state.turnNumber + 5;
+game.state.runBleed = 2;
+game.planEnemyIntents();
+completeClaw("coin");
+const bleedHpBefore = bleedTarget.hp;
+assert.equal(game.combatAttack(), true, "bleed build should perform its normal one attack");
+assert.ok(bleedTarget.hp <= bleedHpBefore - 7, "bleed should add damage during the enemy phase");
+assert.equal(bleedTarget.bleedTurns, 1, "bleed should persist for the remaining enemy-phase tick");
+
+game.startRun(1);
+game.state.runWard = 2;
+game.state.shield = 0;
+game.beginPlayerTurn();
+assert.equal(game.state.shield, 4, "ward passive should restore two shield per level at turn start");
+
+game.startRun(1);
+const poisonSource = game.state.enemies[0];
+const hpBeforePoisonHit = game.state.hp;
+game.applyEnemyHit(poisonSource);
+assert.equal(game.state.poisonTurns, 2, "slime hit should apply two turns of poison");
+const hpBeforePoisonTick = game.state.hp;
+game.beginPlayerTurn();
+assert.equal(hpBeforePoisonTick - game.state.hp, 2, "poison should tick at the start of the player's next turn");
+assert.equal(game.state.poisonTurns, 1, "poison duration should decrease by one turn");
+
+game.startRun(1);
+const goblin = game.spawnEnemy("goblin");
+goblin.x = game.state.playerX + 90;
+goblin.nextAttackTurn = game.state.turnNumber + 4;
+game.state.enemies = [goblin];
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+assert.equal(goblin.intent, "brace", "goblin should telegraph a guarded stance");
+assert.equal(goblin.guard, 3, "goblin should gain a three-point guard while bracing");
+completeClaw("coin");
+const goblinHpBefore = goblin.hp;
+assert.equal(game.combatAttack(), true, "guarded goblin can still be attacked in a normal player turn");
+assert.equal(goblin.guard, 0, "weapon damage should consume goblin guard first");
+assert.equal(goblinHpBefore - goblin.hp, 2, "only damage left after guard absorption should reach goblin health");
+
+game.startRun(1);
+const porcupine = game.spawnEnemy("porcupine");
+porcupine.x = game.state.playerX + 90;
+porcupine.nextAttackTurn = game.state.turnNumber + 4;
+game.state.enemies = [porcupine];
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+assert.equal(porcupine.spinesActive, true, "porcupine should expose its spines while bracing");
+completeClaw("coin");
+const hpBeforeThorns = game.state.hp;
+assert.equal(game.combatAttack(), true, "attacking a braced porcupine should still use one hero action");
+assert.equal(hpBeforeThorns - game.state.hp, 2, "active porcupine spines should reflect a fixed two damage once per turn");
+
+game.startRun(1);
+const boss = game.spawnEnemy("boss");
+boss.hp = Math.ceil(boss.maxHp * .5);
+boss.x = game.state.playerX + 150;
+boss.nextAttackTurn = game.state.turnNumber + 4;
+game.state.enemies = [boss];
+game.planEnemyIntents();
+assert.equal(boss.enraged, true, "boss should enter enrage at half health");
+assert.equal(boss.intent, "brace", "enraged boss should telegraph before its next attack");
+
+game.startRun(1);
+const bat = game.spawnEnemy("bat");
+bat.hp = 100;
+bat.maxHp = 100;
+bat.x = game.state.playerX + 130;
+bat.nextAttackTurn = game.state.turnNumber;
+game.state.enemies = [bat];
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+assert.equal(bat.intent, "attack", "bat should announce a dive when its attack is ready");
+completeClaw("coin");
+assert.equal(game.combatAttack(), true, "bat encounter still requires exactly one hero attack");
+assert.equal(bat.action, "dive", "bat enemy phase should resolve with a dive action");
+assert.equal(bat.x, game.state.playerX + 105, "bat dive should reposition through a discrete turn step");
+
+game.startRun(1);
+const animationTarget = game.state.enemies[0];
+animationTarget.hp = 100;
+animationTarget.maxHp = 100;
+animationTarget.x = game.state.playerX + 90;
+animationTarget.nextAttackTurn = game.state.turnNumber + 5;
+game.state.enemies = [animationTarget];
+game.state.selectedEnemy = 0;
+game.planEnemyIntents();
+completeClaw("coin");
+assert.equal(game.combatAttack(), true, "test attack animation should resolve");
+assert.equal(game.state.playerAction, "attack", "committed attack animation should survive entry into the next turn");
+assert.ok(game.state.playerActionTimer > 0, "committed attack should retain its presentation timer");
+
 const oldAttackRank = game.profile.attackRank;
 game.profile.coins += 100;
 game.saveProfile();

@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Claw Quest — mobilny 2D roguelite: turowa walka, chwytak z łupami i wybór umiejętności przy każdym awansie.">
+<meta name="description" content="Claw Quest — mobilny arcade roguelite: dynamiczna walka w czasie rzeczywistym, broń zdobywana chwytakiem i rozwój postaci.">
 <title>Claw Quest — Arcade Roguelite</title>
 <style>
 :root{color-scheme:dark;--ink:#fff8eb;--muted:#aebbd5;--panel:#172541;--line:rgba(255,255,255,.16);--gold:#ffd166;--cyan:#67e8e5;--navy:#101a34;--blue:#29466f}
@@ -30,7 +30,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 <main id="game-wrap" aria-label="Claw Master Arcade Quest">
 <canvas id="game" width="450" height="800" aria-label="Gra Claw Master Arcade Quest"></canvas>
 <div id="toast" role="status"></div>
-<div id="hint">TUROWA WALKA • J ATAK • K OBRONA • L SUPER • CHWYTAK NA DOLE</div>
+<div id="hint">RUCH ◀ ▶ / DOTYK ARENY • J SERIA • K OSŁONA • L SUPER • CHWYTAK</div>
 </main>
 <script>
 (() => {
@@ -181,7 +181,7 @@ function drawHealth(){
  rounded(13,77,424,44,13,"#14334cdd","#c4edf377",1.2);text("♥",29,99,17,"#ff7188",1000,"center");rounded(49,89,229,19,9,"#243b50","#8aa6b5",1);
  const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(49,0,278,0);gr.addColorStop(0,"#ff6b7d");gr.addColorStop(.58,"#ff9b69");gr.addColorStop(1,"#ffe07b");if(pct>0)rounded(50,90,227*pct,17,8,gr);
  for(let i=1;i<5;i++)line(49+i*45.8,91,49+i*45.8,106,"#142a3d88",1);text(Math.ceil(state.hp)+" / "+state.maxHp,163,99,10,"#fff",1000,"center");
- rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("ATK "+state.damage,322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");
+ rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("DMG "+currentWeaponDamage(),322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");
 }
 function drawHero(x,y){
  const duration=Math.max(.001,state.playerActionDuration||.42);
@@ -246,11 +246,7 @@ function drawHero(x,y){
  if(special&&progress>.08&&progress<.96){ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.5)*1.7)*.75;ctx.strokeStyle="#9effff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(15,-29,45,-1.6,-.1);ctx.stroke();ctx.restore()}
  
 // readable attack slash trail and guard shield
- if((attack||special)&&progress>.12&&progress<.94){
-  ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.52)*1.5)*.72;ctx.strokeStyle=special?"#9effff":"#fff0a8";ctx.lineWidth=special?5:3;
-  ctx.beginPath();ctx.arc(15,-29,special?48:39,-1.65,-.12);ctx.stroke();ctx.restore();
- }
- if(guard){
+  if(guard){
   ctx.save();ctx.translate(27,-25);
   ctx.fillStyle="#398bb6";ctx.strokeStyle="#a4efff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(15,-14);ctx.lineTo(13,6);ctx.quadraticCurveTo(0,21,-13,6);ctx.lineTo(-15,-14);ctx.closePath();ctx.fill();ctx.stroke();
   line(-6,-8,6,7,"#e4ffff",2);line(6,-8,-6,7,"#e4ffff",2);ctx.restore();
@@ -360,7 +356,7 @@ function drawArena(){
  ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();drawHero(state.playerX,state.playerY);
  const active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  const threat=active.reduce((a,b)=>!a||b.x>a.x?b:a,null);
- for(const e of state.enemies){drawEnemy(e);if(e===threat&&state.playerInvuln<=0&&Math.abs(e.x-state.playerX)<105&&!e.dying)pill(e.x-32,e.y-82,64,"ATAKUJE!","#743e42","#ffe6bd")}
+ for(const e of state.enemies){drawEnemy(e);if(e.action==="attack"&&!e.dying)pill(e.x-32,e.y-82,64,"ATAKUJE!","#743e42","#ffe6bd")}
  drawCombatImpacts();
  for(const b of state.bullets){
   ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));
@@ -511,10 +507,10 @@ function drawHelpOverlay(){
   text("PĘTLA ROZGRYWKI  /  STEROWANIE",225,258,8,"#aa916c",900,"center");
   line(59,278,391,278,"#ffffff20",1);
   const rows=[
-   ["01","WYBIERZ CEL","Dotknij przeciwnika na arenie, aby go oznaczyć."],
-   ["02","WYKONAJ CHWYT","Przesuń chwytak i uruchom go przyciskiem ZŁAP."],
-   ["03","WYKORZYSTAJ TURĘ","Po chwycie wybierz atak, obronę lub superatak."],
-   ["04","ROZWIJAJ POSTAĆ","Zbieraj XP, wybieraj umiejętności i kupuj ulepszenia."]
+   ["01","PORUSZAJ SIĘ","Dotknij lewej części areny lub użyj przycisków kierunkowych."],
+   ["02","AUTOMATYCZNY OSTRZAŁ","Bohater sam atakuje najbliższego przeciwnika wyposażoną bronią."],
+   ["03","ZDOBYWAJ WYPOSAŻENIE","Ustaw chwytak, łap broń i przedmioty; po chwili maszyna się odnawia."],
+   ["04","BUDUJ SWOJĄ POSTAĆ","Zbieraj XP, wybieraj umiejętności i ulepszaj broń."]
   ];
   let y=311;
   for(const r of rows){
@@ -526,7 +522,7 @@ function drawHelpOverlay(){
   }
   rounded(59,528,332,40,4,"#151d20","#655840",1);
   text("RUCH A/D LUB ←/→  •  CHWYT SPACJA / F",225,541,7.5,"#d6c5a4",900,"center");
-  text("J ATAK  •  K OBRONA  •  L SUPER  •  ESC PAUZA",225,556,7.2,"#9ca7a2",800,"center");
+  text("RUCH: DOTKNIJ LEWEJ STRONY ARENY / ◀ ▶  •  J SERIA  •  K OSŁONA  •  L SUPER",225,556,6.8,"#9ca7a2",800,"center");
   button(112,575,226,28,"WRÓĆ DO BAZY","",true);
 }
 
@@ -630,7 +626,7 @@ function draw(){
 function spawnEnemy(typeOverride=null){
  const stage=state.stage,types=["slime","bat","goblin","porcupine"],boss=typeOverride==="boss"||(typeOverride===null&&stage%5===0&&!state.bossSpawned);
  const type=boss?"boss":(typeOverride||pick(stage<=2?["slime","slime","bat"]:types)),scale=Math.max(0,stage-1),stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5},max=stats.hp+Math.floor(scale*2.2);
- state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+scale*.6,damage:stats.damage+Math.floor(scale/3),phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
+ state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+scale*.6,damage:stats.damage+Math.floor(scale/3),attackCooldown:rand(.55,1.2),phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
@@ -660,7 +656,7 @@ function reward(type){
  if(type==="xp"){gainXp(12);state.score+=25;popText("+12 XP",225,633,"#a8e9ff")}
  if(type==="ammo"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=35;popText("AMUNICJA +1 ATK",225,633,"#9fffe5")}
  if(type==="weapon"){
-  const choices=weaponCatalog.filter(w=>w.id!==state.weaponId),picked=choices.length?pick(choices):weaponForRun();
+  const picked=pick(weaponCatalog);
   if(picked.id===state.weaponId)state.weaponLevel=Math.min(3,state.weaponLevel+1);else{state.weaponId=picked.id;state.weaponLevel=1}
   state.fireCooldown=0;state.score+=80;popText("NOWA BROŃ: "+picked.name.toUpperCase(),225,633,picked.color);notify("ZDOBYTO: "+picked.name.toUpperCase());
  }
@@ -679,7 +675,7 @@ function findCombatTarget(){const active=state.enemies.filter(e=>!e.dying&&e.hp>
 function fireWeapon(pelletCount=null){
  if(!state.started||state.over||state.paused||state.levelChoices)return 0;
  const weapon=weaponForRun(),target=findCombatTarget();if(!target)return 0;
- const count=pelletCount??weapon.pellets,baseDamage=currentWeaponDamage(),originX=state.playerX+28,originY=state.playerY-30;
+ const count=pelletCount??weapon.pellets,baseDamage=currentWeaponDamage()+state.runVenom,originX=state.playerX+28,originY=state.playerY-30;
  for(let i=0;i<count;i++){
   const offset=i-(count-1)/2,angle=Math.atan2(target.y-22-originY,target.x-originX)+offset*weapon.spread;
   state.bullets.push({x:originX,y:originY,vx:Math.cos(angle)*weapon.speed,vy:Math.sin(angle)*weapon.speed,damage:baseDamage,radius:weapon.radius,color:weapon.color,type:weapon.id,life:1.35,splash:weapon.splash||0,pierce:weapon.pierce||0,critical:Math.random()<state.runCrit});
@@ -798,7 +794,7 @@ function update(dt){
  state.clawCooldown=Math.max(0,state.clawCooldown-dt);if(state.clawCooldown<=0)state.clawUsedThisTurn=false;
  for(let i=0;i<state.enemies.length;i++){
   const e=state.enemies[i];e.phase+=dt*2;if(e.dying)continue;
-  const targetX=state.playerX+58+i*25;if(e.x>targetX)e.x=Math.max(targetX,e.x-e.speed*dt);
+  const targetX=state.playerX+58+i*45;if(e.x>targetX)e.x=Math.max(targetX,e.x-e.speed*dt);
   e.attackCooldown=(e.attackCooldown??rand(.6,1.2))-dt;
   if(e.x<=targetX+2&&e.attackCooldown<=0&&state.playerInvuln<=0){applyEnemyHit(e);e.attackCooldown=e.type==="boss"?1.05:1.42}
  }
@@ -821,7 +817,7 @@ function update(dt){
  state.bullets=remaining;
  for(const e of state.enemies)if(e.hp<=0&&!e.dying){defeat(e);e.dying=true;e.action="death";e.deathTimer=.46;e.actionTimer=0}
  state.enemies=state.enemies.filter(e=>!e.dying||e.deathTimer>0);
- if(!state.enemies.length){if(state.stageWave<stageDefinition().waves.length)spawnStageWave();else completeStage()}
+ if(!state.enemies.length&&state.clawMode==="idle"){if(state.stageWave<stageDefinition().waves.length)spawnStageWave();else completeStage()}
  if(state.hp<=0){state.hp=0;state.over=true;profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=profile.bestScore;profile.bestStage=Math.max(profile.bestStage,state.stage);saveProfile();return}
  if(state.playerHit>0)state.playerHit-=dt;
  for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}
@@ -850,7 +846,7 @@ function frame(ts){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveClaw,deployClaw,interact,update,stageDefinition};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition};
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 draw();requestAnimationFrame(frame);
 })();

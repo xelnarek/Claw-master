@@ -42,12 +42,35 @@ const state={
  time:0,last:0,spawn:0,shot:0,turn:"player",turnTimer:0,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:310,clawTimer:0,grabbed:null,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
- enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,
+ enemies:[],bullets:[],particles:[],loot:[],stars:[],floaters:[],skillReady:true,skillCooldown:0,
+ stage:1,stageWave:0,stageCleared:false,stageReward:0,stageXp:0,runDamageBonus:0,threatEnemy:null,upgradesOpen:false,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
 };
 const COLORS={navy:"#111d39",deep:"#0b1530",panel:"#1a2a4b",cyan:"#57e5e8",gold:"#ffd166",orange:"#ff8b55",pink:"#ff6ba8",violet:"#9d82ff",green:"#7ce6a2"};
+const PROFILE_KEY="clawQuestProfileV1";
+const stageCatalog=[
+ {title:"Polana Początku",biome:"meadow",objective:"Wybierz cel i wykonaj pierwszy atak.",waves:[["slime"],["slime","slime"]],coins:20,xp:18},
+ {title:"Zarośnięta Ścieżka",biome:"forest",objective:"Uważaj na szybkie nietoperze.",waves:[["slime","slime"],["slime","bat"]],coins:28,xp:26},
+ {title:"Nora Zmierzchu",biome:"cave",objective:"Jeżoryj zadaje mocniejsze obrażenia.",waves:[["bat","slime"],["porcupine","slime","bat"]],coins:38,xp:34},
+ {title:"Ruiny Strażników",biome:"ruins",objective:"Gobliny i kolczaste bestie blokują przejście.",waves:[["goblin","goblin","bat"],["porcupine","goblin","slime"]],coins:50,xp:42},
+ {title:"Leśny Strażnik",biome:"boss",objective:"Pokonaj Strażnika i zakończ pierwszy rozdział.",waves:[["boss","porcupine"]],coins:85,xp:70}
+];
+const starterProfile=()=>({coins:0,xp:0,level:1,attackRank:0,vitalityRank:0,clawRank:0,unlockedStage:1,bestStage:1,bestScore:0});
+function loadProfile(){try{const raw=localStorage.getItem(PROFILE_KEY);if(!raw)return starterProfile();const data=JSON.parse(raw),base=starterProfile();for(const key of Object.keys(base)){const value=Number(data?.[key]);base[key]=Number.isFinite(value)?Math.max(0,Math.floor(value)):base[key]}base.level=Math.max(1,base.level);base.unlockedStage=Math.max(1,Math.min(99,base.unlockedStage));return base}catch(e){return starterProfile()}}
+let profile=loadProfile();
+function saveProfile(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));return true}catch(e){return false}}
+function stageDefinition(stage=state.stage){if(stage<=stageCatalog.length)return stageCatalog[Math.max(0,stage-1)];const n=stage-stageCatalog.length;return {title:"Dzika Knieja "+n,biome:n%3===0?"ruins":n%3===1?"forest":"cave",objective:"Przetrwaj kolejne fale i zbieraj łupy.",waves:[["slime","bat","goblin"],["porcupine","goblin","bat"],["porcupine","goblin","slime","bat"]],coins:55+n*8,xp:45+n*5}}
+function gainCoins(amount){const n=Math.max(0,Math.floor(amount));profile.coins+=n;state.coins=profile.coins;saveProfile();return n}
+function gainXp(amount){profile.xp+=Math.max(0,Math.floor(amount));let levels=0;while(profile.xp>=profile.level*30){profile.xp-=profile.level*30;profile.level++;levels++}if(levels)notify("POZIOM BOHATERA "+profile.level+"!");saveProfile();return levels}
+function effectiveDamage(){return 4+profile.attackRank+state.runDamageBonus}
+function effectiveMaxHp(){return 100+profile.vitalityRank*15}
+function purchaseUpgrade(kind){const cfg={attack:{rank:"attackRank",base:30,step:20},vitality:{rank:"vitalityRank",base:35,step:20},claw:{rank:"clawRank",base:25,step:18}}[kind];if(!cfg)return false;const rank=profile[cfg.rank],cost=cfg.base+rank*cfg.step;if(profile.coins<cost)return false;profile.coins-=cost;profile[cfg.rank]++;state.coins=profile.coins;const oldMax=state.maxHp;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();if(kind==="vitality"&&state.started)state.hp=Math.min(state.maxHp,state.hp+state.maxHp-oldMax);saveProfile();beep(620,.08,"triangle");return true}
+function spawnStageWave(){const def=stageDefinition();if(state.stageWave>=def.waves.length){completeStage();return}const types=def.waves[state.stageWave++];state.wave=state.stageWave;state.enemies=[];state.selectedEnemy=0;state.threatEnemy=null;for(const type of types)spawnEnemy(type);notify("ETAP "+state.stage+" • FALA "+state.wave)}
+function completeStage(){if(state.stageCleared)return false;const def=stageDefinition();state.stageCleared=true;state.stageReward=def.coins;state.stageXp=def.xp;gainCoins(def.coins);gainXp(def.xp);profile.unlockedStage=Math.max(profile.unlockedStage,state.stage+1);profile.bestStage=Math.max(profile.bestStage,state.stage);profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=Math.max(state.bestScore,state.score);saveProfile();state.hp=Math.min(state.maxHp,state.hp+15);notify("ETAP UKOŃCZONY • NAGRODA ODEBRANA");return true}
+function advanceStage(){if(!state.stageCleared)return false;state.stage++;state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.enemies=[];state.selectedEnemy=0;state.turn="player";state.turnTimer=0;state.defending=false;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();state.hp=Math.min(state.maxHp,state.hp);spawnStageWave();return true}
+function startRun(stage=profile.unlockedStage){state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.skillCooldown=0;state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.runDamageBonus=0;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;spawnStageWave();notify("WYPRAWA ROZPOCZĘTA!")}
 let audio=null;
-try{state.sound=localStorage.getItem("clawQuestSound")==="true";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
+try{state.coins=profile.coins;state.bestScore=profile.bestScore;state.sound=localStorage.getItem("clawQuestSound")==="true";state.effects=localStorage.getItem("clawQuestEffects")!=="false";state.bestScore=Number(localStorage.getItem("clawQuestBest")||0)||0}catch(e){}
 function beep(freq=440,duration=.07,type="sine",volume=.035){
  if(!state.sound)return;
  try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.value=volume;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.stop(audio.currentTime+duration)}catch(e){}
@@ -80,20 +103,20 @@ function button(x,y,w,h,label,sub,active=false){
  if(sub)text(sub,x+w/2,y+h*.76,Math.min(9,w/Math.max(7,sub.length*.54)),active?"#70491f":"#c9dbf3",900,"center");
 }
 function drawBackground(){
- const g=ctx.createLinearGradient(0,80,0,505);g.addColorStop(0,"#243e71");g.addColorStop(.55,"#2b6d77");g.addColorStop(1,"#193d4d");ctx.fillStyle=g;ctx.fillRect(0,75,W,430);
- glow(345,170,125,"#ffcf78",.24);
- // soft clouds
- for(let i=0;i<4;i++){const x=((i*137-state.time*5)%570+570)%570-60,y=135+(i%2)*54;ctx.globalAlpha=.13;ctx.fillStyle="#e5f5ff";ctx.beginPath();ctx.ellipse(x,y,38,11,0,0,Math.PI*2);ctx.ellipse(x+20,y-7,22,12,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
- // distant hills
- ctx.fillStyle="#255b61";ctx.beginPath();ctx.moveTo(0,354);ctx.quadraticCurveTo(70,280,145,355);ctx.quadraticCurveTo(250,265,340,355);ctx.quadraticCurveTo(405,300,450,344);ctx.lineTo(450,505);ctx.lineTo(0,505);ctx.fill();
- // decorative trees
- for(let i=0;i<9;i++){const x=i*59-14;const h=65+(i*31)%65;ctx.fillStyle=i%2?"#174b50":"#1b5554";ctx.fillRect(x+16,365-h*.5,10,h*.7);ctx.beginPath();ctx.arc(x+21,360-h*.55,30+(i%3)*5,0,Math.PI*2);ctx.fill()}
- // arena floor
- const floor=ctx.createLinearGradient(0,405,0,505);floor.addColorStop(0,"#386b59");floor.addColorStop(1,"#1b3947");ctx.fillStyle=floor;ctx.fillRect(0,405,W,100);
- for(let i=0;i<18;i++){const x=i*29+(i%2)*8;ctx.fillStyle=i%2?"#9fbc8050":"#cce39a32";ctx.beginPath();ctx.ellipse(x,455+(i%3)*10,7,2,0,0,Math.PI*2);ctx.fill()}
- line(0,503,450,503,"#87d69b",3);
- // ambience motes
- for(const p of state.stars){ctx.globalAlpha=p.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ const def=stageDefinition(),palettes={
+ meadow:{sky1:"#69b9dc",sky2:"#72c9a4",sky3:"#327b64",hill:"#3d8a61",tree:"#236b4d",tree2:"#2d8059",floor1:"#8acb76",floor2:"#467c52",line:"#d5ef9d"},
+ forest:{sky1:"#397d9d",sky2:"#397e73",sky3:"#173d42",hill:"#205c4d",tree:"#123f38",tree2:"#1e5b4b",floor1:"#54865b",floor2:"#234d45",line:"#8bc98e"},
+ cave:{sky1:"#4d588d",sky2:"#383d6d",sky3:"#182641",hill:"#454b77",tree:"#292f5b",tree2:"#343a70",floor1:"#62618a",floor2:"#303658",line:"#b3a4e8"},
+ ruins:{sky1:"#8d9b9f",sky2:"#637c79",sky3:"#344b50",hill:"#5c7060",tree:"#354b43",tree2:"#51614b",floor1:"#9d9169",floor2:"#5b644f",line:"#d6c78c"},
+ boss:{sky1:"#765d7e",sky2:"#563d5e",sky3:"#231f3e",hill:"#42324e",tree:"#2d2542",tree2:"#49304b",floor1:"#71535f",floor2:"#3a2d48",line:"#f0a18c"}};
+ const p=palettes[def.biome]||palettes.forest,g=ctx.createLinearGradient(0,80,0,505);g.addColorStop(0,p.sky1);g.addColorStop(.55,p.sky2);g.addColorStop(1,p.sky3);
+ ctx.fillStyle=g;ctx.fillRect(0,75,W,430);glow(345,170,125,def.biome==="boss"?"#ff947d":"#ffe39b",.2);
+ for(let i=0;i<4;i++){const x=((i*137-state.time*5)%570+570)%570-60,y=135+(i%2)*54;ctx.globalAlpha=.12;ctx.fillStyle="#f4ffff";ctx.beginPath();ctx.ellipse(x,y,38,11,0,0,Math.PI*2);ctx.ellipse(x+20,y-7,22,12,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ ctx.fillStyle=p.hill;ctx.beginPath();ctx.moveTo(0,354);ctx.quadraticCurveTo(70,280,145,355);ctx.quadraticCurveTo(250,265,340,355);ctx.quadraticCurveTo(405,300,450,344);ctx.lineTo(450,505);ctx.lineTo(0,505);ctx.fill();
+ for(let i=0;i<9;i++){const x=i*59-14,high=65+(i*31)%65;ctx.fillStyle=p.tree;ctx.fillRect(x+16,365-high*.5,10,high*.7);ctx.fillStyle=i%2?p.tree2:p.tree;ctx.beginPath();ctx.arc(x+21,360-high*.55,30+(i%3)*5,0,Math.PI*2);ctx.fill()}
+ const floor=ctx.createLinearGradient(0,405,0,505);floor.addColorStop(0,p.floor1);floor.addColorStop(1,p.floor2);ctx.fillStyle=floor;ctx.fillRect(0,405,W,100);
+ for(let i=0;i<18;i++){const x=i*29+(i%2)*8;ctx.fillStyle=i%2?"#ffffff24":"#fff2bf30";ctx.beginPath();ctx.ellipse(x,455+(i%3)*10,7,2,0,0,Math.PI*2);ctx.fill()}
+ line(0,503,450,503,p.line,3);for(const mote of state.stars){ctx.globalAlpha=mote.a;ctx.fillStyle="#fff4c6";ctx.beginPath();ctx.arc(mote.x,mote.y,mote.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
 }
 function drawHeader(){
  rounded(10,9,430,59,16,"#0c1730eF","#8ca9ce66",1.5);
@@ -107,6 +130,12 @@ function drawHeader(){
  text("◆",282,37,12,"#ffd66d",1000,"center");text(String(state.coins),323,37,13,"#fff0c1",1000,"center");
  rounded(374,20,28,28,9,"#29476b","#91abc9",1.2);text(state.sound?"♫":"♪",388,34,15,"#f9fbff",900,"center");
  rounded(408,20,28,28,9,"#29476b","#91abc9",1.2);text(state.paused?"▶":"Ⅱ",422,34,12,"#f9fbff",900,"center");
+}
+function drawHealth(){
+ rounded(13,77,424,44,13,"#14334cdd","#c4edf377",1.2);text("♥",29,99,17,"#ff7188",1000,"center");rounded(49,89,229,19,9,"#243b50","#8aa6b5",1);
+ const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(49,0,278,0);gr.addColorStop(0,"#ff6b7d");gr.addColorStop(.58,"#ff9b69");gr.addColorStop(1,"#ffe07b");if(pct>0)rounded(50,90,227*pct,17,8,gr);
+ for(let i=1;i<5;i++)line(49+i*45.8,91,49+i*45.8,106,"#142a3d88",1);text(Math.ceil(state.hp)+" / "+state.maxHp,163,99,10,"#fff",1000,"center");
+ rounded(290,86,65,27,9,"#1c5d66","#79dbce",1);text("ATK "+state.damage,322,100,10,"#baffeb",1000,"center");rounded(361,86,75,27,9,"#614a4e","#e4b17d",1);text("WYNIK "+state.score,398,100,10,"#fff0ba",1000,"center");
 }
 function drawHero(x,y){
  const duration=Math.max(.001,state.playerActionDuration||.42);
@@ -211,6 +240,12 @@ function drawEnemy(e){
   rounded(-12,-23,9,12,4,"#fff");rounded(3,-23,9,12,4,"#fff");
   rounded(-9,-19,4,6,2,"#30264d");rounded(6,-19,4,6,2,"#30264d");
   ctx.fillStyle="#fff0b0";ctx.beginPath();ctx.moveTo(-4,-3);ctx.lineTo(-1,3);ctx.lineTo(2,-3);ctx.closePath();ctx.fill();
+ }else if(e.type==="porcupine"){
+  glow(0,-8,43,"#ffbd74",.16);const body=ctx.createLinearGradient(0,-34,0,10);body.addColorStop(0,"#d6b17a");body.addColorStop(1,"#8b5c43");
+  ctx.fillStyle="#5a423c";ctx.strokeStyle="#f1d2a0";ctx.lineWidth=1.5;
+  for(let i=0;i<13;i++){const a=-Math.PI*.93+i*(Math.PI*1.86/12),inner=19,outer=38+(i%3)*3;ctx.beginPath();ctx.moveTo(Math.cos(a)*inner,Math.sin(a)*inner-12);ctx.lineTo(Math.cos(a+.12)*outer,Math.sin(a+.12)*outer-12);ctx.lineTo(Math.cos(a-.12)*outer,Math.sin(a-.12)*outer-12);ctx.closePath();ctx.fill();ctx.stroke()}
+  ctx.fillStyle=body;ctx.beginPath();ctx.ellipse(0,-8,26,20,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#f0c9a0";ctx.beginPath();ctx.ellipse(18,-6,12,10,.1,0,Math.PI*2);ctx.fill();
+  rounded(5,-23,8,11,4,"#fff4d7");rounded(16,-22,8,11,4,"#fff4d7");rounded(8,-20,4,7,2,"#2f3747");rounded(19,-19,4,7,2,"#2f3747");ctx.fillStyle="#54383a";ctx.beginPath();ctx.arc(27,-7,4,0,Math.PI*2);ctx.fill();line(-8,-1,3,3,"#694541",1.5);
  }else if(e.type==="boss"){
   const pulse=1+Math.sin(state.time*3+e.phase)*.035;
   ctx.save();ctx.scale(pulse,pulse);
@@ -246,33 +281,17 @@ function drawEnemy(e){
  ctx.restore();
 }
 function drawArena(){
- drawBackground();
- rounded(15,126,136,25,10,"#102a42dd","#7dc9c066",1);
- text("✦  LEŚNA POLANA",83,139,10,"#d5ffe8",1000,"center");
- glow(405,365,48,"#d47fff",.17);
- line(14,416,436,416,"#c8ffd233",1);line(14,505,436,505,"#b5e7bd88",2);
- ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();
- drawHero(state.playerX,state.playerY);
- for(let i=0;i<state.enemies.length;i++){
-  const e=state.enemies[i];drawEnemy(e);
-  if(i===state.selectedEnemy&&!e.dying){
-   ctx.save();ctx.strokeStyle="#fff0a3";ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.beginPath();ctx.ellipse(e.x,e.y-17,e.type==="boss"?48:35,e.type==="boss"?54:42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-   glow(e.x,e.y+17,37,"#ffdc83",.12);text("▼",e.x,e.y-(e.type==="boss"?78:69),14,"#fff1a8",1000,"center");ctx.restore();
-  }
- }
+ drawBackground();const def=stageDefinition();rounded(14,126,252,27,10,"#12344ddd","#b1e7d688",1);text("ETAP "+state.stage+"  •  "+def.title.toUpperCase(),140,140,9,"#f4ffea",1000,"center");
+ rounded(343,127,92,25,9,"#213d58dd","#d4e5a277",1);text("FALA "+state.wave+"/"+def.waves.length,389,140,9,"#ffe8a2",1000,"center");text(def.objective,225,166,8,"#efffe9cc",800,"center");
+ glow(405,365,48,"#d47fff",.17);line(14,416,436,416,"#c8ffd233",1);line(14,505,436,505,"#b5e7bd88",2);ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();drawHero(state.playerX,state.playerY);
+ const threat=state.enemies.filter(e=>!e.dying).reduce((a,b)=>!a||b.x>a.x?b:a,null);
+ for(let i=0;i<state.enemies.length;i++){const e=state.enemies[i];drawEnemy(e);if(i===state.selectedEnemy&&!e.dying){ctx.save();ctx.strokeStyle="#fff0a3";ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.beginPath();ctx.ellipse(e.x,e.y-17,e.type==="boss"?48:35,e.type==="boss"?54:42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);glow(e.x,e.y+17,37,"#ffdc83",.12);text("▼",e.x,e.y-(e.type==="boss"?78:69),14,"#fff1a8",1000,"center");ctx.restore()}if(e===threat&&!e.dying&&state.turn==="player")pill(e.x-34,e.y-(e.type==="boss"?91:82),68,"ZAMIERZA!","#713c4d","#ffe5a5")}
  for(const b of state.bullets){glow(b.x,b.y,18,"#79f5ff",.4);ctx.fillStyle="#b9ffff";ctx.beginPath();ctx.ellipse(b.x,b.y,8,4,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#58dfe3";ctx.lineWidth=2;ctx.stroke()}
  for(const p of state.particles){ctx.globalAlpha=p.life/p.max;glow(p.x,p.y,p.size*2,p.color,.3);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
  for(const f of state.floaters){ctx.globalAlpha=clamp(f.life,0,1);text(f.label,f.x,f.y,12,f.color,1000,"center");ctx.globalAlpha=1}
- rounded(13,426,424,66,14,"#0d1b35eF","#7197bc77",1.2);
- const isPlayer=state.turn==="player";
- rounded(22,432,108,22,9,isPlayer?"#174e55":"#553044",isPlayer?"#6dd6bf":"#e890a1",1);
- text(isPlayer?"TWOJA TURA":"TURA WROGA",76,443,9,isPlayer?"#baffea":"#ffd0d7",1000,"center");
- if(state.enemies.length){const target=state.enemies[state.selectedEnemy]||state.enemies[0];text("CEL: "+enemyName(target).toUpperCase(),151,443,9,"#d7e5ff",900,"left")}
- else text("ARENA OCZYSZCZONA",151,443,9,"#d7e5ff",900,"left");
- button(22,459,119,27,"ATAK","J",isPlayer);
- button(151,459,119,27,"OBRONA","K • -65%",isPlayer&&state.defending);
- button(280,459,148,27,"SUPER","L • "+(state.skillReady?"GOTOWA":"ŁADUJE"),isPlayer&&state.skillReady);
- if(state.defending)pill(164,395,120,"POSTAWA OBRONNA","#244e68","#a4f5ff");
+ rounded(13,421,424,74,14,"#15324aeF","#9bc7c777",1.2);const isPlayer=state.turn==="player";rounded(22,427,108,22,9,isPlayer?"#1d695e":"#713e50",isPlayer?"#7ae5c0":"#ef9dad",1);text(isPlayer?"TWOJA TURA":"TURA WROGA",76,438,9,isPlayer?"#caffeb":"#ffd0d7",1000,"center");
+ if(state.enemies.length){const target=state.enemies[state.selectedEnemy]||state.enemies.find(e=>!e.dying);text("CEL: "+enemyName(target).toUpperCase(),151,438,9,"#f2f7ff",900,"left")}else text(state.stageCleared?"ETAP UKOŃCZONY":"ARENA OCZYSZCZONA",151,438,9,"#f2f7ff",900,"left");
+ button(22,456,119,34,"ATAK","J • "+state.damage+" DMG",isPlayer);button(151,456,119,34,"OBRONA","K • -65%",isPlayer&&state.defending);button(280,456,148,34,"SUPER","L • "+(state.skillReady?"GOTOWA":"ŁADUJE "+state.skillCooldown.toFixed(1)+"s"),isPlayer&&state.skillReady);if(state.defending)pill(164,393,120,"POSTAWA OBRONNA","#244e68","#a4f5ff");
 }
 function drawPrize(type,x,y,scale=1){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
@@ -341,23 +360,11 @@ function drawMenuScene(){
  const v=ctx.createRadialGradient(225,390,140,225,390,560);v.addColorStop(0,"transparent");v.addColorStop(1,"#050d1d99");ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawTitle(){
- drawMenuScene();
- rounded(27,25,396,111,24,"#0d1a31dE","#9bc4d777",1.5);
- rounded(39,37,372,87,18,"#172b49dd","#e4c77966",1);
- glow(225,77,92,"#ffd166",.13);
- rounded(55,50,48,48,14,"#eeb84e","#fff0b0",2);text("✦",79,74,28,"#523516",1000,"center");
- text("CLAW QUEST",247,66,27,"#fff7e8",1000,"center");
- text("ARCADE  •  ROGUELITE  •  2D",247,96,10,"#8bf0e7",1000,"center");
- rounded(30,493,390,271,22,"#0d1931ed","#9bb7d4",2);
- rounded(39,502,372,253,17,"#1b3151","#567ca5",1);
- text("BAZA WYPRAWY",225,523,12,"#e8f3ff",1000,"center");line(62,540,388,540,"#d5e5f033",1);
- rounded(53,550,102,43,11,"#142743","#587da0",1);text("NAJLEPSZY WYNIK",104,562,7,"#a8bed9",900,"center");text(String(state.bestScore),104,580,14,"#ffdf86",1000,"center");
- rounded(174,550,102,43,11,"#142743","#587da0",1);text("POKONANI",225,562,7,"#a8bed9",900,"center");text(String(state.kills),225,580,14,"#b7f5e7",1000,"center");
- rounded(295,550,102,43,11,"#142743","#587da0",1);text("MONETY",346,562,7,"#a8bed9",900,"center");text(String(state.coins),346,580,14,"#ffdf86",1000,"center");
- button(66,606,318,57,"ROZPOCZNIJ WYPRAWĘ","WALKA TUROWA  •  CHWYTAK 2D",true);
- button(53,676,165,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);
- button(232,676,165,43,"JAK GRAĆ","ZASADY I STEROWANIE",false);
- text("WYBIERZ CEL  •  ZAPLANUJ RUCH  •  ZDOBĄDŹ ŁUP",225,741,8,"#b9d2df",900,"center");
+ drawMenuScene();const stage=profile.unlockedStage,def=stageDefinition(stage);rounded(27,25,396,111,24,"#10324beF","#c1e6b777",1.5);rounded(39,37,372,87,18,"#27617bdd","#f4d47b88",1);
+ glow(225,77,92,"#ffd166",.13);rounded(55,50,48,48,14,"#f1bf4e","#fff0b0",2);text("✦",79,74,28,"#523516",1000,"center");text("CLAW QUEST",247,66,27,"#fff7e8",1000,"center");text("ARCADE  •  ROGUELITE  •  2D",247,96,10,"#b9fff1",1000,"center");
+ rounded(30,493,390,271,22,"#12344beF","#b7d7ca",2);rounded(39,502,372,253,17,"#2a5971","#81b7ac",1);text("BAZA WYPRAWY",225,522,12,"#f4ffea",1000,"center");line(62,539,388,539,"#e8fff033",1);
+ rounded(52,548,108,46,11,"#183e59","#8ebfb4",1);text("BOHATER",106,560,7,"#c5e2dc",900,"center");text("POZ. "+profile.level,106,579,13,"#ffdf86",1000,"center");rounded(171,548,108,46,11,"#183e59","#8ebfb4",1);text("ETAP ODBLOK.",225,560,7,"#c5e2dc",900,"center");text(String(profile.unlockedStage),225,579,13,"#baffea",1000,"center");rounded(290,548,108,46,11,"#183e59","#8ebfb4",1);text("MONETY",344,560,7,"#c5e2dc",900,"center");text(String(profile.coins),344,579,13,"#ffdf86",1000,"center");
+ rounded(67,598,316,6,3,"#19394e");rounded(67,598,316*clamp(profile.xp/(profile.level*30),0,1),6,3,"#f5d36c");text("XP "+profile.xp+" / "+profile.level*30,225,615,8,"#dbfff0",800,"center");button(66,628,318,48,"KONTYNUUJ ETAP "+stage,def.title.toUpperCase(),true);button(42,687,112,39,"ULEPSZENIA","ROZWÓJ",false);button(169,687,112,39,"OPCJE","DŹWIĘK",false);button(296,687,112,39,"JAK GRAĆ","ZASADY",false);text("NAJLEPSZY WYNIK  "+profile.bestScore,225,746,8,"#d9efe9",900,"center");
 }
 function drawSettingsOverlay(){
  ctx.fillStyle="#050d1cce";ctx.fillRect(0,0,W,H);
@@ -375,32 +382,26 @@ function drawHelpOverlay(){
  let y=321;for(const r of helpRows){rounded(64,y-13,30,30,9,"#eab854","#ffedb1",1);text(r[0],79,y+2,12,"#4c3218",1000,"center");text(r[1],108,y-4,10,"#fff",1000);text(r[2],108,y+13,8.5,"#bed0e5",700);y+=54}
  rounded(64,541,322,26,9,"#142744","#6387ab",1);text("J / K / L  •  ATAK / OBRONA / SUPER",225,554,9,"#ffe29b",900,"center");button(112,565,226,34,"WRÓĆ","",true);
 }
+function drawUpgradeOverlay(){
+ ctx.fillStyle="#061626d9";ctx.fillRect(0,0,W,H);rounded(32,202,386,410,23,"#16435b","#f1d180",2);rounded(41,211,368,392,17,"#2b6580","#8ec7ba",1);text("ROZWÓJ BOHATERA",225,247,20,"#fff7df",1000,"center");text("ULEPSZENIA ZOSTAJĄ NA STAŁE",225,270,9,"#bff9e8",900,"center");
+ const items=[{rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń za poziom",cost:30+profile.attackRank*20},{rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20},{rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18}];
+ let y=292;for(const item of items){rounded(57,y,336,75,13,"#17405d","#8eb9b9",1);text(item.title,72,y+17,10,"#fff5df",1000);text(item.desc,72,y+39,8,"#c5e6df",700);text("POZ. "+item.rank,72,y+59,8,"#ffdd87",900);button(285,y+17,93,41,String(item.cost),"MONET",profile.coins>=item.cost);y+=82}text("MONETY: "+profile.coins,225,548,10,"#ffe39a",1000,"center");button(113,562,224,36,"WRÓĆ DO BAZY","",true);
+}
 function drawOverlay(){
- if(state.paused&&state.screen==="game"){
-  ctx.fillStyle="#050d1cbb";ctx.fillRect(0,0,W,H);
-  rounded(49,271,352,274,23,"#12213d","#a6c3df",2);rounded(58,280,334,256,17,"#1c3454","#668aaa",1);
-  text("PAUZA",225,319,24,"#fff5e7",1000,"center");text("WYPRAWA WSTRZYMANA",225,344,9,"#9bd8df",900,"center");
-  button(107,370,236,45,"WRÓĆ DO GRY","",true);button(107,428,236,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);button(107,483,236,43,"MENU GŁÓWNE","ZAKOŃCZ TĘ WYPRAWĘ",false);
- }
- if(state.over){
-  ctx.fillStyle="#050d1ccc";ctx.fillRect(0,0,W,H);
-  rounded(38,272,374,251,23,"#17213d","#e8be71",2);rounded(47,281,356,233,17,"#25334f","#8c9bb8",1);glow(225,330,115,"#ff9a71",.17);
-  text("KONIEC WYPRAWY",225,321,22,"#fff3e8",1000,"center");text("WYNIK  "+state.score,225,367,18,"#ffdf86",1000,"center");
-  text("POKONANI WROGOWIE: "+state.kills,225,395,10,"#dce7ff",900,"center");text("NAJLEPSZY WYNIK: "+state.bestScore,225,416,10,"#9cebdd",900,"center");
-  button(101,448,248,48,"ZAGRAJ PONOWNIE","",true);
- }
- if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();
+ if(state.paused&&state.screen==="game"){ctx.fillStyle="#050d1cbb";ctx.fillRect(0,0,W,H);rounded(49,271,352,274,23,"#16405a","#c4e4d5",2);rounded(58,280,334,256,17,"#2b5d77","#88b8af",1);text("PAUZA",225,319,24,"#fff5e7",1000,"center");text("WYPRAWA WSTRZYMANA",225,344,9,"#b4f1e2",900,"center");button(107,370,236,45,"WRÓĆ DO GRY","",true);button(107,428,236,43,"USTAWIENIA","DŹWIĘK I EFEKTY",false);button(107,483,236,43,"MENU GŁÓWNE","ZAKOŃCZ TĘ WYPRAWĘ",false)}
+ if(state.stageCleared){ctx.fillStyle="#071a28c9";ctx.fillRect(0,0,W,H);rounded(38,270,374,250,23,"#1a4a61","#f0d17e",2);rounded(47,279,356,232,17,"#347b83","#a9d8bd",1);glow(225,330,108,"#ffd166",.18);text("ETAP UKOŃCZONY!",225,315,22,"#fff5d9",1000,"center");text(stageDefinition().title,225,342,12,"#c8fff0",900,"center");text("+"+state.stageReward+" MONET    +"+state.stageXp+" XP",225,385,14,"#ffe18a",1000,"center");text("NOWY ETAP: "+(state.stage+1),225,414,10,"#e5fff1",900,"center");button(101,444,248,50,"NASTĘPNY ETAP","",true)}
+ if(state.over){ctx.fillStyle="#050d1ccc";ctx.fillRect(0,0,W,H);rounded(38,272,374,251,23,"#17213d","#e8be71",2);rounded(47,281,356,233,17,"#25334f","#8c9bb8",1);glow(225,330,115,"#ff9a71",.17);text("KONIEC WYPRAWY",225,321,22,"#fff3e8",1000,"center");text("WYNIK  "+state.score,225,367,18,"#ffdf86",1000,"center");text("POKONANI WROGOWIE: "+state.kills,225,395,10,"#dce7ff",900,"center");text("REKORD: "+profile.bestScore,225,416,10,"#9cebdd",900,"center");button(101,448,248,48,"ZAGRAJ PONOWNIE","",true)}
+ if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();
 }
 function draw(){
  ctx.clearRect(0,0,W,H);
- if(state.screen==="title"){drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();return}
+ if(state.screen==="title"){drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();return}
  drawHeader();drawHealth();drawArena();drawClawMachine();drawOverlay();
 }
-function spawnEnemy(){
- const wave=state.wave;const boss=wave%5===0&&!state.bossSpawned;
- const type=boss?"boss":pick(["slime","slime","bat","goblin"]);
- const max=boss?32+wave*4:10+Math.floor(wave*1.6);
- state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+wave*1.1,damage:boss?22:6+wave,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
+function spawnEnemy(typeOverride=null){
+ const stage=state.stage,types=["slime","bat","goblin","porcupine"],boss=typeOverride==="boss"||(typeOverride===null&&stage%5===0&&!state.bossSpawned);
+ const type=boss?"boss":(typeOverride||pick(stage<=2?["slime","slime","bat"]:types)),scale=Math.max(0,stage-1),stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5},max=stats.hp+Math.floor(scale*2.2);
+ state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+scale*.6,damage:stats.damage+Math.floor(scale/3),phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
@@ -408,26 +409,22 @@ function particle(x,y,color,size=3){
 }
 function popText(label,x,y,color="#fff"){state.floaters.push({label,x,y,life:1,color})}
 function defeat(e){
- state.kills++;state.score+=e.type==="boss"?250:20;
- const reward=e.type==="boss"?8:1;state.coins+=reward;
- for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));
- popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a");
- if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP");}
- if(e.type!=="boss"&&state.kills>0&&state.kills%8===0){state.wave++;notify("NOWA FALA "+state.wave);state.damage++;state.hp=Math.min(state.maxHp,state.hp+8)}
- beep(680,.09,"triangle");
+ state.kills++;state.score+=e.type==="boss"?250:e.type==="porcupine"?35:20;gainCoins(e.type==="boss"?8:1);gainXp(e.type==="boss"?22:e.type==="porcupine"?7:4);
+ for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a");
+ if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP")}beep(680,.09,"triangle");
 }
 function reward(type){
- if(type==="coin"){state.coins+=5;state.score+=30;popText("+5 MONET",225,633,"#ffdf79")}
- if(type==="gem"){state.damage++;state.score+=50;popText("ATAK +1",225,633,"#80fff0")}
+ if(type==="coin"){gainCoins(5);state.score+=30;popText("+5 MONET",225,633,"#ffdf79")}
+ if(type==="gem"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=50;popText("ATAK +1",225,633,"#80fff0")}
  if(type==="heart"){state.hp=Math.min(state.maxHp,state.hp+28);state.score+=20;popText("+28 ŻYCIA",225,633,"#ff8eae")}
- if(type==="star"){state.shield=5;state.score+=40;popText("TARCZA 5 s",225,633,"#ffe18a")}
- if(type==="bomb"){for(const e of state.enemies)e.hp-=5;state.score+=40;popText("BOMBA!",225,633,"#ffad82")}
- beep(900,.12,"sine");
+ if(type==="star"){state.shield+=18;state.score+=40;popText("TARCZA +18",225,633,"#ffe18a")}
+ if(type==="bomb"){for(const e of state.enemies){if(!e.dying){e.hp-=7;e.hit=.32}}state.score+=40;popText("BOMBA -7",225,633,"#ffad82")}beep(900,.12,"sine");
 }
-function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":"Goblin"}
+function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="porcupine"?"Jeżoryj":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":"Goblin"}
 function combatAttack(){
  if(state.turn!=="player"||!state.started||state.over||!state.enemies.length)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];
+ if(e.dying)return;
  const dmg=state.damage+(e.type==="bat"?1:0);
  e.hp-=dmg;e.hit=.26;state.playerHit=.15;state.playerAction="attack";state.playerActionDuration=.42;state.playerActionTimer=.42;
  for(let i=0;i<7;i++)particle(e.x,e.y,"#ffdd91",rand(2,4));
@@ -435,41 +432,34 @@ function combatAttack(){
  state.turn="enemy";state.turnTimer=.65;state.defending=false;beep(540,.1,"square");
 }
 function combatDefend(){
- if(state.turn!=="player"||!state.started||state.over)return;
+ if(state.turn!=="player"||!state.started||state.over||state.stageCleared)return;
  state.defending=true;state.playerAction="defend";state.playerActionDuration=.68;state.playerActionTimer=.68;state.turn="enemy";state.turnTimer=.65;popText("OBRONA",state.playerX,state.playerY-70,"#a9e9ff");beep(260,.1,"triangle");
 }
 function combatSkill(){
- if(state.turn!=="player"||!state.started||state.over||!state.skillReady)return;
+ if(state.turn!=="player"||!state.started||state.over||state.stageCleared||!state.skillReady)return;
  const e=state.enemies[state.selectedEnemy]||state.enemies[0];if(!e)return;
- const dmg=state.damage*3+4;e.hp-=dmg;state.skillReady=false;state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
+ if(e.dying)return;
+ const dmg=state.damage*2+3;e.hp-=dmg;state.skillReady=false;state.skillCooldown=4.5;state.playerAction="special";state.playerActionDuration=.58;state.playerActionTimer=.58;e.hit=.32;
  state.playerHit=.25;for(let i=0;i<18;i++)particle(e.x,e.y,pick(["#a7ffff","#ffdb78","#ff9bbd"]),rand(3,6));
  popText("SUPER -"+dmg,e.x,e.y-48,"#ffb8ff");notify("MOCNY CIOS!");state.turn="enemy";state.turnTimer=.85;state.defending=false;beep(880,.15,"sawtooth");
  setTimeout(()=>{state.skillReady=true},4500);
 }
 function resolveEnemyTurn(){
- if(state.turn!=="enemy")return;
- const active=state.enemies.filter(e=>!e.dying);
- if(active.length){
-  const target=active.reduce((a,b)=>a.x>b.x?a:b);
-  target.action="attack";target.actionDuration=.38;target.actionTimer=.38;
-  const guarded=state.defending;
-  const raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;
-  const dmg=guarded?Math.max(1,Math.ceil(raw*.35)):raw;
-  if(state.shield>0){state.shield=Math.max(0,state.shield-dmg);popText("TARCZA",state.playerX,state.playerY-65,"#83f6e9")}
-  else {state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;state.playerAction=guarded?"defend":"hurt";state.playerActionDuration=guarded?.34:.3;state.playerActionTimer=guarded?.34:.3;beep(170,.12,"sawtooth")}
-  if(target.type==="boss"&&Math.random()<.3&&!guarded){state.hp=Math.max(0,state.hp-4);popText("MOC BOSS +4",state.playerX,state.playerY-90,"#ff9cbd")}
+ if(state.turn!=="enemy")return;const active=state.enemies.filter(e=>!e.dying&&e.hp>0);
+ if(active.length){const target=active.reduce((a,b)=>!a||b.x>a.x?b:a,null);state.threatEnemy=target;target.action="attack";target.actionDuration=.38;target.actionTimer=.38;
+  const guarded=state.defending,raw=target.type==="boss"?Math.ceil(target.damage/3):target.damage;let dmg=guarded?Math.max(1,Math.ceil(raw*.35)):raw;
+  if(state.shield>0){const absorbed=Math.min(state.shield,dmg);state.shield-=absorbed;dmg-=absorbed;popText("TARCZA -"+absorbed,state.playerX,state.playerY-65,"#83f6e9")}
+  if(dmg>0){state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");state.playerHit=.2;state.playerAction=guarded?"defend":"hurt";state.playerActionDuration=guarded?.34:.3;state.playerActionTimer=guarded?.34:.3;beep(170,.12,"sawtooth")}
+  if(target.type==="boss"&&!guarded&&Math.random()<.25){state.hp=Math.max(0,state.hp-3);popText("MOC BOSS +3",state.playerX,state.playerY-90,"#ff9cbd")}
  }
- state.defending=false;state.turn="player";
- const aliveIndex=state.enemies.findIndex(e=>!e.dying);
- state.selectedEnemy=aliveIndex<0?0:clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));
- if(state.enemies[state.selectedEnemy]?.dying)state.selectedEnemy=aliveIndex<0?0:aliveIndex;
- notify("TWOJA TURA");
+ state.defending=false;state.turn="player";state.threatEnemy=null;const ix=state.enemies.findIndex(e=>!e.dying&&e.hp>0);state.selectedEnemy=ix<0?0:clamp(state.selectedEnemy,0,Math.max(0,state.enemies.length-1));if(state.enemies[state.selectedEnemy]?.dying)state.selectedEnemy=ix<0?0:ix;notify("TWOJA TURA");
 }
 function updateCharacterAnimations(dt){
  if(state.playerActionTimer>0){
   state.playerActionTimer=Math.max(0,state.playerActionTimer-dt);
   if(state.playerActionTimer===0)state.playerAction="idle";
  }
+ state.skillCooldown=Math.max(0,state.skillCooldown-dt);state.skillReady=state.skillCooldown<=0;
  for(const e of state.enemies){
   if(e.hit>0)e.hit=Math.max(0,e.hit-dt);
   if(e.actionTimer>0){
@@ -485,32 +475,20 @@ function deployClaw(){
 }
 function moveClaw(dir){if(state.clawMode==="idle"){state.clawX=clamp(state.clawX+dir*23,54,396);beep(230,.03,"square",.015)}}
 function notify(msg){toastEl.textContent=msg;toastEl.classList.add("show");state.toastTimer=1.35}
-function reset(){
- state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.spawn=0;state.shot=0;state.turn="player";state.turnTimer=0;state.defending=false;state.selectedEnemy=0;state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;state.wave=1;state.kills=0;state.score=0;state.coins=0;state.hp=100;state.maxHp=100;state.damage=1;state.shield=0;state.playerX=86;state.enemies=[];state.bullets=[];state.particles=[];state.floaters=[];state.clawMode="idle";state.clawX=310;state.clawY=565;state.grabbed=null;state.bossSpawned=false;state.skillReady=true;state.settingsOpen=false;state.helpOpen=false;for(let i=0;i<2;i++)spawnEnemy();notify("WYPRAWA ROZPOCZĘTA!");
-}
+function reset(){return startRun(profile.unlockedStage)}
 function interact(x,y){
- if(state.settingsOpen){
-  if(y>=345&&y<=400&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
-  if(y>=415&&y<=480&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}beep(420,.05);return}
-  if(y>=500&&y<=565){state.settingsOpen=false;return}return;
- }
+ if(state.settingsOpen){if(y>=345&&y<=400&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}if(y>=415&&y<=480&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}beep(420,.05);return}if(y>=500&&y<=565){state.settingsOpen=false;return}return}
+ if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){state.upgradesOpen=false;return}return}
  if(state.helpOpen){if(y>=545&&y<=610){state.helpOpen=false;return}return}
- if(state.screen==="title"){
-  if(y>=600&&y<=666){reset();return}
-  if(y>=670&&y<=725){if(x<225)state.settingsOpen=true;else state.helpOpen=true;return}return;
- }
+ if(state.screen==="title"){if(y>=625&&y<=680){startRun(profile.unlockedStage);return}if(y>=680&&y<=735){if(x<155)state.upgradesOpen=true;else if(x<285)state.settingsOpen=true;else state.helpOpen=true;return}return}
  if(state.over){if(y>430&&y<510)reset();return}
- if(state.paused){
-  if(y>=365&&y<=420){state.paused=false;return}
-  if(y>=425&&y<=480){state.settingsOpen=true;return}
-  if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.enemies=[];state.particles=[];state.floaters=[];return}return;
- }
- if(y<60&&x>400){state.paused=true;return}
- if(y<60&&x>365){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
- if(y>455&&y<495){if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
- if(y>674&&y<735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
- if(y>=500&&y<=674){moveClaw(x<state.clawX?-1:1);return}
- if(y>330&&y<420&&state.turn==="player"&&state.enemies.length){let near=0,best=1e9;state.enemies.forEach((en,i)=>{let d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(best<110){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]));}}
+ if(state.stageCleared){if(y>=435&&y<=505){advanceStage();return}return}
+ if(state.paused){if(y>=365&&y<=420){state.paused=false;return}if(y>=425&&y<=480){state.settingsOpen=true;return}if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.enemies=[];state.particles=[];state.floaters=[];return}return}
+ if(y<60&&x>400){state.paused=true;return}if(y<60&&x>365){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}beep(520,.05);return}
+ if(y>=450&&y<=495){if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
+ if(y>=680&&y<=735){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
+ if(y>=500&&y<675){if(state.clawMode==="idle")state.clawX=clamp(x,54,396);return}
+ if(y>330&&y<420&&state.turn==="player"&&state.enemies.length){let near=-1,best=1e9;state.enemies.forEach((en,i)=>{if(en.dying||en.hp<=0)return;const d=Math.abs(en.x-x)+Math.abs(en.y-y);if(d<best){best=d;near=i}});if(near>=0&&best<120){state.selectedEnemy=near;notify("CEL: "+enemyName(state.enemies[near]))}}
 }
 let pointerStart=null;
 canvas.addEventListener("pointerdown",e=>{
@@ -519,7 +497,7 @@ canvas.addEventListener("pointerdown",e=>{
 });
 canvas.addEventListener("pointermove",e=>{
  if(!pointerStart||state.clawMode!=="idle")return;
- if(e.pointerType==="touch"&&pointerStart.y>500&&pointerStart.y<675){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;state.clawX=clamp(x,54,396)}
+ if(pointerStart.y>500&&pointerStart.y<675){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;state.clawX=clamp(x,54,396)}
 });
 canvas.addEventListener("pointerup",()=>{pointerStart=null});
 window.addEventListener("keydown",e=>{
@@ -541,40 +519,19 @@ window.addEventListener("keydown",e=>{
  if(e.key.toLowerCase()==="j")combatAttack();if(e.key.toLowerCase()==="k")combatDefend();if(e.key.toLowerCase()==="l")combatSkill();
 });
 function update(dt){
- state.time+=dt;
- if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
- if(state.screen!=="game"||state.paused||state.over)return;
- // visual-only idle movement of enemy bodies; actions are resolved in discrete turns.
- updateCharacterAnimations(dt);
- for(const e of state.enemies){e.phase+=dt*2}
+ state.time+=dt;if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}
+ if(state.screen!=="game"||state.paused||state.over||state.stageCleared)return;
+ updateCharacterAnimations(dt);for(const e of state.enemies)e.phase+=dt*2;
  if(state.turn==="enemy"){state.turnTimer-=dt;if(state.turnTimer<=0)resolveEnemyTurn()}
- const alive=[];
- for(const e of state.enemies){
-  if(e.hp<=0&&!e.dying){defeat(e);e.dying=true;e.action="death";e.deathTimer=.46;e.actionTimer=0}
-  if(e.dying&&e.deathTimer<=0)continue;
-  alive.push(e);
- }
- state.enemies=alive;
- if(state.enemies[state.selectedEnemy]?.dying){
-  const nextTarget=state.enemies.findIndex(e=>!e.dying);
-  state.selectedEnemy=nextTarget<0?0:nextTarget;
- }
- if(!state.enemies.length&&state.turn==="player"&&!state.over){state.wave++;state.spawn=0;state.bossSpawned=false;const count=state.wave%5===0?1:Math.min(2+Math.floor(state.wave/2),5);for(let i=0;i<count;i++)spawnEnemy();state.selectedEnemy=0;notify("FALA "+state.wave+" • "+(state.wave%5===0?"BOSS":"NOWI WROGOWIE"));}
- if(state.hp<=0){state.hp=0;state.over=true;if(state.score>state.bestScore){state.bestScore=state.score;try{localStorage.setItem("clawQuestBest",String(state.bestScore))}catch(e){}}return}
+ const alive=[];for(const e of state.enemies){if(e.hp<=0&&!e.dying){defeat(e);e.dying=true;e.action="death";e.deathTimer=.46;e.actionTimer=0}if(e.dying&&e.deathTimer<=0)continue;alive.push(e)}state.enemies=alive;
+ if(state.enemies[state.selectedEnemy]?.dying){const next=state.enemies.findIndex(e=>!e.dying&&e.hp>0);state.selectedEnemy=next<0?0:next}
+ if(!state.enemies.length&&state.turn==="player"){if(state.stageWave<stageDefinition().waves.length)spawnStageWave();else completeStage()}
+ if(state.hp<=0){state.hp=0;state.over=true;profile.bestScore=Math.max(profile.bestScore,state.score);state.bestScore=profile.bestScore;profile.bestStage=Math.max(profile.bestStage,state.stage);saveProfile();return}
  if(state.playerHit>0)state.playerHit-=dt;
- if(state.shield>0)state.shield-=dt;
- for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}
- state.particles=state.particles.filter(p=>p.life>0);
- if(!state.effects)state.particles=[];
- for(const f of state.floaters){f.y-=22*dt;f.life-=dt}
- state.floaters=state.floaters.filter(f=>f.life>0);
- if(state.clawMode==="down"){
-  state.clawY=Math.min(713,state.clawY+250*dt);
-  if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}];const nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a);if(Math.abs(nearest.x-state.clawX)<42){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}
- }else if(state.clawMode==="return"){
-  state.clawY=Math.max(565,state.clawY-280*dt);
-  if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null}
- }
+ for(const p of state.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=120*dt;p.life-=dt}state.particles=state.particles.filter(p=>p.life>0);if(!state.effects)state.particles=[];
+ for(const f of state.floaters){f.y-=22*dt;f.life-=dt}state.floaters=state.floaters.filter(f=>f.life>0);
+ if(state.clawMode==="down"){state.clawY=Math.min(713,state.clawY+250*dt);if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}],nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a),tolerance=42+profile.clawRank*4;if(Math.abs(nearest.x-state.clawX)<tolerance){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}}
+ else if(state.clawMode==="return"){state.clawY=Math.max(565,state.clawY-280*dt);if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null}}
  for(const s of state.stars){s.y+=s.v*dt;if(s.y>500)s.y=85}
 }
 function frame(ts){
@@ -583,6 +540,7 @@ function frame(ts){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveClaw,deployClaw,interact,update,stageDefinition};
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 draw();requestAnimationFrame(frame);
 })();

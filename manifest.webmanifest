@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Claw Quest — Arcade Roguelite",
   "short_name": "Claw Quest",
-  "description": "Kolorowa gra 2D arcade: walcz na arenie i zdobywaj ulepszenia automatem z chwytakiem.",
+  "description": "Turowy roguelite: jeden chwyt, jedna akcja bohatera i ruch przeciwników.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

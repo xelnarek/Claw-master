@@ -255,7 +255,7 @@ function drawArena(){
  drawHero(state.playerX,state.playerY);
  for(let i=0;i<state.enemies.length;i++){
   const e=state.enemies[i];drawEnemy(e);
-  if(i===state.selectedEnemy){
+  if(i===state.selectedEnemy&&!e.dying){
    ctx.save();ctx.strokeStyle="#fff0a3";ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.beginPath();ctx.ellipse(e.x,e.y-17,e.type==="boss"?48:35,e.type==="boss"?54:42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
    glow(e.x,e.y+17,37,"#ffdc83",.12);text("▼",e.x,e.y-(e.type==="boss"?78:69),14,"#fff1a8",1000,"center");ctx.restore();
   }

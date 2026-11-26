@@ -116,7 +116,8 @@ assert.equal(game.state.shot, shotAfterTurn, "idle animation time must not gener
 
 game.startRun(1);
 completeClaw("coin");
-const guardEnemy = game.spawnEnemy("goblin");
+game.spawnEnemy("goblin");
+const guardEnemy = game.state.enemies.at(-1);
 game.state.enemies = [guardEnemy];
 guardEnemy.hp = 100;
 guardEnemy.maxHp = 100;

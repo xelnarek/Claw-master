@@ -14,13 +14,16 @@
 :root{color-scheme:dark;--ink:#fff8eb;--muted:#aebbd5;--panel:#172541;--line:rgba(255,255,255,.16);--gold:#ffd166;--cyan:#67e8e5;--navy:#101a34;--blue:#29466f}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#091326;font-family:Inter,ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-body{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 16%,#344d7a 0%,#142441 47%,#07101f 100%)}
-#game-wrap{position:relative;width:min(100vw,56.25dvh);height:min(100dvh,177.78vw);max-width:520px;max-height:925px;overflow:hidden;border-radius:22px;background:#101b35;box-shadow:0 24px 90px #000b,0 0 0 1px #ffffff24,inset 0 0 0 2px #ffffff12}
+body{display:block;background:#091326}
+/* Pełnoekranowy układ mobilny: żadnych pustych pasów nad/pod grą na ekranach 19.5:9–21:9. */
+#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden;border-radius:0;background:#101b35;box-shadow:none;isolation:isolate}
 canvas{display:block;width:100%;height:100%;touch-action:none}
+@supports(height:100svh){#game-wrap{height:100svh}}
+@media(min-width:700px) and (min-height:900px){#game-wrap{width:min(100vw,62.5dvh);height:min(100dvh,160vw);left:50%;top:50%;transform:translate(-50%,-50%);border-radius:18px;box-shadow:0 24px 90px #000b,0 0 0 1px #ffffff24}}
 #toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.95);opacity:0;pointer-events:none;padding:11px 17px;border:1px solid #ffffff35;border-radius:16px;background:#111c33ee;color:white;font-size:13px;font-weight:900;letter-spacing:.05em;white-space:nowrap;box-shadow:0 12px 32px #0008;transition:.18s}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #hint{position:absolute;bottom:7px;left:0;right:0;text-align:center;color:#c9d4ef88;font-size:9px;letter-spacing:.08em;pointer-events:none}
-@media(min-aspect-ratio:7/10){#game-wrap{border-radius:15px}}
+@media(max-height:520px){#hint{font-size:8px;bottom:2px}}
 </style>
 </head>
 <body>

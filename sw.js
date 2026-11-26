@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v8-gameplay-polish";
+const CACHE_NAME = "claw-quest-v9-impact-overlays";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

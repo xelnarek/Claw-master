@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101b35">
-<meta name="description" content="Claw Master Arcade Quest — kolorowa gra arcade 2D z walką i automatem z chwytakiem.">
-<title>Claw Master — Arcade Quest</title>
+<meta name="description" content="Claw Quest — kolorowa gra arcade 2D z walką i automatem z chwytakiem.">
+<title>Claw Quest — Arcade Roguelite</title>
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#aab3d0;--panel:#172541;--line:rgba(255,255,255,.13);--gold:#ffcc5c;--cyan:#5ce4e8}
 *{box-sizing:border-box}
@@ -88,7 +88,7 @@ function drawHeader(){
  // logo mark
  glow(35,38,25,"#56e2dd",.22);rounded(19,21,33,33,10,"#ffbd50","#ffe5a4",2);
  text("✦",35,38,20,"#493016",1000,"center");
- text("CLAW",62,28,16,"#fff",1000);text("MASTER",62,47,11,"#69e8e6",1000);
+ text("CLAW",62,28,16,"#fff",1000);text("QUEST",62,47,11,"#69e8e6",1000);
  pill(180,24,72,"FALA "+state.wave,"#243e66","#ffe08a");
  rounded(270,21,94,34,11,"#203554","#5474a9");text("◆ "+state.coins,317,38,13,"#ffdc77",1000,"center");
  // Sound and pause buttons
@@ -206,11 +206,11 @@ function drawClawMachine(){
  // clamp body
  rounded(state.clawX-12,state.clawY-25,24,18,7,"#dce9f5","#ffffff",2);
  ctx.strokeStyle="#dce9f5";ctx.lineWidth=5;ctx.lineCap="round";
- const spread=state.clawMode==="down"||state.clawMode==="return"?13:19;
+ const spread=state.clawMode==="down"?22:state.clawMode==="return"?7:19;
  ctx.beginPath();ctx.moveTo(state.clawX-6,state.clawY-10);ctx.lineTo(state.clawX-spread,state.clawY+9);ctx.stroke();
  ctx.beginPath();ctx.moveTo(state.clawX+6,state.clawY-10);ctx.lineTo(state.clawX+spread,state.clawY+9);ctx.stroke();
  // prizes in machine, bounce slightly
- const prizes=[{type:"coin",x:78},{type:"gem",x:145},{type:"star",x:214},{type:"heart",x:284},{type:"gem",x:360}];
+ const prizes=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}];
  for(const p of prizes){const caught=state.grabbed&&state.grabbed.x===p.x; if(!caught)drawPrize(p.type,p.x,704+Math.sin(state.time*3+p.x)*2,.9)}
  if(state.grabbed&&state.clawMode==="return")drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72);
  // floor tray
@@ -230,7 +230,7 @@ function drawOverlay(){
   ctx.fillStyle="#071226c9";ctx.fillRect(0,0,W,H);
   glow(225,330,170,"#4acbd3",.18);
   rounded(32,206,386,302,26,"#182a4beb","#85e5e6",2);
-  text("CLAW MASTER",225,255,30,"#fff",1000,"center");
+  text("CLAW QUEST",225,255,30,"#fff",1000,"center");
   text("ARCADE QUEST",225,286,15,"#70e7e7",1000,"center");
   // hero emblem
   glow(225,355,70,"#ffd166",.25);drawHero(225,389);
@@ -270,7 +270,7 @@ function defeat(e){
  for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));
  popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a");
  if(e.type==="boss"){state.wave++;state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP");}
- if(state.kills>0&&state.kills%8===0){state.wave++;notify("NOWA FALA "+state.wave);state.damage++;state.hp=Math.min(state.maxHp,state.hp+8)}
+ if(e.type!=="boss"&&state.kills>0&&state.kills%8===0){state.wave++;notify("NOWA FALA "+state.wave);state.damage++;state.hp=Math.min(state.maxHp,state.hp+8)}
  beep(680,.09,"triangle");
 }
 function reward(type){
@@ -342,7 +342,7 @@ function update(dt){
  // claw cycle: lower, grab nearest prize row, raise
  if(state.clawMode==="down"){
   state.clawY=Math.min(713,state.clawY+250*dt);
-  if(state.clawY>=700){const options=[{type:"coin",x:78},{type:"gem",x:145},{type:"star",x:214},{type:"heart",x:284},{type:"gem",x:360}];const nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a);if(Math.abs(nearest.x-state.clawX)<42){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}
+  if(state.clawY>=700){const options=[{type:"coin",x:62},{type:"gem",x:128},{type:"star",x:194},{type:"heart",x:260},{type:"bomb",x:326},{type:"gem",x:392}];const nearest=options.reduce((a,b)=>Math.abs(b.x-state.clawX)<Math.abs(a.x-state.clawX)?b:a);if(Math.abs(nearest.x-state.clawX)<42){state.grabbed=nearest;state.clawMode="return";notify("ZŁAPANO NAGRODĘ!");beep(760,.12,"triangle")}else{state.clawMode="return";notify("PUSTY CHWYT!");beep(180,.12,"triangle")}}
  }else if(state.clawMode==="return"){
   state.clawY=Math.max(565,state.clawY-280*dt);
   if(state.clawY<=565){state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null}

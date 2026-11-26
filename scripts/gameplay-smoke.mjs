@@ -70,6 +70,7 @@ assert.equal(game.state.turn, "enemy", "player action should hand control to ene
 game.resolveEnemyTurn();
 assert.equal(game.state.turn, "player", "enemy phase should return control to player");
 
+assert.equal(game.purchaseUpgrade("attack"), false, "upgrade should reject insufficient funds");
 const coinsBefore = game.profile.coins;
 game.reward("coin");
 assert.ok(game.profile.coins > coinsBefore, "claw coin prize should add persistent currency");
@@ -84,6 +85,9 @@ assert.equal(game.state.damage, oldDamage + 1, "permanent attack upgrade should 
 game.completeStage();
 assert.equal(game.state.stageCleared, true, "stage completion should open reward state");
 assert.ok(game.profile.unlockedStage >= 2, "clearing stage 1 should unlock stage 2");
+const coinsAfterCompletion = game.profile.coins;
+assert.equal(game.completeStage(), false, "stage reward must only be granted once");
+assert.equal(game.profile.coins, coinsAfterCompletion, "re-entering stage completion must not duplicate coins");
 game.advanceStage();
 assert.equal(game.state.stage, 2, "next-stage action should load stage 2");
 assert.ok(game.state.enemies.some(enemy => enemy.type === "bat" || enemy.type === "slime"),

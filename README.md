@@ -5,7 +5,9 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 ## Current playable slice
 
 - Portrait layout designed for Android phones.
-- Side-view 2D arena with a cartoon hero, animated enemies, health, score and waves.
+- Side-view 2D arena with a detailed cartoon hero, animated enemies, health, score and waves.
+- Character action animation states: idle breathing, sword attack, charged special, shield guard and damage reaction.
+- Enemy reactions: bat wing flaps, slime squash/stretch, goblin attack movement, boss pulse, hit flash and delayed defeat animation.
 - Turn-based combat: choose a target, attack, defend to reduce incoming damage, or use a powerful cooldown skill.
 - Enemy variety, wave scaling and a boss encounter every fifth wave.
 - Separate claw-machine cabinet in the lower half of the screen.
@@ -33,7 +35,7 @@ For GitHub Pages, select **GitHub Actions** as the deployment source in the repo
 
 ## Technical direction
 
-The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The menu now has a separate illustrated camp/portal scene, a structured expedition panel, functional settings and a controls guide. This remains an original 2D visual prototype rather than a final sprite-sheet asset pack; the next art pass should add consistent frame-based character animations and authored enemy/environment sprites.
+The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The menu has a separate illustrated camp/portal scene, a structured expedition panel, functional settings and a controls guide. Combat now includes timed character poses and enemy hit/defeat reactions. This remains an original 2D visual prototype rather than a final sprite-sheet asset pack; the next art pass should replace procedural character shapes with authored, consistent sprite sheets and add further distinct biomes.
 
 ## Next milestones
 

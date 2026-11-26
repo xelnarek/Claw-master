@@ -53,7 +53,7 @@ const state={
  started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,
  time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,grabbed:null,heroActionUsedThisTurn:false,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
- playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,
+ playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,shotFxTimer:0,shotFxDuration:.32,shotFxWeaponId:"sidearm",
  enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,runBleed:0,runWard:0,runCounterBonus:0,
  stage:1,stageWave:0,stageCleared:false,stageReward:0,stageXp:0,runDamageBonus:0,threatEnemy:null,upgradesOpen:false,
  toastTimer:0,screen:"title",bossSpawned:false,settingsOpen:false,helpOpen:false,effects:true,bestScore:0
@@ -169,7 +169,7 @@ function startRun(stage=profile.unlockedStage){
  state.weaponId="sidearm";state.weaponLevel=1;state.prizeRefreshTimer=0;state.machinePrizes=generateMachinePrizes();
  state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.shot=0;state.poisonTurns=0;state.poisonDamage=2;
  state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.defending=false;state.selectedEnemy=0;
- state.playerAction="idle";state.playerActionTimer=0;state.skillReady=true;
+ state.playerAction="idle";state.playerActionTimer=0;state.shotFxTimer=0;state.shotFxDuration=.32;state.shotFxWeaponId="sidearm";state.skillReady=true;
  state.stage=Math.max(1,Math.min(profile.unlockedStage,Math.floor(stage)||1));state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;
  state.runDamageBonus=0;state.runSkills={};state.runCrit=0;state.runSkillBonus=0;state.runHealOnKill=0;state.runClawBonus=0;state.runLootBonus=0;state.runVenom=0;state.runBleed=0;state.runWard=0;state.runCounterBonus=0;
  state.pendingLevelUps=0;state.levelChoices=null;state.wave=1;state.kills=0;state.score=0;state.coins=profile.coins;
@@ -264,6 +264,7 @@ function drawHero(x,y){
  const idle=Math.sin(state.time*4.2)*1.7;
  const hurt=action==="hurt";
  const attack=action==="attack"||action==="counter";
+ const shotFx=state.shotFxTimer>0,shotProgress=clamp(1-state.shotFxTimer/Math.max(.001,state.shotFxDuration),0,1);
  const special=action==="special";
  const guard=action==="defend"||action==="counter";
  ctx.save();ctx.translate(x,y+idle-(attack||special?swing*2:0));
@@ -319,8 +320,8 @@ function drawHero(x,y){
  // Compact mechanical firearm; the picked weapon changes its silhouette and muzzle.
  ctx.save();ctx.translate(23,-28);
  const activeWeapon=weaponForRun(),gunLength=activeWeapon.id==="cannon"?29:activeWeapon.id==="scatter"?25:activeWeapon.id==="laser"?31:23;
- const shotKick=attack?Math.sin(progress*Math.PI)*4.5:0;ctx.translate(-shotKick,0);
- const muzzle=attack?clamp(1-progress*1.9,0,1):0;
+ const shotKick=shotFx?Math.sin(shotProgress*Math.PI)*4.5:0;ctx.translate(-shotKick,0);
+ const muzzle=shotFx?clamp(1-shotProgress*1.9,0,1):0;
  const metal=ctx.createLinearGradient(0,-10,0,10);metal.addColorStop(0,"#c4d0cd");metal.addColorStop(.45,"#596b70");metal.addColorStop(1,"#25363d");
  rounded(-8,-7,22,12,3,metal,"#d4d9cc",1);rounded(7,-5,gunLength,6,2,"#46575d","#c5c9b4",1);rounded(9,-1,activeWeapon.id==="cannon"?12:8,9,2,"#28363d","#82908b",1);rounded(-13,-4,8,8,2,"#8d6945","#d5ae73",1);
  line(-5,-10,12,-10,activeWeapon.color,1.7);
@@ -330,8 +331,8 @@ function drawHero(x,y){
   ctx.save();ctx.globalAlpha=muzzle;ctx.fillStyle="#fff6d7";ctx.strokeStyle=activeWeapon.color;ctx.lineWidth=1.4;
   ctx.beginPath();ctx.moveTo(gunLength+2,-2);ctx.lineTo(gunLength+9,-7);ctx.lineTo(gunLength+17,-2);ctx.lineTo(gunLength+9,3);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
  }
- if(attack&&activeWeapon.id!=="laser"){
-  const caseT=clamp(progress*1.8,0,1),caseAlpha=clamp(1-Math.abs(progress-.42)*2.1,0,1);
+ if(shotFx&&activeWeapon.id!=="laser"){
+  const caseT=clamp(shotProgress*1.8,0,1),caseAlpha=clamp(1-Math.abs(shotProgress-.42)*2.1,0,1);
   if(caseAlpha>.01){ctx.save();ctx.globalAlpha=caseAlpha;ctx.translate(7-caseT*10,-1+caseT*15);ctx.rotate(caseT*4);rounded(-2,-1,5,2,1,"#d6a65e","#fff0b5",.7);ctx.restore()}
  }
  if(special){ctx.shadowColor="#8ef4ff";ctx.shadowBlur=14;rounded(-5,-12,34,3,1,"#9beeff")}
@@ -940,6 +941,7 @@ function fireWeapon(counter=false){
  }
  const duration=weapon.id==="laser"?.36:weapon.id==="cannon"?.52:weapon.id==="scatter"?.42:.46;
  state.attackFx={type:weapon.id,x1:state.playerX+28,y1:state.playerY-28,x2:target.x,y2:target.y-22,color:weapon.color,life:duration,max:duration,targets:traceTargets};
+ state.shotFxTimer=state.shotFxDuration=weapon.id==="cannon"?.42:weapon.id==="scatter"?.36:.32;state.shotFxWeaponId=weapon.id;
  state.playerAction="attack";state.playerActionDuration=weapon.id==="cannon"?.46:weapon.id==="scatter"?.34:.3;state.playerActionTimer=state.playerActionDuration;state.shot++;
  const pitch=weapon.id==="cannon"?120:weapon.id==="laser"?780:weapon.id==="repeater"?610:weapon.id==="scatter"?240:390;
  beep(pitch,.11,weapon.id==="cannon"?"sawtooth":weapon.id==="laser"?"triangle":"square",.03);
@@ -1021,6 +1023,7 @@ function checkEncounterClear(){
  return true;
 }
 function updateCharacterAnimations(dt){
+ if(state.shotFxTimer>0)state.shotFxTimer=Math.max(0,state.shotFxTimer-dt);
  if(state.playerActionTimer>0){state.playerActionTimer=Math.max(0,state.playerActionTimer-dt);if(state.playerActionTimer===0)state.playerAction="idle"}
  for(const e of state.enemies){
   e.phase+=dt*2;

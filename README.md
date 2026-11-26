@@ -1,27 +1,41 @@
-# Claw Quest — Arcade Roguelite
+# Claw Quest — real-time claw roguelite
 
-A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
+A mobile-first 2D arcade roguelite made with Canvas 2D and vanilla JavaScript. Its core loop combines real-time side-view combat with a separate claw machine for weapons, upgrades and resources. The project takes inspiration from the broad design of *Claw Master – Roguelike Hero* while using original code, procedural art and synthesized audio.
 
 ## Current playable slice
 
-- Portrait layout designed for Android phones.
-- Side-view 2D arena with a detailed cartoon hero, animated enemies, health, score and waves.
-- Character action animation states: idle breathing, sword attack, charged special, shield guard and damage reaction.
-- Roguelite level-up draft: every hero level offers three distinct skill cards; select one to shape the current run.
-- Nine run skills: attack power, vitality, shield, critical strikes, kill healing, super damage, claw precision, bonus loot and venom damage. Skills stack up to individual caps and are visible in the arena build HUD.
-- Synthesized Web Audio effects with layered harmonics for combat, loot, menu feedback and boss encounters; sound is enabled by default unless the player has disabled it.
-- Enemy reactions: bat wing flaps, slime squash/stretch, goblin attack movement, boss pulse, hit flash and delayed defeat animation.
-- Turn-based combat: choose a target, attack, defend to reduce incoming damage, or use a powerful cooldown skill.
-- Five curated opening stages with distinct biomes, scripted encounter waves, an end-of-chapter boss, then a scalable endless expedition.
-- New porcupine enemy, enemy attack telegraph, stage objectives and stage-clear rewards.
-- Separate claw-machine cabinet in the lower half of the screen.
-- Touch/drag claw positioning, left/right controls and a grab/retrieval cycle.
-- Claw loot: persistent coins, run-only attack upgrade, healing, shield buffer and area bomb.
-- Persistent local profile: hero level/XP, unlocked stage, best stage/score, permanent attack/vitality/claw upgrades.
-- Keyboard fallback: J attack, K defend, L special; A/D or arrows move claw, Space/F grab, Escape pause.
-- Dedicated illustrated start screen, expedition summary, settings and quick controls guide.
-- Local device preferences for sound and visual effects, plus a locally saved best score.
+- Portrait-first mobile layout with high-DPI Canvas rendering and responsive resize handling.
+- Side-view real-time arena: the hero automatically fires at the nearest active enemy while the player repositions by touch-dragging the left side of the arena or using directional controls.
+- Five weapon archetypes with distinct fire rates, projectile speeds, damage profiles and visual projectile treatments: service pistol, repeater, scatter gun, siege cannon and photon lance.
+- Projectiles collide with enemies and are removed on impact; the cannon adds splash damage and the photon lance can pierce.
+- Combat abilities: burst volley, temporary guard and a cooldown-based area super.
+- Enemies advance toward the hero, telegraph close-range attacks and have different durability, speed and damage values.
+- A separate lower claw machine remains active during combat. Position its carriage by tapping or dragging in the chamber, then launch the claw to retrieve a prize.
+- Claw loot includes coins, weapon drops, damage ammunition, XP, healing, shields and area bombs. New weapon drops can replace the current weapon or raise its level.
+- The claw has an independent 6.5-second cooldown after retrieval; it no longer consumes a combat turn.
+- Five curated opening stages with distinct biomes and waves, followed by a scalable endless expedition.
+- Roguelite level-up draft with three skill choices and persistent camp upgrades.
+- Persistent local profile, coins, unlocked stages, best stage and score.
+- Synthesized Web Audio effects and adjustable visual effects.
+- Keyboard fallback: A/D or arrows move the hero, J fires a burst, K activates guard, L triggers the super, Space/F launches the claw, Escape pauses.
 - No 3D engine, remote asset dependency, build step or external library.
+
+## Controls
+
+- Tap **ROZPOCZNIJ WYPRAWĘ** to start.
+- Drag or tap the left half of the arena to reposition the hero. The hero automatically shoots the nearest living enemy.
+- Use **SERIA**, **OSŁONA** and **SUPER** in the combat action bar for active abilities.
+- Tap or drag inside the lower cabinet to position the claw. Press **ZŁAP!** to descend and retrieve the nearest prize.
+- The lower left/right buttons make small hero-position adjustments. The claw carriage is positioned directly in the cabinet area.
+- A successful claw retrieval starts its cooldown; combat continues during the claw animation and cooldown.
+
+## Progression
+
+The first five authored stages are Polana Początku, Zarośnięta Ścieżka, Nora Zmierzchu, Ruiny Strażników and Leśny Strażnik. Clearing their waves unlocks the next stage. Coins, hero level/XP, unlocked stage, best score and permanent upgrade ranks are saved locally in `localStorage`. The base camp sells permanent attack, vitality and claw-precision upgrades.
+
+## Technical direction
+
+The game uses Canvas 2D with procedural character drawings, enemy silhouettes, parallax-style scenery, biome palettes, layered projectile effects and synthesized audio. It does not use another game's sprites, source code, sound assets or branding. The current art is still procedural 2D; production sprite sheets, more elaborate enemy attack patterns, boss phases and deeper run synergies remain future quality milestones.
 
 ## Run locally
 
@@ -29,51 +43,6 @@ Open `index.html` in a modern browser, or serve the repository with any static w
 
 For GitHub Pages, select **GitHub Actions** as the deployment source in the repository's Pages settings.
 
-## Controls
-
-- Tap **ROZPOCZNIJ WYPRAWĘ** to start. The main menu also opens settings and a control guide.
-- Tap an enemy in the arena to select a target. Tap the action buttons (attack/defend/special) to resolve your turn.
-- Tap anywhere in the claw chamber to place the claw directly, or drag to fine-tune its position.
-- Use the lower **LEWO / PRAWO** buttons for precise correction. The claw precision upgrade increases the pickup tolerance.
-- Tap **ZŁAP!** to lower the claw and retrieve a nearby prize.
-- Combat is turn-based: the player selects a target and chooses Attack, Defend or Special. Enemies act during their phase.
-
-## Progression
-
-The first five stages are authored encounters: Polana Początku, Zarośnięta Ścieżka, Nora Zmierzchu, Ruiny Strażników and Leśny Strażnik. Clearing a stage grants coins and XP and unlocks the next stage. Coins, hero level, XP, unlocked stage, best score and permanent upgrade ranks are saved locally in `localStorage`. The camp upgrade panel sells permanent attack, vitality and claw-precision upgrades.
-
-## Technical direction
-
-The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery, foreground terrain detail, atmospheric lighting and biome-specific silhouettes. The first five stages use separate meadow, forest, cave, ruins and boss palettes. The camp now surfaces level, XP, unlocked stage and coins, with a permanent upgrade panel. Combat includes timed character poses, enemy intent markers and hit/defeat reactions. The visual direction is being moved toward a darker, more material-rich fantasy roguelite presentation. The game uses original procedural 2D art and synthesized audio; it does not copy Claw Master's proprietary sprites, sounds or source code.
-
-## Next milestones
-
-1. Replace vector placeholder characters with original sprite sheets and animation states.
-2. Add distinct enemy attack patterns, boss phases and hit reactions.
-3. Add weapon selection, collectible upgrades, rarity and build synergies.
-4. Add persistent progression, stage selection, sound settings and save data.
-5. Tune mobile performance, accessibility, balancing and Android packaging.
-
-The project is inspired by the broad 2D arcade/roguelike claw-machine genre. It does not use the name, source code or proprietary assets of another game.
-
-## Install and publish
-
-The project includes a web-app manifest and an offline service worker. Once hosted over HTTPS, a compatible Android browser can offer installation to the home screen.
-
-To publish with GitHub Pages:
-1. Open **Settings → Pages** in this repository.
-2. Under **Build and deployment → Source**, select **GitHub Actions**.
-3. Re-run the **Deploy Claw Quest to GitHub Pages** workflow, or push another commit to `main`.
-
-Expected project URL after Pages is enabled: `https://xelnarek.github.io/Claw-master/`.
-
-The public Pages deployment is published at `https://xelnarek.github.io/Claw-master/`.
-
-## Combat
-
-Turn order alternates between the player and enemy phases. Choose an enemy by tapping its sprite, then use Attack, Defend or Special. The special attack has a cooldown. Defending reduces incoming damage for the next enemy action.
-
-
 ## Automated checks
 
-Run `node scripts/validate.mjs` with Node.js 22 to validate the Canvas game script, PWA manifest, service worker, menu/progression features and the gameplay smoke suite. The smoke suite checks the opening encounter, turn flow, 65% defend reduction, claw rewards, saved upgrades, stage unlocks and touch positioning.
+Run `node scripts/validate.mjs` with Node.js 22 to validate the Canvas game script, PWA manifest, service worker, responsive layout and gameplay smoke suite. The smoke suite checks automatic fire, projectile collision, weapon switching, the combat abilities, claw retrieval/cooldown, upgrades, stage progression and mobile touch cancellation.

@@ -433,4 +433,24 @@ console.log("PASS: turn-based skill cooldown and claw skill-charge reward");
 console.log("PASS: moving claw, varied prize layouts, capture reward and persistent upgrades");
 console.log("PASS: enemy intent, discrete approach/attack turns and encounter progression");
 console.log("PASS: mobile touch aiming, pointer cancellation and high-DPI resize");
+// Render sweep: verify every world biome and menu/modal screen executes its Canvas draw path.
+game.state.screen = "title";
+game.state.paused = false;
+game.state.over = false;
+game.state.stageCleared = false;
+game.state.settingsOpen = false;
+game.state.helpOpen = false;
+game.state.upgradesOpen = false;
+game.state.levelChoices = null;
+game.render();
+game.state.settingsOpen = true; game.render(); game.state.settingsOpen = false;
+game.state.helpOpen = true; game.render(); game.state.helpOpen = false;
+game.state.upgradesOpen = true; game.render(); game.state.upgradesOpen = false;
+game.startRun(1);
+for (const stage of [1, 2, 3, 4, 5]) { game.state.stage = stage; game.render(); }
+game.state.paused = true; game.render(); game.state.paused = false;
+game.state.levelChoices = game.abilityPool.slice(0, 3); game.render(); game.state.levelChoices = null;
+game.state.stageCleared = true; game.render(); game.state.stageCleared = false;
+game.state.over = true; game.render(); game.state.over = false;
+
 console.log("PASS: title menu, help panel and keyboard-close behavior");

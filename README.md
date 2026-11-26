@@ -7,6 +7,9 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 - Portrait layout designed for Android phones.
 - Side-view 2D arena with a detailed cartoon hero, animated enemies, health, score and waves.
 - Character action animation states: idle breathing, sword attack, charged special, shield guard and damage reaction.
+- Roguelite level-up draft: every hero level offers three distinct skill cards; select one to shape the current run.
+- Nine run skills: attack power, vitality, shield, critical strikes, kill healing, super damage, claw precision, bonus loot and venom damage. Skills stack up to individual caps and are visible in the arena build HUD.
+- Synthesized Web Audio effects with layered harmonics for combat, loot, menu feedback and boss encounters; sound is enabled by default unless the player has disabled it.
 - Enemy reactions: bat wing flaps, slime squash/stretch, goblin attack movement, boss pulse, hit flash and delayed defeat animation.
 - Turn-based combat: choose a target, attack, defend to reduce incoming damage, or use a powerful cooldown skill.
 - Five curated opening stages with distinct biomes, scripted encounter waves, an end-of-chapter boss, then a scalable endless expedition.
@@ -41,7 +44,7 @@ The first five stages are authored encounters: Polana Początku, Zarośnięta Ś
 
 ## Technical direction
 
-The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The first five stages use separate meadow, forest, cave, ruins and boss palettes. The camp now surfaces level, XP, unlocked stage and coins, with a permanent upgrade panel. Combat includes timed character poses, enemy intent markers and hit/defeat reactions. The game remains an original 2D visual prototype rather than a final sprite-sheet asset pack.
+The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery, foreground terrain detail, atmospheric lighting and biome-specific silhouettes. The first five stages use separate meadow, forest, cave, ruins and boss palettes. The camp now surfaces level, XP, unlocked stage and coins, with a permanent upgrade panel. Combat includes timed character poses, enemy intent markers and hit/defeat reactions. The visual direction is being moved toward a darker, more material-rich fantasy roguelite presentation. The game uses original procedural 2D art and synthesized audio; it does not copy Claw Master's proprietary sprites, sounds or source code.
 
 ## Next milestones
 

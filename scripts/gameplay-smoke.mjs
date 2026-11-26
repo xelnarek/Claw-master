@@ -69,6 +69,10 @@ assert.ok(firstEnemy.hp < hpBeforeAttack, "attack should damage the selected ene
 assert.equal(game.state.turn, "enemy", "player action should hand control to enemy phase");
 game.resolveEnemyTurn();
 assert.equal(game.state.turn, "player", "enemy phase should return control to player");
+const hpBeforeGuard = game.state.hp;
+game.combatDefend();
+game.resolveEnemyTurn();
+assert.equal(hpBeforeGuard - game.state.hp, 1, "65% guard should reduce a 4-damage slime hit to 1");
 
 assert.equal(game.purchaseUpgrade("attack"), false, "upgrade should reject insufficient funds");
 const coinsBefore = game.profile.coins;
@@ -98,11 +102,16 @@ game.interact(174, 600);
 assert.equal(game.state.clawX, 174, "tapping the cabinet should position the claw directly");
 game.moveClaw(1);
 assert.ok(game.state.clawX > 174, "direction control should keep moving the claw");
+const savedCoins = game.profile.coins;
+game.startRun(1);
+assert.equal(game.state.coins, savedCoins, "starting a new run must keep saved coins");
+assert.equal(game.state.damage, 4 + game.profile.attackRank, "permanent attack rank must survive a new run");
 
 console.log("PASS: first-stage onboarding encounter");
-console.log("PASS: turn-based attack and enemy phase");
+console.log("PASS: turn-based attack, enemy phase and 65% defend reduction");
 console.log("PASS: claw rewards persist between runs");
 console.log("PASS: permanent upgrade purchase and stat application");
 console.log("PASS: stage completion unlocks the next stage");
 console.log("PASS: stage 2 introduces a new enemy type");
 console.log("PASS: direct touch positioning and directional claw controls");
+console.log("PASS: saved currency and permanent stats survive a new run");

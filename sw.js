@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v2-ui";
+const CACHE_NAME = "claw-quest-v3-combat-animations";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

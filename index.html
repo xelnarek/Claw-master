@@ -377,6 +377,8 @@ function drawHero(x,y){
  const step=Math.sin(state.time*5)*1.1;
  rounded(-16,-12+step,12,20,5,"#334d83","#20365d",1);
  rounded(2,-12-step,12,20,5,"#334d83","#20365d",1);
+ rounded(-17,-5+step,14,7,3,"#647d8c","#c8b88d",.9);rounded(1,-5-step,14,7,3,"#647d8c","#c8b88d",.9);
+ line(-15,-2+step,-5,-2+step,"#dbe1d4",.8);line(3,-2-step,13,-2-step,"#dbe1d4",.8);
  rounded(-19,2+step,17,8,4,"#f2b75d","#ffe1a1",1);
  rounded(0,2-step,17,8,4,"#f2b75d","#ffe1a1",1);
  line(-15,7+step,-5,7+step,"#fff0c0",1);line(4,7-step,14,7-step,"#fff0c0",1);
@@ -390,6 +392,9 @@ function drawHero(x,y){
  line(-9,-31,0,-36,"#d4b77e",1.3);line(0,-36,9,-31,"#d4b77e",1.3);
  rounded(-3,-31,6,11,2,"#111e28","#a98f67",1);glow(0,-25,9,"#59dce5",.25);rounded(-1.5,-28,3,5,1,"#a7fff3");
  rounded(-14,-17,5,7,1,"#8c9aa0","#e0c893",1);rounded(9,-17,5,7,1,"#8c9aa0","#e0c893",1);
+ line(-7,-20,-2,-18,"#d5c59c",.8);line(2,-18,7,-20,"#d5c59c",.8);
+ ctx.save();ctx.rotate(.08);rounded(11,-36,14,10,4,"#53636a","#c3b58d",1.1);line(14,-33,21,-33,"#e0c38b",1);ctx.restore();
+ glow(16,-32,13,"#79d9db",.1);
  // animated arms
  const armSwing=attack?-.78*swing:special?-1.05*swing:guard?-.38:Math.sin(state.time*4)*.035;
  ctx.save();ctx.translate(-18,-30);ctx.rotate(-.18);rounded(-5,-4,12,24,6,"#f3bc83","#ffe0ba",1);ctx.restore();
@@ -705,7 +710,18 @@ function drawArena(){
  for(let i=0;i<state.enemies.length;i++){
   const e=state.enemies[i];
   if(!e.dying&&e.hp>0&&i===state.selectedEnemy){
-   ctx.save();ctx.strokeStyle="#fff1a8";ctx.globalAlpha=.85;ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(e.x,e.y+1,e.type==="boss"?47:34,13,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+   const pulse=.88+.12*Math.sin(state.time*6),rx=e.type==="boss"?53:39;
+   ctx.save();ctx.translate(e.x,e.y+2);ctx.globalAlpha=.92*pulse;
+   ctx.strokeStyle="#f4d18a";ctx.lineWidth=1.7;ctx.setLineDash([6,4]);ctx.lineDashOffset=-state.time*8;
+   ctx.beginPath();ctx.ellipse(0,0,rx,14,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+   ctx.globalAlpha=.52*pulse;ctx.strokeStyle="#fff0bd";ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,rx-7,10,0,0,Math.PI*2);ctx.stroke();
+   ctx.globalAlpha=.92*pulse;ctx.strokeStyle="#fff0bd";ctx.lineWidth=2.2;
+   const tx=rx+5,ty=19,k=7;
+   for(const sx of [-1,1])for(const sy of [-1,1]){
+    ctx.beginPath();ctx.moveTo(sx*tx,sy*ty+sy*k);ctx.lineTo(sx*tx,sy*ty);ctx.lineTo(sx*(tx-k),sy*ty);ctx.stroke();
+   }
+   ctx.globalAlpha=.8;ctx.fillStyle="#f4d18a";ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(-4,-31);ctx.lineTo(4,-31);ctx.closePath();ctx.fill();
+   ctx.restore();
   }
   drawEnemy(e);
   if(!e.dying&&e.hp>0&&state.turnPhase!=="enemy"){

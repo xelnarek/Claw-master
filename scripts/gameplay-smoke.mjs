@@ -215,7 +215,8 @@ assert.equal(hpBeforePoisonTick - game.state.hp, 2, "poison should tick at the s
 assert.equal(game.state.poisonTurns, 1, "poison duration should decrease by one turn");
 
 game.startRun(1);
-const goblin = game.spawnEnemy("goblin");
+game.spawnEnemy("goblin");
+const goblin = game.state.enemies.at(-1);
 goblin.x = game.state.playerX + 90;
 goblin.nextAttackTurn = game.state.turnNumber + 4;
 game.state.enemies = [goblin];
@@ -230,7 +231,8 @@ assert.equal(goblin.guard, 0, "weapon damage should consume goblin guard first")
 assert.equal(goblinHpBefore - goblin.hp, 2, "only damage left after guard absorption should reach goblin health");
 
 game.startRun(1);
-const porcupine = game.spawnEnemy("porcupine");
+game.spawnEnemy("porcupine");
+const porcupine = game.state.enemies.at(-1);
 porcupine.x = game.state.playerX + 90;
 porcupine.nextAttackTurn = game.state.turnNumber + 4;
 game.state.enemies = [porcupine];
@@ -243,7 +245,8 @@ assert.equal(game.combatAttack(), true, "attacking a braced porcupine should sti
 assert.equal(hpBeforeThorns - game.state.hp, 2, "active porcupine spines should reflect a fixed two damage once per turn");
 
 game.startRun(1);
-const boss = game.spawnEnemy("boss");
+game.spawnEnemy("boss");
+const boss = game.state.enemies.at(-1);
 boss.hp = Math.ceil(boss.maxHp * .5);
 boss.x = game.state.playerX + 150;
 boss.nextAttackTurn = game.state.turnNumber + 4;
@@ -253,7 +256,8 @@ assert.equal(boss.enraged, true, "boss should enter enrage at half health");
 assert.equal(boss.intent, "brace", "enraged boss should telegraph before its next attack");
 
 game.startRun(1);
-const bat = game.spawnEnemy("bat");
+game.spawnEnemy("bat");
+const bat = game.state.enemies.at(-1);
 bat.hp = 100;
 bat.maxHp = 100;
 bat.x = game.state.playerX + 130;

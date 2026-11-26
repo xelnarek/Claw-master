@@ -257,10 +257,10 @@ function drawHero(x,y){
 function drawEnemy(e){
  ctx.save();ctx.translate(e.x,e.y);
  const dyingProgress=e.dying?clamp(1-(e.deathTimer||0)/.46,0,1):0;
- const attackProgress=e.action==="attack"?clamp(1-(e.actionTimer||0)/Math.max(.001,e.actionDuration||.38),0,1):0;
+ const attackProgress=e.action==="attack"||e.action==="windup"?clamp(1-(e.actionTimer||0)/Math.max(.001,e.actionDuration||.38),0,1):0;
  const bob=Math.sin(state.time*(e.type==="bat"?7:4.6)+e.phase)* (e.type==="bat"?5:2.6);
  const shake=e.hit>0?Math.sin(state.time*91+e.phase)*2.8:0;
- const lunge=e.action==="attack"?-Math.sin(attackProgress*Math.PI)*13:0;
+ const lunge=e.action==="attack"?-Math.sin(attackProgress*Math.PI)*13:e.action==="windup"?-Math.sin(attackProgress*Math.PI)*4:0;
  ctx.translate(lunge+shake,bob-(e.dying?dyingProgress*9:0));
  if(e.dying){ctx.globalAlpha=1-dyingProgress;ctx.rotate(dyingProgress*.72);ctx.scale(1-dyingProgress*.54,1-dyingProgress*.38)}
  if(e.type==="slime"){
@@ -313,6 +313,7 @@ function drawEnemy(e){
   ctx.save();ctx.translate(18,-28);ctx.rotate(arm);rounded(-4,-3,12,23,5,"#b96c49","#f3c08d",1);ctx.restore();
   rounded(-19,-15,10,8,3,"#6d829d","#d4deeb",1);rounded(9,-15,10,8,3,"#6d829d","#d4deeb",1);
  }
+ if(e.action==="windup"&&!e.dying){ctx.save();ctx.globalAlpha=.4+Math.sin(state.time*24+e.phase)*.22;ctx.strokeStyle="#ffd07a";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(0,-18,e.type==="boss"?54:36,e.type==="boss"?58:44,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore()}
  if(e.hit>0&&!e.dying){
   ctx.save();ctx.globalAlpha=clamp(e.hit/.26,0,1)*.82;ctx.strokeStyle="#fff5d4";ctx.lineWidth=3;
   ctx.beginPath();ctx.ellipse(0,-18,e.type==="boss"?43:29,e.type==="boss"?48:35,0,0,Math.PI*2);ctx.stroke();
@@ -356,7 +357,7 @@ function drawArena(){
  ctx.fillStyle="#07132255";ctx.beginPath();ctx.ellipse(state.playerX,state.playerY+9,31,8,0,0,Math.PI*2);ctx.fill();drawHero(state.playerX,state.playerY);
  const active=state.enemies.filter(e=>!e.dying&&e.hp>0);
  const threat=active.reduce((a,b)=>!a||b.x>a.x?b:a,null);
- for(const e of state.enemies){drawEnemy(e);if(e.action==="attack"&&!e.dying)pill(e.x-32,e.y-82,64,"ATAKUJE!","#743e42","#ffe6bd")}
+ for(const e of state.enemies){drawEnemy(e);if((e.action==="windup"||e.action==="attack")&&!e.dying)pill(e.x-32,e.y-82,64,e.action==="windup"?"ZAMACH!":"ATAK!","#743e42","#ffe6bd")}
  drawCombatImpacts();
  for(const b of state.bullets){
   ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy,b.vx));
@@ -625,10 +626,16 @@ function draw(){
 }
 function spawnEnemy(typeOverride=null){
  const stage=state.stage,types=["slime","bat","goblin","porcupine"],boss=typeOverride==="boss"||(typeOverride===null&&stage%5===0&&!state.bossSpawned);
- const type=boss?"boss":(typeOverride||pick(stage<=2?["slime","slime","bat"]:types)),scale=Math.max(0,stage-1),stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5},max=stats.hp+Math.floor(scale*2.2);
- state.enemies.push({x:boss?345:rand(245,405),y:boss?365:rand(360,395),type,hp:max,maxHp:max,speed:(boss?10:rand(17,28))+scale*.6,damage:stats.damage+Math.floor(scale/3),attackCooldown:rand(.55,1.2),phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
+ const type=boss?"boss":(typeOverride||pick(stage<=2?["slime","slime","bat"]:types)),scale=Math.max(0,stage-1);
+ const stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5};
+ const max=stats.hp+Math.floor(scale*2.2),x=boss?345:rand(245,405),y=boss?365:rand(360,395);
+ const speedBase={slime:23,bat:38,goblin:31,porcupine:16,boss:12}[type]||22;
+ const windup={slime:.42,bat:.25,goblin:.34,porcupine:.64,boss:.82}[type]||.4;
+ const interval={slime:1.5,bat:1.12,goblin:1.32,porcupine:2.05,boss:2.25}[type]||1.5;
+ state.enemies.push({x,y,baseY:y,type,hp:max,maxHp:max,speed:speedBase+scale*.55,damage:stats.damage+Math.floor(scale/3),attackCooldown:rand(.55,1.2),attackWindup:windup,attackInterval:interval,windupTimer:0,phase:rand(0,6),hit:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
+
 function particle(x,y,color,size=3){
  state.particles.push({x,y,vx:rand(-60,60),vy:rand(-85,40),life:rand(.3,.7),max:.7,color,size});
 }
@@ -678,7 +685,7 @@ function fireWeapon(pelletCount=null){
  const count=pelletCount??weapon.pellets,baseDamage=currentWeaponDamage()+state.runVenom,originX=state.playerX+28,originY=state.playerY-30;
  for(let i=0;i<count;i++){
   const offset=i-(count-1)/2,angle=Math.atan2(target.y-22-originY,target.x-originX)+offset*weapon.spread;
-  state.bullets.push({x:originX,y:originY,vx:Math.cos(angle)*weapon.speed,vy:Math.sin(angle)*weapon.speed,damage:baseDamage,radius:weapon.radius,color:weapon.color,type:weapon.id,life:1.35,splash:weapon.splash||0,pierce:weapon.pierce||0,critical:Math.random()<state.runCrit});
+  state.bullets.push({x:originX,y:originY,vx:Math.cos(angle)*weapon.speed,vy:Math.sin(angle)*weapon.speed,damage:baseDamage,radius:weapon.radius,color:weapon.color,type:weapon.id,life:1.35,splash:weapon.splash||0,pierce:weapon.pierce||0,hitTargets:[],critical:Math.random()<state.runCrit});
  }
  state.playerAction="attack";state.playerActionDuration=.19;state.playerActionTimer=.19;state.fireCooldown=weapon.rate;state.shot++;
  beep(weapon.id==="cannon"?150:weapon.id==="laser"?760:weapon.id==="repeater"?540:360,.045,weapon.id==="cannon"?"sawtooth":"square",.018);return count;
@@ -794,22 +801,28 @@ function update(dt){
  state.clawCooldown=Math.max(0,state.clawCooldown-dt);if(state.clawCooldown<=0)state.clawUsedThisTurn=false;
  for(let i=0;i<state.enemies.length;i++){
   const e=state.enemies[i];e.phase+=dt*2;if(e.dying)continue;
+  if(e.type==="bat")e.y=e.baseY+Math.sin(state.time*5.4+e.phase)*11;
   const targetX=state.playerX+58+i*45;if(e.x>targetX)e.x=Math.max(targetX,e.x-e.speed*dt);
-  e.attackCooldown=(e.attackCooldown??rand(.6,1.2))-dt;
-  if(e.x<=targetX+2&&e.attackCooldown<=0&&state.playerInvuln<=0){applyEnemyHit(e);e.attackCooldown=e.type==="boss"?1.05:1.42}
+  if(e.x<=targetX+2){
+   if(e.windupTimer>0){e.windupTimer-=dt;if(e.windupTimer<=0){e.windupTimer=0;applyEnemyHit(e)}}
+   else{
+    e.attackCooldown-=dt;
+    if(e.attackCooldown<=0&&state.playerInvuln<=0){e.windupTimer=e.attackWindup;e.action="windup";e.actionDuration=e.attackWindup;e.actionTimer=e.attackWindup;e.attackCooldown=e.attackInterval}
+   }
+  }
  }
  state.fireCooldown-=dt;if(state.fireCooldown<=0&&findCombatTarget())fireWeapon();
  const remaining=[];
  for(const b of state.bullets){
   b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let consumed=false;
   for(const e of state.enemies){
-   if(e.dying||e.hp<=0)continue;
+   if(e.dying||e.hp<=0||b.hitTargets.includes(e))continue;
    const reach=(e.type==="boss"?40:27)+b.radius;
    if((e.x-b.x)**2+(e.y-19-b.y)**2<=reach*reach){
     const damage=b.critical?b.damage*2:b.damage;e.hp-=damage;e.hit=.28;
     spawnImpact(e,b.critical?"critical":"slash",damage);popText((b.critical?"KRYTYK ":"-")+damage,e.x,e.y-45,b.critical?"#ff9b63":b.color);
     if(b.splash){for(const other of state.enemies){if(other!==e&&!other.dying&&Math.abs(other.x-e.x)<b.splash){other.hp-=Math.ceil(damage*.55);other.hit=.24;spawnImpact(other,"arcane",damage*.55)}}}
-    if(b.pierce>0)b.pierce--;else consumed=true;state.score+=1;break;
+    b.hitTargets.push(e);if(b.pierce>0)b.pierce--;else consumed=true;state.score+=1;break;
    }
   }
   if(!consumed&&b.life>0&&b.x<W+45&&b.x>-35&&b.y>100&&b.y<510)remaining.push(b);

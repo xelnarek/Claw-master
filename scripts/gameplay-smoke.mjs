@@ -135,6 +135,9 @@ game.startRun(1);
 game.spawnEnemy("slime");
 const pairedEnemies = game.state.enemies;
 for (const enemy of pairedEnemies) {
+  enemy.type = "goblin";
+  enemy.damage = 4;
+  enemy.guard = 0;
   enemy.hp = 100;
   enemy.maxHp = 100;
   enemy.x = game.state.playerX + 90;

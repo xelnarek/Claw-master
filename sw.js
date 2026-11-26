@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v15-forged-weapons-enemy-fx";
+const CACHE_NAME = "claw-quest-v16-weapon-models-targeting";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

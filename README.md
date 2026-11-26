@@ -12,6 +12,8 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 - Touch/drag claw positioning, left/right controls and a grab/retrieval cycle.
 - Loot rewards: coins, gems, health, shield and bomb.
 - Keyboard fallback: J attack, K defend, L special; A/D or arrows move claw, Space/F grab, Escape pause.
+- Dedicated illustrated start screen, expedition summary, settings and quick controls guide.
+- Local device preferences for sound and visual effects, plus a locally saved best score.
 - No 3D engine, remote asset dependency, build step or external library.
 
 ## Run locally
@@ -22,16 +24,16 @@ For GitHub Pages, select **Deploy from a branch**, choose `main` and the root fo
 
 ## Controls
 
-- Tap **ROZPOCZNIJ GRĘ** to start.
+- Tap **ROZPOCZNIJ WYPRAWĘ** to start. The main menu also opens settings and a control guide.
 - Tap an enemy in the arena to select a target. Tap the action buttons (attack/defend/special) to resolve your turn.
 - Tap/drag in the claw cabinet to position the claw.
 - Use the lower **LEWO / PRAWO** buttons to position it precisely.
 - Tap **ZŁAP!** to lower the claw and retrieve a nearby prize.
-- The hero attacks automatically. The left/right arena controls shift the hero's position.
+- Combat is turn-based: the player selects a target and chooses Attack, Defend or Special. Enemies act during their phase.
 
 ## Technical direction
 
-The current art is drawn procedurally with Canvas 2D vector shapes and gradients. It is a self-contained visual prototype, not yet a final production asset pack. The next art pass should replace placeholder vector characters with a consistent original sprite set and frame-based animations while retaining the 2D arcade presentation.
+The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The menu now has a separate illustrated camp/portal scene, a structured expedition panel, functional settings and a controls guide. This remains an original 2D visual prototype rather than a final sprite-sheet asset pack; the next art pass should add consistent frame-based character animations and authored enemy/environment sprites.
 
 ## Next milestones
 

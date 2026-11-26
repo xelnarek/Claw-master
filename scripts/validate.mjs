@@ -25,6 +25,9 @@ const requiredFeatures = [
   "function drawClawMachine()", "function drawAttackFx()", "function markDefeatedEnemies()",
   "function applyEnemyHit(", "const stageCatalog=", "const abilityPool=",
   "function rollAbilityChoices()", "function chooseAbility(index)", "state.runSkills",
+  'id:"bleed"', 'id:"ward"', 'id:"riposte"', "state.runBleed", "state.runWard", "state.runCounterBonus",
+  "e.enraged", "e.spinesActive", "e.guard", 'action==="dive"', 'action==="slam"',
+  "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
   "state.skillCooldownTurns", "state.turnPhase", "state.heroActionUsedThisTurn",
   "state.clawUsedThisTurn", "function beep(", "function spawnImpact(",
   "function drawCombatImpacts()", "const weaponCatalog=", "function fireWeapon(",
@@ -50,6 +53,17 @@ for (const field of obsoleteTimerFields) {
   if (gameScript.includes(field)) throw new Error("Obsolete real-time timer remains: " + field);
 }
 
+const beginTurnStart = gameScript.indexOf("function beginPlayerTurn(){");
+const beginTurnEnd = gameScript.indexOf("function spawnStageWave(){", beginTurnStart);
+if (beginTurnStart < 0 || beginTurnEnd < 0) throw new Error("Turn start function boundaries are missing.");
+const beginTurnBody = gameScript.slice(beginTurnStart, beginTurnEnd);
+if (beginTurnBody.includes('state.playerAction="idle"') || beginTurnBody.includes("state.attackFx=null")) {
+  throw new Error("Beginning the next turn must not erase the previous action's visual feedback.");
+}
+if ((gameScript.match(/function applyEnemyHit\\(e\\)\\{/g) ?? []).length !== 1) {
+  throw new Error("Enemy damage must have exactly one authoritative resolver.");
+}
+
 const animationFeatures = [
   'playerAction:"idle"', "playerActionTimer", "function updateCharacterAnimations(dt)",
   "e.actionTimer", "e.deathTimer", "e.dying", "function drawHero(", "function drawEnemy("
@@ -67,9 +81,9 @@ new Function(read("sw.js"));
 
 console.log("PASS: JavaScript syntax and responsive mobile layout");
 console.log("PASS: turn state machine — claw, one hero action, enemy phase");
-console.log("PASS: turn-based weapon profiles, skills, blocks and enemy intents");
+console.log("PASS: turn-based weapon profiles, status passives, blocks and enemy archetypes");
 console.log("PASS: dynamic claw prize pool and visual combat effects");
-console.log("PASS: character animation, menu, settings and local profile");
+console.log("PASS: upgraded character/enemy art, preserved action feedback, menu and local profile");
 console.log("PASS: PWA manifest, icons and service-worker JavaScript");
 
 execFileSync(process.execPath, [path.join(root, "scripts", "gameplay-smoke.mjs")], { stdio: "inherit" });

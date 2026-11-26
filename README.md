@@ -9,10 +9,12 @@ A mobile-first 2D arcade prototype built with Canvas 2D and vanilla JavaScript.
 - Character action animation states: idle breathing, sword attack, charged special, shield guard and damage reaction.
 - Enemy reactions: bat wing flaps, slime squash/stretch, goblin attack movement, boss pulse, hit flash and delayed defeat animation.
 - Turn-based combat: choose a target, attack, defend to reduce incoming damage, or use a powerful cooldown skill.
-- Enemy variety, wave scaling and a boss encounter every fifth wave.
+- Five curated opening stages with distinct biomes, scripted encounter waves, an end-of-chapter boss, then a scalable endless expedition.
+- New porcupine enemy, enemy attack telegraph, stage objectives and stage-clear rewards.
 - Separate claw-machine cabinet in the lower half of the screen.
 - Touch/drag claw positioning, left/right controls and a grab/retrieval cycle.
-- Loot rewards: coins, gems, health, shield and bomb.
+- Claw loot: persistent coins, run-only attack upgrade, healing, shield buffer and area bomb.
+- Persistent local profile: hero level/XP, unlocked stage, best stage/score, permanent attack/vitality/claw upgrades.
 - Keyboard fallback: J attack, K defend, L special; A/D or arrows move claw, Space/F grab, Escape pause.
 - Dedicated illustrated start screen, expedition summary, settings and quick controls guide.
 - Local device preferences for sound and visual effects, plus a locally saved best score.
@@ -28,14 +30,18 @@ For GitHub Pages, select **GitHub Actions** as the deployment source in the repo
 
 - Tap **ROZPOCZNIJ WYPRAWĘ** to start. The main menu also opens settings and a control guide.
 - Tap an enemy in the arena to select a target. Tap the action buttons (attack/defend/special) to resolve your turn.
-- Tap/drag in the claw cabinet to position the claw.
-- Use the lower **LEWO / PRAWO** buttons to position it precisely.
+- Tap anywhere in the claw chamber to place the claw directly, or drag to fine-tune its position.
+- Use the lower **LEWO / PRAWO** buttons for precise correction. The claw precision upgrade increases the pickup tolerance.
 - Tap **ZŁAP!** to lower the claw and retrieve a nearby prize.
 - Combat is turn-based: the player selects a target and chooses Attack, Defend or Special. Enemies act during their phase.
 
+## Progression
+
+The first five stages are authored encounters: Polana Początku, Zarośnięta Ścieżka, Nora Zmierzchu, Ruiny Strażników and Leśny Strażnik. Clearing a stage grants coins and XP and unlocks the next stage. Coins, hero level, XP, unlocked stage, best score and permanent upgrade ranks are saved locally in `localStorage`. The camp upgrade panel sells permanent attack, vitality and claw-precision upgrades.
+
 ## Technical direction
 
-The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The menu has a separate illustrated camp/portal scene, a structured expedition panel, functional settings and a controls guide. Combat now includes timed character poses and enemy hit/defeat reactions. This remains an original 2D visual prototype rather than a final sprite-sheet asset pack; the next art pass should replace procedural character shapes with authored, consistent sprite sheets and add further distinct biomes.
+The art is drawn procedurally with Canvas 2D vector shapes, gradients, layered scenery and lighting. The first five stages use separate meadow, forest, cave, ruins and boss palettes. The camp now surfaces level, XP, unlocked stage and coins, with a permanent upgrade panel. Combat includes timed character poses, enemy intent markers and hit/defeat reactions. The game remains an original 2D visual prototype rather than a final sprite-sheet asset pack.
 
 ## Next milestones
 
@@ -58,7 +64,7 @@ To publish with GitHub Pages:
 
 Expected project URL after Pages is enabled: `https://xelnarek.github.io/Claw-master/`.
 
-The current repository has Pages disabled, so the deployment workflow cannot publish yet. This is a repository setting, not a game-code error.
+The public Pages deployment is published at `https://xelnarek.github.io/Claw-master/`.
 
 ## Combat
 

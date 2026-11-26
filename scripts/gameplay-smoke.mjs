@@ -10,11 +10,12 @@ const gameScript = html.slice(scriptStart + 8, scriptEnd);
 
 const listeners = new Map();
 const store = new Map();
+const bounds = { left: 0, top: 0, width: 450, height: 800 };
 const canvas = {
   width: 450,
   height: 800,
   getContext: () => context,
-  getBoundingClientRect: () => ({ left: 0, top: 0, width: 450, height: 800 }),
+  getBoundingClientRect: () => bounds,
   addEventListener: (name, callback) => listeners.set("canvas:" + name, callback),
   setPointerCapture: () => {}
 };
@@ -36,6 +37,7 @@ const document = {
 };
 const window = {
   location: { search: "?test=1" },
+  devicePixelRatio: 2,
   addEventListener(name, callback) { listeners.set("window:" + name, callback); },
   __CLAW_TEST_API__: null
 };
@@ -152,6 +154,38 @@ const savedCoins = game.profile.coins;
 game.startRun(1);
 assert.equal(game.state.coins, savedCoins, "starting a new run must keep saved coins");
 assert.equal(game.state.damage, 4 + game.profile.attackRank, "permanent attack rank must survive a new run");
+
+
+game.state.screen = "title";
+game.interact(350, 735);
+assert.equal(game.state.helpOpen, true, "documentation button should open help");
+game.interact(225, 558);
+assert.equal(game.state.helpOpen, true, "keyboard hints must not overlap the help close button");
+game.interact(225, 590);
+assert.equal(game.state.helpOpen, false, "help close button should still close the overlay");
+
+game.interact(90, 735);
+assert.equal(game.state.upgradesOpen, true, "arsenal button should open upgrades");
+listeners.get("window:keydown")({ key: "Escape", preventDefault() {} });
+assert.equal(game.state.upgradesOpen, false, "Escape should close the upgrades overlay");
+
+assert.equal(canvas.width, 900, "canvas backing width should use capped device pixel ratio");
+assert.equal(canvas.height, 1600, "canvas backing height should use capped device pixel ratio");
+bounds.width = 400;
+bounds.height = 900;
+listeners.get("window:resize")();
+assert.equal(canvas.width, 800, "resize should refresh backing width for portrait rotation");
+assert.equal(canvas.height, 1800, "resize should refresh backing height for portrait rotation");
+bounds.width = 450;
+bounds.height = 800;
+listeners.get("window:resize")();
+
+game.startRun(1);
+listeners.get("canvas:pointerdown")({ clientX: 120, clientY: 600, pointerId: 1 });
+assert.equal(game.state.clawX, 120, "touch should move the claw to the pressed position");
+listeners.get("canvas:pointercancel")({ pointerId: 1 });
+listeners.get("canvas:pointermove")({ clientX: 350, clientY: 600, pointerId: 1 });
+assert.equal(game.state.clawX, 120, "cancelled touch must not keep dragging the claw");
 
 console.log("PASS: first-stage onboarding encounter");
 console.log("PASS: one claw grab per turn, combat phase lock and 65% defend reduction");

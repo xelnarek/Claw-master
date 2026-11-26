@@ -184,9 +184,11 @@ function drawArena(){
  for(const f of state.floaters){ctx.globalAlpha=clamp(f.life,0,1);text(f.label,f.x,f.y,12,f.color,1000,"center");ctx.globalAlpha=1}
  // strategic turn-based combat actions
  pill(18,432,110,state.turn==="player"?"TWOJA TURA":"TURA WROGA","#173653",state.turn==="player"?"#a8fff0":"#ffb2b2");
- button(137,435,88,48,"ATAK","",state.turn==="player");
- button(231,435,88,48,"OBRONA","",state.turn==="player");
- button(325,435,105,48,"UMIEJĘT.",""+(state.skillReady?"GOTOWA":"ŁADUJE"),state.turn==="player"&&state.skillReady);
+ button(137,435,88,48,"ATAK","J • CEL",state.turn==="player");
+ button(231,435,88,48,"OBRONA","K • -65%",state.turn==="player");
+ button(325,435,105,48,"SUPER","L • "+(state.skillReady?"GOTOWA":"ŁADUJE"),state.turn==="player"&&state.skillReady);
+ if(state.turn==="enemy")text("WRÓG ATAKUJE…",225,421,11,"#ffb4c4",1000,"center");
+ if(state.defending)pill(165,386,120,"POSTAWA OBRONNA","#244e68","#a4f5ff");
 }
 function drawPrize(type,x,y,scale=1){
  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);

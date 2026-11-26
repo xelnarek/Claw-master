@@ -500,7 +500,7 @@ function drawClawMachine(){
  for(let i=0;i<5;i++)glow(38+i*94,532,18,i%2?"#c19a59":"#78928c",.1);
  ctx.save();ctx.globalAlpha=.07;ctx.fillStyle="#e8fbff";ctx.beginPath();ctx.moveTo(35,522);ctx.lineTo(142,522);ctx.lineTo(270,744);ctx.lineTo(190,744);ctx.closePath();ctx.fill();ctx.restore();
  for(let i=0;i<21;i++){const x=42+(i*71)%370,y=535+(i*43)%181;ctx.globalAlpha=.23;ctx.fillStyle="#d8c9a8";ctx.beginPath();ctx.arc(x,y,1+(i%3)*.7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
- rounded(108,515,234,21,4,"#171e20","#9a7d52",1);text("CLA W  /  SKARBNICA ŁUPÓW",225,526,9,"#d8c7a5",1000,"center");
+ rounded(108,515,234,21,4,"#171e20","#9a7d52",1);text("CLAW  /  SKARBNICA ŁUPÓW",225,526,9,"#d8c7a5",1000,"center");
  rounded(41,541,368,10,3,"#5a5b55","#c3a36d",1);rounded(state.clawX-19,524,38,21,4,"#b68d50","#e4c88e",1.5);
  line(state.clawX,545,state.clawX,state.clawY-22,"#c7b48a",3);rounded(state.clawX-12,state.clawY-25,24,18,4,"#7d8986","#d8c49b",1.5);
  ctx.strokeStyle="#c7b48a";ctx.lineWidth=4;ctx.lineCap="round";const spread=state.clawMode==="down"?22:state.clawMode==="return"?7:19;
@@ -964,15 +964,6 @@ window.addEventListener("keydown",e=>{
  if(e.key===" "||e.key.toLowerCase()==="f")deployClaw();
  if(e.key.toLowerCase()==="j")combatAttack();if(e.key.toLowerCase()==="k")combatDefend();if(e.key.toLowerCase()==="l")combatSkill();
 });
-function applyEnemyHit(e){
- if(state.playerInvuln>0||state.over)return;
- e.action="attack";e.actionDuration=.38;e.actionTimer=.38;
- const raw=e.type==="boss"?Math.ceil(e.damage/3):e.damage;
- let dmg=state.guardTimer>0?Math.max(1,Math.floor(raw*.35)):raw;
- if(state.shield>0){const absorbed=Math.min(state.shield,dmg);state.shield-=absorbed;dmg-=absorbed;popText("TARCZA -"+absorbed,state.playerX,state.playerY-65,"#83f6e9")}
- if(dmg>0){state.hp=Math.max(0,state.hp-dmg);popText("-"+dmg,state.playerX,state.playerY-65,"#ff8d9e");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",dmg);state.playerHit=.2;state.playerAction=state.guardTimer>0?"defend":"hurt";state.playerActionDuration=.3;state.playerActionTimer=.3;beep(170,.12,"sawtooth")}
- state.playerInvuln=state.guardTimer>0?.5:.72;
-}
 function update(dt){
  state.time+=Math.max(0,dt);
  if(state.toastTimer>0){state.toastTimer-=dt;if(state.toastTimer<=0)toastEl.classList.remove("show")}

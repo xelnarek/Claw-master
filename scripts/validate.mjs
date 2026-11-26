@@ -6,18 +6,22 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => readFileSync(path.join(root, name), "utf8");
 
 const html = read("index.html");
-const scriptMatch = html.match(/<script>([\\s\\S]*?)<\\/script>/);
-if (!scriptMatch) throw new Error("Inline game script was not found.");
-new Function(scriptMatch[1]);
+const scriptStart = html.indexOf("<script>");
+const scriptEnd = html.indexOf("</script>", scriptStart);
+if (scriptStart < 0 || scriptEnd < 0) {
+  throw new Error("Inline game script was not found.");
+}
+const gameScript = html.slice(scriptStart + 8, scriptEnd);
+new Function(gameScript);
 
 const manifest = JSON.parse(read("manifest.webmanifest"));
 if (manifest.display !== "standalone" || manifest.orientation !== "portrait") {
   throw new Error("Manifest must target an installed portrait app.");
 }
 for (const icon of manifest.icons ?? []) {
-  const relative = icon.src.replace(/^\\.\\//, "");
+  const relative = icon.src.startsWith("./") ? icon.src.slice(2) : icon.src;
   if (!existsSync(path.join(root, relative))) {
-    throw new Error(`Manifest icon is missing: ${icon.src}`);
+    throw new Error("Manifest icon is missing: " + icon.src);
   }
 }
 if (!html.includes('rel="manifest"') || !html.includes('serviceWorker.register("./sw.js")')) {

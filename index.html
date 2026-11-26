@@ -424,9 +424,18 @@ canvas.addEventListener("pointermove",e=>{
 });
 canvas.addEventListener("pointerup",()=>{pointerStart=null});
 window.addEventListener("keydown",e=>{
- if(["ArrowLeft","ArrowRight"," ","a","d","A","D","f","F","Escape"].includes(e.key))e.preventDefault();
- if(e.key==="Escape"){state.paused=!state.paused;return}
- if(state.screen==="title"){reset();return}
+ if(["ArrowLeft","ArrowRight"," ","a","d","A","D","f","F","Escape","Enter"].includes(e.key))e.preventDefault();
+ if(e.key==="Escape"){
+  if(state.settingsOpen){state.settingsOpen=false;return}
+  if(state.helpOpen){state.helpOpen=false;return}
+  if(state.screen==="game"&&!state.over)state.paused=!state.paused;
+  return;
+ }
+ if(state.screen==="title"){
+  if(e.key==="Enter"&&!state.settingsOpen&&!state.helpOpen)reset();
+  return;
+ }
+ if(state.settingsOpen||state.helpOpen||state.paused||state.over)return;
  if(e.key==="ArrowLeft"||e.key.toLowerCase()==="a")moveClaw(-1);
  if(e.key==="ArrowRight"||e.key.toLowerCase()==="d")moveClaw(1);
  if(e.key===" "||e.key.toLowerCase()==="f")deployClaw();

@@ -117,12 +117,14 @@ assert.equal(game.state.shot, shotAfterTurn, "idle animation time must not gener
 game.startRun(1);
 completeClaw("coin");
 const guardEnemy = game.state.enemies[0];
+guardEnemy.hp = 100;
+guardEnemy.maxHp = 100;
 guardEnemy.x = game.state.playerX + 90;
 guardEnemy.nextAttackTurn = game.state.turnNumber;
 game.planEnemyIntents();
 const hpBeforeGuard = game.state.hp;
 assert.equal(game.combatDefend(), true, "counterattack should consume the one hero action");
-assert.ok(guardTarget.hp < 100, "counterattack must still land exactly one weapon attack");
+assert.ok(guardEnemy.hp < 100, "counterattack must still land exactly one weapon attack");
 assert.equal(hpBeforeGuard - game.state.hp, 2, "counterattack guard should halve a 4-damage slime hit");
 assert.equal(game.state.guardTurns, 0, "block should expire after one enemy phase");
 assert.equal(game.state.turnPhase, "claw", "block should complete the turn and return to claw phase");

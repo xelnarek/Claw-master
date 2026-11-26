@@ -121,10 +121,35 @@ guardEnemy.x = game.state.playerX + 90;
 guardEnemy.nextAttackTurn = game.state.turnNumber;
 game.planEnemyIntents();
 const hpBeforeGuard = game.state.hp;
-assert.equal(game.combatDefend(), true, "block should consume the one hero action");
-assert.equal(hpBeforeGuard - game.state.hp, 2, "one block should halve a 4-damage slime hit");
+assert.equal(game.combatDefend(), true, "counterattack should consume the one hero action");
+assert.ok(guardTarget.hp < 100, "counterattack must still land exactly one weapon attack");
+assert.equal(hpBeforeGuard - game.state.hp, 2, "counterattack guard should halve a 4-damage slime hit");
 assert.equal(game.state.guardTurns, 0, "block should expire after one enemy phase");
 assert.equal(game.state.turnPhase, "claw", "block should complete the turn and return to claw phase");
+
+game.startRun(1);
+game.spawnEnemy("slime");
+const pairedEnemies = game.state.enemies;
+for (const enemy of pairedEnemies) {
+  enemy.hp = 100;
+  enemy.maxHp = 100;
+  enemy.x = game.state.playerX + 90;
+  enemy.nextAttackTurn = game.state.turnNumber;
+}
+game.planEnemyIntents();
+completeClaw("coin");
+const hpBeforeMultipleEnemies = game.state.hp;
+assert.equal(game.combatAttack(), true, "one attack should start the enemy phase");
+assert.equal(hpBeforeMultipleEnemies - game.state.hp, 8,
+  "every eligible enemy must resolve one attack in the same enemy phase; no timed invulnerability may suppress later enemies");
+
+game.startRun(1);
+game.state.machinePrizes = [];
+assert.equal(game.deployClaw(), true, "one claw attempt must still be available when the machine has no nearby prize");
+for (let i = 0; i < 12; i++) game.update(0.1);
+assert.equal(game.state.turnPhase, "hero", "a missed claw attempt must still unlock the hero attack phase");
+assert.equal(game.combatAttack(), true, "a miss must not soft-lock the encounter");
+
 
 game.startRun(1);
 game.state.enemies[0].hp = 100;
@@ -213,7 +238,8 @@ listeners.get("window:resize")();
 console.log("PASS: turn order is exactly one claw grab, one hero action, then enemy actions");
 console.log("PASS: no automatic fire, enemy movement, or incoming damage during player planning");
 console.log("PASS: one weapon attack per turn and differentiated weapon effects");
-console.log("PASS: turn-based block, skill cooldown and claw skill-charge reward");
+console.log("PASS: counterattack always deals one hit and reduces enemy-phase damage");
+console.log("PASS: turn-based skill cooldown and claw skill-charge reward");
 console.log("PASS: moving claw, varied prize layouts, capture reward and persistent upgrades");
 console.log("PASS: enemy intent, discrete approach/attack turns and encounter progression");
 console.log("PASS: mobile touch aiming, pointer cancellation and high-DPI resize");

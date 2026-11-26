@@ -69,14 +69,32 @@ assert.ok(game.state.enemies.every(enemy => enemy.type === "slime"), "stage 1 sh
 const firstEnemy = game.state.enemies[game.state.selectedEnemy];
 const hpBeforeAttack = firstEnemy.hp;
 game.combatAttack();
-assert.ok(firstEnemy.hp < hpBeforeAttack, "attack should damage the selected enemy");
-assert.equal(game.state.turn, "enemy", "player action should hand control to enemy phase");
+assert.equal(firstEnemy.hp, hpBeforeAttack, "combat is locked until the claw phase is completed");
+game.state.machinePrizes = [{ id: "test-coin", type: "coin", x: 310, y: 700, phase: 0 }];
+game.deployClaw();
+assert.equal(game.state.turn, "claw");
+assert.equal(game.state.clawUsedThisTurn, true);
+game.deployClaw();
+assert.equal(game.state.turn, "claw", "a second claw deployment must be rejected");
+game.update(1);
+game.update(1);
+assert.equal(game.state.turn, "player-action");
+game.combatAttack();
+assert.ok(firstEnemy.hp < hpBeforeAttack);
+assert.equal(game.state.turn, "enemy");
 game.resolveEnemyTurn();
-assert.equal(game.state.turn, "player", "enemy phase should return control to player");
+assert.equal(game.state.turn, "player");
+assert.equal(game.state.clawUsedThisTurn, false);
+game.state.machinePrizes = [{ id: "test-xp", type: "xp", x: 310, y: 700, phase: 0 }];
+game.deployClaw();
+game.update(1);
+game.update(1);
+assert.equal(game.state.turn, "player-action");
 const hpBeforeGuard = game.state.hp;
 game.combatDefend();
 game.resolveEnemyTurn();
 assert.equal(hpBeforeGuard - game.state.hp, 1, "65% guard should reduce a 4-damage slime hit to 1");
+assert.equal(game.state.clawUsedThisTurn, false);
 
 const levelBeforeDraft = game.profile.level;
 game.gainXp(levelBeforeDraft * 30);
@@ -136,7 +154,7 @@ assert.equal(game.state.coins, savedCoins, "starting a new run must keep saved c
 assert.equal(game.state.damage, 4 + game.profile.attackRank, "permanent attack rank must survive a new run");
 
 console.log("PASS: first-stage onboarding encounter");
-console.log("PASS: turn-based attack, enemy phase and 65% defend reduction");
+console.log("PASS: one claw grab per turn, combat phase lock and 65% defend reduction");
 console.log("PASS: three-choice level-up draft and run skill application");
 console.log("PASS: claw rewards persist between runs");
 console.log("PASS: permanent upgrade purchase and stat application");

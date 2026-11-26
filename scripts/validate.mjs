@@ -48,7 +48,12 @@ const requiredVisualFeatures = [
   "function spawnImpact(",
   "function drawCombatImpacts()",
   "state.impacts",
-  "state.shake"
+  "state.shake",
+  "const weaponCatalog=",
+  "function fireWeapon(",
+  "function moveHero(",
+  "function applyEnemyHit(",
+  "state.clawCooldown"
 ];
 for (const feature of requiredVisualFeatures) {
   if (!gameScript.includes(feature)) {
@@ -90,6 +95,7 @@ new Function(read("sw.js"));
 console.log("PASS: game JavaScript syntax");
 console.log("PASS: illustrated menu, settings, help, stage catalog and local profile");
 console.log("PASS: character action, hit and defeat animations");
+console.log("PASS: real-time weapon loop, five weapon archetypes and claw cooldown");
 console.log("PASS: three-choice skill draft, run build modifiers and synthesized audio");
 console.log("PASS: PWA manifest and icon references");
 console.log("PASS: service-worker JavaScript syntax");

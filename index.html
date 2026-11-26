@@ -409,27 +409,66 @@ function drawHero(x,y){
  // pauldron and glove details
  glow(-15,-32,17,"#ffd166",.12);rounded(-23,-36,13,10,4,"#d9a64d","#ffe5a4",1);
  rounded(18,-13,8,7,3,"#f3bc83","#ffe0ba",1);
- // Compact mechanical firearm; the picked weapon changes its silhouette and muzzle.
- ctx.save();ctx.translate(23,-28);
- const activeWeapon=(shotFx&&state.shotFxWeaponId?weaponCatalog.find(w=>w.id===state.shotFxWeaponId):null)||weaponForRun(),gunLength=activeWeapon.id==="cannon"?29:activeWeapon.id==="scatter"?25:activeWeapon.id==="laser"?31:23;
- const shotKick=shotFx?Math.sin(shotProgress*Math.PI)*4.5:0;ctx.translate(-shotKick,0);
- const muzzle=shotFx?clamp(1-shotProgress*1.9,0,1):0;
- const metal=ctx.createLinearGradient(0,-10,0,10);metal.addColorStop(0,"#c4d0cd");metal.addColorStop(.45,"#596b70");metal.addColorStop(1,"#25363d");
- rounded(-8,-7,22,12,3,metal,"#d4d9cc",1);rounded(7,-5,gunLength,6,2,"#46575d","#c5c9b4",1);rounded(9,-1,activeWeapon.id==="cannon"?12:8,9,2,"#28363d","#82908b",1);rounded(-13,-4,8,8,2,"#8d6945","#d5ae73",1);
- line(-5,-10,12,-10,activeWeapon.color,1.7);
- if(activeWeapon.id==="laser"){glow(gunLength+5,-2,15,activeWeapon.color,.32);rounded(gunLength-2,-4,7,4,1,"#d8ffff",activeWeapon.color,1)}else rounded(gunLength-1,-4,6,5,1,activeWeapon.color,"#fff1c9",1);
- if(muzzle>.02){
-  glow(gunLength+8,-2,14+muzzle*9,activeWeapon.color,.35+muzzle*.42);
-  ctx.save();ctx.globalAlpha=muzzle;ctx.fillStyle="#fff6d7";ctx.strokeStyle=activeWeapon.color;ctx.lineWidth=1.4;
-  ctx.beginPath();ctx.moveTo(gunLength+2,-2);ctx.lineTo(gunLength+9,-7);ctx.lineTo(gunLength+17,-2);ctx.lineTo(gunLength+9,3);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
- }
- if(shotFx&&activeWeapon.id!=="laser"){
-  const caseT=clamp(shotProgress*1.8,0,1),caseAlpha=clamp(1-Math.abs(shotProgress-.42)*2.1,0,1);
-  if(caseAlpha>.01){ctx.save();ctx.globalAlpha=caseAlpha;ctx.translate(7-caseT*10,-1+caseT*15);ctx.rotate(caseT*4);rounded(-2,-1,5,2,1,"#d6a65e","#fff0b5",.7);ctx.restore()}
- }
- if(special){ctx.shadowColor="#8ef4ff";ctx.shadowBlur=14;rounded(-5,-12,34,3,1,"#9beeff")}
- ctx.restore();
- if(special&&progress>.08&&progress<.96){ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.5)*1.7)*.75;ctx.strokeStyle="#9effff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(15,-29,45,-1.6,-.1);ctx.stroke();ctx.restore()}
+ // Weapon-specific forged silhouettes: each pickup changes the actual hand-held profile.
+  ctx.save();ctx.translate(23,-28);
+  const activeWeapon=(shotFx&&state.shotFxWeaponId?weaponCatalog.find(w=>w.id===state.shotFxWeaponId):null)||weaponForRun();
+  const wid=activeWeapon.id,gunLength=wid==="cannon"?36:wid==="laser"?35:wid==="scatter"?29:wid==="repeater"?32:23;
+  const shotKick=shotFx?Math.sin(shotProgress*Math.PI)*(wid==="cannon"?6:4):0;ctx.translate(-shotKick,0);
+  const muzzle=shotFx?clamp(1-shotProgress*1.9,0,1):0;
+  const metal=ctx.createLinearGradient(0,-13,0,13);metal.addColorStop(0,"#d5ddd5");metal.addColorStop(.22,"#78888a");metal.addColorStop(.52,"#384950");metal.addColorStop(1,"#111d24");
+  const darkMetal="#17242b",edge="#c3c9b7";
+  if(wid==="sidearm"){
+   rounded(-10,-8,29,13,3,metal,edge,1);rounded(12,-6,14,5,2,"#65787b","#d6d9c8",.8);
+   rounded(5,-2,8,12,2,darkMetal,"#82908b",.8);line(7,2,10,7,"#d0ae76",1.4);
+   rounded(-4,-12,17,3,1,"#a9b6ae","#e8e6d4",.7);line(-5,-7,10,-7,"#f0d8a6",.8);
+   rounded(-13,-5,5,7,1,"#96714a","#dbc08e",.8);
+  }else if(wid==="repeater"){
+   rounded(-10,-9,31,15,3,metal,edge,1);rounded(12,-6,21,5,2,"#42575e","#b8c4bc",1);
+   rounded(-2,6,12,12,2,"#202e35","#8e9d96",.9);rounded(-5,-14,17,4,2,"#27363c","#b5c9c5",.8);
+   rounded(0,-18,8,4,1,"#101a20",activeWeapon.color,.8);glow(4,-16,8,activeWeapon.color,.18);
+   for(let i=0;i<4;i++)line(-5+i*4,-7,-5+i*4,-1,"#c1c8b8",.8);
+   line(-9,3,20,3,activeWeapon.color,1.8);rounded(25,-7,8,7,2,"#26383e",activeWeapon.color,1);
+  }else if(wid==="scatter"){
+   rounded(-11,-10,24,15,3,metal,edge,1);rounded(7,-8,27,5,2,"#465960",edge,.8);
+   rounded(7,-2,27,5,2,"#344950","#a8b9b2",.8);
+   rounded(30,-9,8,7,2,"#17252b","#d1b785",1);rounded(30,-3,8,6,2,"#17252b","#d1b785",1);
+   rounded(0,6,19,5,2,"#5a4635","#d1ac72",.8);rounded(1,-15,12,4,1,"#25353b","#b3c0b8",.8);
+   for(let i=0;i<3;i++){ctx.fillStyle="#d5a65f";ctx.beginPath();ctx.arc(5+i*5,8,1.4,0,Math.PI*2);ctx.fill()}
+  }else if(wid==="cannon"){
+   rounded(-13,-12,32,20,4,metal,"#e0d5b7",1.2);rounded(7,-11,27,14,4,"#364b50","#c5c7b4",1);
+   rounded(28,-13,12,18,3,"#1a282f","#e1c28a",1.2);rounded(31,-9,8,10,2,"#0a1419",activeWeapon.color,1);
+   rounded(-2,8,16,10,3,"#26373e","#a9b7ad",1);rounded(-15,-5,6,10,2,"#6b5438","#d0ae76",.8);
+   for(let i=0;i<3;i++){ctx.fillStyle="#d5b16e";ctx.beginPath();ctx.arc(-8+i*5,-14,1.5,0,Math.PI*2);ctx.fill()}
+   line(-8,1,18,1,activeWeapon.color,2);
+  }else if(wid==="laser"){
+   rounded(-12,-6,31,10,3,metal,edge,1);rounded(12,-4,27,5,2,"#283a43","#d1dace",.9);
+   rounded(1,-14,14,6,2,"#1d3038",activeWeapon.color,1);ctx.fillStyle="#d8ffff";ctx.beginPath();ctx.moveTo(7,-17);ctx.lineTo(13,-12);ctx.lineTo(7,-7);ctx.lineTo(1,-12);ctx.closePath();ctx.fill();glow(7,-12,13,activeWeapon.color,.32);
+   line(-8,-8,28,-8,activeWeapon.color,1.4);line(-7,7,27,7,activeWeapon.color,1.2);rounded(31,-7,8,7,2,"#132a31",activeWeapon.color,1);
+  }
+  rounded(-12,-3,8,8,2,"#8b6845","#d9bd84",.8);
+  for(const [sx,sy] of [[-5,-4],[7,-4],[16,1]]){ctx.fillStyle="#d7d9c8";ctx.beginPath();ctx.arc(sx,sy,1,0,Math.PI*2);ctx.fill();line(sx-.6,sy,sx+.6,sy,"#34444a",.5)}
+  glow(1,-11,10,activeWeapon.color,.11);line(-7,11,5,11,"#d0b17a",1);
+  if(muzzle>.02){
+   ctx.save();ctx.globalAlpha=muzzle;ctx.shadowColor=activeWeapon.color;ctx.shadowBlur=13;
+   if(wid==="scatter"){
+    for(let i=-1;i<=1;i++){ctx.fillStyle=i?"#ffb779":"#fff5d7";ctx.beginPath();ctx.arc(gunLength+6,-2+i*5,2.2,0,Math.PI*2);ctx.fill()}
+    line(gunLength+1,-2,gunLength+12,-2,activeWeapon.color,3);
+   }else if(wid==="cannon"){
+    ctx.fillStyle="#ffe5a7";ctx.strokeStyle=activeWeapon.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(gunLength+8,-3,7+muzzle*3,0,Math.PI*2);ctx.fill();ctx.stroke();
+   }else if(wid==="laser"){
+    line(gunLength-4,-2,gunLength+13,-2,"#ffffff",3);line(gunLength,-7,gunLength+12,-2,activeWeapon.color,2);line(gunLength,3,gunLength+12,-2,activeWeapon.color,2);
+   }else{
+    ctx.fillStyle="#fff6d7";ctx.strokeStyle=activeWeapon.color;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(gunLength,-2);ctx.lineTo(gunLength+7,-7);ctx.lineTo(gunLength+16,-2);ctx.lineTo(gunLength+7,3);ctx.closePath();ctx.fill();ctx.stroke();
+   }
+   glow(gunLength+9,-2,12+muzzle*11,activeWeapon.color,.35+muzzle*.38);ctx.restore();
+  }
+  if(shotFx&&wid!=="laser"){
+   const caseT=clamp(shotProgress*1.8,0,1),caseAlpha=clamp(1-Math.abs(shotProgress-.42)*2.1,0,1);
+   if(caseAlpha>.01){ctx.save();ctx.globalAlpha=caseAlpha;ctx.translate(wid==="cannon"?-3:7-caseT*10,-1+caseT*15);ctx.rotate(caseT*4);rounded(-2,-1,5,2,1,"#d6a65e","#fff0b5",.7);ctx.restore()}
+  }
+  if(special){ctx.shadowColor="#8ef4ff";ctx.shadowBlur=14;rounded(-5,-12,34,3,1,"#9beeff")}
+  ctx.restore();
+  if(special&&progress>.08&&progress<.96){ctx.save();ctx.globalAlpha=(1-Math.abs(progress-.5)*1.7)*.75;ctx.strokeStyle="#9effff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(15,-29,45,-1.6,-.1);ctx.stroke();ctx.restore()}
  
 // readable attack slash trail and guard shield
   if(guard){

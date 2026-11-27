@@ -79,16 +79,30 @@ function completeClaw(type = "coin") {
 }
 
 game.startRun(1);
-assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 12,
-  "the first turn should start with twelve ordinary filler balls");
+assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 24,
+  "the first turn should start with twenty-four ordinary filler balls");
 const coinsBeforeFillerGrab = game.profile.coins;
 completeClaw("ball");
 assert.equal(game.profile.coins, coinsBeforeFillerGrab,
   "catching an ordinary ball must not grant coins or bonus rewards");
 assert.equal(game.combatAttack(), true, "a filler-ball catch must still allow one hero action");
 assert.equal(game.state.turnNumber, 2, "the player must complete the normal turn after catching a filler ball");
-assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 15,
-  "the filler-ball target count should rise by three on turn two");
+assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 29,
+  "the filler-ball target count should rise by five on turn two");
+
+// A small ordinary ball sits above a valuable reward in the claw's drop corridor.
+// The first object in the vertical path must be caught; the capsule must stay in the pit.
+game.startRun(1);
+const obstructX = game.state.clawX;
+game.state.machinePrizes = [
+  { id: "front-ball", type: "ball", x: obstructX, y: 604, radius: 9, phase: 0, color: "#e9f0ed" },
+  { id: "blocked-gem", type: "gem", x: obstructX, y: 684, radius: 18, phase: 0, size: 1 }
+];
+assert.equal(game.deployClaw(), true, "claw should start above the obstructed reward");
+for (let i = 0; i < 12; i++) game.update(0.1);
+assert.ok(game.state.machinePrizes.some(prize => prize.id === "blocked-gem"),
+  "an ordinary ball above a reward must obstruct the grab and leave the reward in the machine");
+assert.equal(game.state.turnPhase, "hero", "an obstructed pickup must still finish the claw phase");
 game.startRun(1);
 const firstEnemy = game.state.enemies[0];
 firstEnemy.x = 360;

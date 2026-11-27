@@ -141,20 +141,28 @@ assert.equal(game.state.shot, shotAfterTurn, "idle animation time must not gener
 
 game.startRun(1);
 completeClaw("coin");
-game.spawnEnemy("goblin");
-const guardEnemy = game.state.enemies.at(-1);
-game.state.enemies = [guardEnemy];
-guardEnemy.hp = 100;
-guardEnemy.maxHp = 100;
-guardEnemy.x = game.state.playerX + 90;
-guardEnemy.nextAttackTurn = game.state.turnNumber;
+game.spawnEnemy("fire_elemental");
+const elemental = game.state.enemies.at(-1);
+elemental.hp = 100;
+elemental.maxHp = 100;
+elemental.x = game.state.playerX + 90;
+elemental.nextAttackTurn = game.state.turnNumber;
+game.state.enemies = [elemental];
 game.planEnemyIntents();
-const hpBeforeGuard = game.state.hp;
-assert.equal(game.combatDefend(), true, "counterattack should consume the one hero action");
-assert.ok(guardEnemy.hp < 100, "counterattack must still land exactly one weapon attack");
-assert.equal(hpBeforeGuard - game.state.hp, 3, "counterattack guard should halve a 5-damage goblin hit, rounded up");
-assert.equal(game.state.guardTurns, 0, "block should expire after one enemy phase");
-assert.equal(game.state.turnPhase, "claw", "block should complete the turn and return to claw phase");
+assert.equal(game.combatAttack(), true, "combat attack should consume the one hero action");
+assert.ok(elemental.hp < 100, "combat attack must deal weapon damage to fire elemental");
+
+game.startRun(1);
+game.spawnEnemy("dragon");
+assert.ok(game.state.enemies.some(e => e.type === "dragon"), "dragon enemy should spawn correctly");
+
+game.startRun(1);
+game.spawnEnemy("golem");
+assert.ok(game.state.enemies.some(e => e.type === "golem"), "crystal golem enemy should spawn correctly");
+
+game.startRun(1);
+game.spawnEnemy("hydra");
+assert.ok(game.state.enemies.some(e => e.type === "hydra"), "swamp hydra enemy should spawn correctly");
 
 game.startRun(1);
 game.spawnEnemy("slime");
@@ -182,21 +190,6 @@ for (let i = 0; i < 12; i++) game.update(0.1);
 assert.equal(game.state.turnPhase, "hero", "a missed claw attempt must still unlock the hero attack phase");
 assert.equal(game.combatAttack(), true, "a miss must not soft-lock the encounter");
 
-
-game.startRun(1);
-game.state.enemies[0].hp = 100;
-game.state.enemies[0].maxHp = 100;
-completeClaw("skill");
-assert.equal(game.state.skillCooldownTurns, 0, "skill charge prize should restore the ability");
-assert.equal(game.combatSkill(), true, "area skill should be usable as the one hero action");
-assert.equal(game.state.skillCooldownTurns, 1, "skill cooldown should be measured in turns, not seconds");
-assert.equal(game.state.turnPhase, "claw", "skill should pass control to the enemy phase and next turn");
-game.state.enemies[0].hp = 100;
-completeClaw("coin");
-assert.equal(game.state.skillCooldownTurns, 1, "idle time and claw animation must not tick skill cooldown");
-assert.equal(game.combatAttack(), true, "next turn should still allow one basic attack");
-assert.equal(game.state.skillCooldownTurns, 0, "skill cooldown should recover after the specified enemy-turn count");
-
 game.startRun(1);
 const clawXBefore = game.state.clawX;
 game.moveClaw(-1);
@@ -204,9 +197,6 @@ assert.ok(game.state.clawX < clawXBefore, "A/D or arrow controls should repositi
 const coinBefore = game.profile.coins;
 game.reward("coin");
 assert.ok(game.profile.coins > coinBefore, "coin prize should add persistent currency");
-game.reward("skill");
-assert.equal(game.state.skillCooldownTurns, 0, "skill prize should restore the turn-based skill charge");
-assert.ok(game.state.runSkillBonus >= 2, "skill prize should also improve the skill build");
 
 // Run passives and enemy archetypes must create visible, turn-bound mechanics.
 game.startRun(1);

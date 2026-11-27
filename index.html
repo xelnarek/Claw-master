@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#1c120f">
+<meta name="theme-color" content="#09090d">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,18 +12,18 @@
 <title>Claw Quest — Relic Vault Roguelite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark;--ink:#fff9ec;--muted:#d4c2ae;--panel:#2c1b15;--line:rgba(255,209,102,.32);--gold:#ffd166;--cyan:#57e6ff;--navy:#160e12;--blue:#3c271d}
+:root{color-scheme:dark;--ink:#fff7eb;--muted:#bfa895;--panel:#1c1319;--line:rgba(217,56,86,.38);--gold:#d9a84e;--crimson:#8f142e;--iron:#242933;--obsidian:#0b0c10}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#130c10;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-body{display:block;background:radial-gradient(circle at 50% 22%,#3a2420 0%,#130c10 76%)}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09090d;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body{display:block;background:radial-gradient(circle at 50% 20%,#240e16 0%,#09090d 78%)}
 /* Pełnoekranowy układ mobilny: żadnych pustych pasów nad/pod grą na ekranach 19.5:9–21:9. */
-#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden;border-radius:0;background:#160e12;box-shadow:none;isolation:isolate}
+#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden;border-radius:0;background:#09090d;box-shadow:none;isolation:isolate}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 @supports(height:100svh){#game-wrap{height:100svh}}
-@media(min-width:700px) and (min-height:900px){#game-wrap{width:min(100vw,62.5dvh);height:min(100dvh,160vw);left:50%;top:50%;transform:translate(-50%,-50%);border-radius:20px;box-shadow:0 28px 96px #000d,0 0 0 2px rgba(255,209,102,.42)}}
-#toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.94);opacity:0;pointer-events:none;padding:10px 18px;border:2.5px solid #ffd166;border-radius:12px;background:linear-gradient(180deg,#573524,#241510);color:#fff9ec;font-size:12px;font-weight:800;letter-spacing:.05em;white-space:nowrap;box-shadow:0 10px 28px rgba(0,0,0,.72),inset 0 2px 0 rgba(255,232,166,.26);transition:.18s}
+@media(min-width:700px) and (min-height:900px){#game-wrap{width:min(100vw,62.5dvh);height:min(100dvh,160vw);left:50%;top:50%;transform:translate(-50%,-50%);border-radius:20px;box-shadow:0 28px 96px #000000f0,0 0 0 2px rgba(184,32,58,.55)}}
+#toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.94);opacity:0;pointer-events:none;padding:10px 18px;border:2.5px solid #d93856;border-radius:8px;background:linear-gradient(180deg,#3b1019,#14070b);color:#fff7eb;font-family:"Cinzel","Plus Jakarta Sans",serif;font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap;box-shadow:0 12px 34px rgba(0,0,0,.88),0 0 16px rgba(217,56,86,.45),inset 0 1px 0 rgba(255,200,210,.3);transition:.18s}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #hint{display:none}
 </style>
@@ -41,7 +41,7 @@ const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 const W=450,H=800,toastEl=document.getElementById("toast"),hintEl=document.getElementById("hint");
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const UI_FONT='"Plus Jakarta Sans",system-ui,-apple-system,sans-serif';
-const DISPLAY_FONT='"Fredoka","Plus Jakarta Sans",system-ui,sans-serif';
+const DISPLAY_FONT='"Cinzel","Plus Jakarta Sans",serif';
 let viewTransform={dpr:1,scale:1,offsetX:0,offsetY:0};
 function resizeCanvas(){
  const rect=canvas.getBoundingClientRect(),dpr=clamp(Number(window.devicePixelRatio)||1,1,2.75);
@@ -328,56 +328,60 @@ function pill(x,y,w,label,fill="#2a3a66",color="#fff"){
 function button(x,y,w,h,label,sub,active=false,tone="teal"){
  ctx.save();
  const palettes={
-  teal:{top:"#39e5a6",bot:"#169473",lip:"#0b5c48",border:"#171226",hi:"#a9ffe2",txt:"#ffffff"},
-  gold:{top:"#ffd858",bot:"#e48c25",lip:"#994e0c",border:"#171226",hi:"#fff4ba",txt:"#ffffff"},
-  red:{top:"#ff6e6e",bot:"#cf2f47",lip:"#7b1426",border:"#171226",hi:"#ffc3c3",txt:"#ffffff"},
-  blue:{top:"#4fc6ff",bot:"#1e74d4",lip:"#0e438a",border:"#171226",hi:"#b9ecff",txt:"#ffffff"},
-  violet:{top:"#b77eff",bot:"#743ad8",lip:"#431991",border:"#171226",hi:"#e5ceff",txt:"#ffffff"},
-  dim:{top:"#3f4c73",bot:"#273152",lip:"#14192e",border:"#171226",hi:"#ffffff30",txt:"#c9d4ea"}
+  teal:{top:"#1f6649",bot:"#0f3b2a",lip:"#071f16",border:"#06070a",hi:"#57d99f",txt:"#ffffff"},
+  gold:{top:"#b88225",bot:"#66430d",lip:"#331f04",border:"#06070a",hi:"#ffd678",txt:"#ffffff"},
+  red:{top:"#b8142c",bot:"#5e0614",lip:"#2e0209",border:"#06070a",hi:"#ff667e",txt:"#ffffff"},
+  blue:{top:"#455369",bot:"#242b36",lip:"#12161c",border:"#06070a",hi:"#8ea1ba",txt:"#ffffff"},
+  violet:{top:"#692075",bot:"#390c40",lip:"#1a041f",border:"#06070a",hi:"#b85ec9",txt:"#ffffff"},
+  dim:{top:"#1f242e",bot:"#11141a",lip:"#08090d",border:"#06070a",hi:"#3a4352",txt:"#737f94"}
  };
  const p=active?(palettes[tone]||palettes.teal):palettes.dim;
- // 3D arcade push-button lip
- rounded(x,y+3,w,h,10,p.lip,p.border,2.2);
+ // Forged dark-iron button lip & sharp metallic bevel
+ rounded(x,y+3,w,h,6,p.lip,p.border,2.2);
  const faceH=Math.max(12,h-3);
  const g=ctx.createLinearGradient(x,y,x,y+faceH);g.addColorStop(0,p.top);g.addColorStop(1,p.bot);
- rounded(x,y,w,faceH,9,g,p.border,2.2);
- // Glossy comic upper shine
- ctx.save();ctx.globalAlpha=active?.42:.18;ctx.fillStyle=p.hi;
- ctx.beginPath();ctx.roundRect(x+5,y+3,w-10,Math.max(4,faceH*.28),5);ctx.fill();ctx.restore();
- inkText(label,x+w/2,y+faceH*(sub?.39:.52),Math.min(13,w/Math.max(6.8,label.length*.6)),p.txt,"#141022",3.1,"center",DISPLAY_FONT);
- if(sub)text(sub,x+w/2,y+faceH*.76,Math.min(7.7,w/Math.max(7,sub.length*.54)),active?"#fff8db":"#99a8c8",800,"center");
+ rounded(x,y,w,faceH,5,g,p.border,2.2);
+ // Forged metallic edge highlight
+ ctx.save();ctx.globalAlpha=active?.38:.12;ctx.fillStyle=p.hi;
+ ctx.beginPath();ctx.roundRect(x+4,y+2,w-8,Math.max(3,faceH*.22),3);ctx.fill();ctx.restore();
+ // Iron corner rivets
+ if(w>50){
+  ctx.fillStyle="#06070a";ctx.beginPath();ctx.arc(x+4,y+4,1.4,0,Math.PI*2);ctx.arc(x+w-4,y+4,1.4,0,Math.PI*2);ctx.fill();
+ }
+ inkText(label,x+w/2,y+faceH*(sub?.39:.52),Math.min(13,w/Math.max(6.8,label.length*.6)),p.txt,"#09090e",3.1,"center",DISPLAY_FONT);
+ if(sub)text(sub,x+w/2,y+faceH*.76,Math.min(7.7,w/Math.max(7,sub.length*.54)),active?"#ffd46e":"#808b9e",800,"center");
  ctx.restore();
 }
 function drawModalFrame(x,y,w,h,accent="#ffd166"){
  ctx.save();
- ctx.shadowColor="#07040cd8";ctx.shadowBlur=30;ctx.shadowOffsetY=12;
- rounded(x,y+5,w,h,18,"#180d0b","#140c0a",2.6);
+ ctx.shadowColor="#000000f0";ctx.shadowBlur=32;ctx.shadowOffsetY=14;
+ rounded(x,y+5,w,h,14,"#0a070c","#060408",2.6);
  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
- // Carved dark-oak & hammered gold Heroic Fantasy tome frame
- const wood=ctx.createLinearGradient(x,y,x,y+h);wood.addColorStop(0,"#593827");wood.addColorStop(.14,"#3b2319");wood.addColorStop(.86,"#291813");wood.addColorStop(1,"#1c100d");
- rounded(x,y,w,h,18,wood,accent,3);
- const slate=ctx.createLinearGradient(x,y+8,x,y+h-8);slate.addColorStop(0,"#262e4f");slate.addColorStop(.5,"#1c233f");slate.addColorStop(1,"#151a31");
- rounded(x+7,y+7,w-14,h-14,12,slate,"#ffd87a44",1.3);
- const bar=ctx.createLinearGradient(x,y+8,x,y+28);bar.addColorStop(0,"#ffd98a26");bar.addColorStop(1,"#ffffff00");
- rounded(x+9,y+9,w-18,20,8,bar);
+ // Carved obsidian & forged blood-iron reliquary frame
+ const iron=ctx.createLinearGradient(x,y,x,y+h);iron.addColorStop(0,"#2a161c");iron.addColorStop(.14,"#1a0c10");iron.addColorStop(.86,"#12080b");iron.addColorStop(1,"#080406");
+ rounded(x,y,w,h,14,iron,accent,2.8);
+ const crypt=ctx.createLinearGradient(x,y+8,x,y+h-8);crypt.addColorStop(0,"#18101a");crypt.addColorStop(.5,"#120912");crypt.addColorStop(1,"#0a050a");
+ rounded(x+7,y+7,w-14,h-14,10,crypt,"#8f142e44",1.4);
+ const bar=ctx.createLinearGradient(x,y+8,x,y+28);bar.addColorStop(0,"#8f142e33");bar.addColorStop(1,"#00000000");
+ rounded(x+9,y+9,w-18,20,6,bar);
  for(const [sx,sy] of [[x+15,y+15],[x+w-15,y+15],[x+15,y+h-15],[x+w-15,y+h-15]]){
-  ctx.fillStyle="#d4933b";ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#8f142e";ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=accent;ctx.beginPath();ctx.arc(sx-.6,sy-.6,3.2,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle="#180d0b";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle="#090508";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(sx,sy,5,0,Math.PI*2);ctx.stroke();
  }
  ctx.restore();
 }
 function drawModalBackdrop(){
- ctx.fillStyle="#0d0914e0";ctx.fillRect(0,0,W,H);
- const haze=ctx.createRadialGradient(225,365,30,225,365,410);haze.addColorStop(0,"#ffb64d24");haze.addColorStop(.55,"#3b6cb828");haze.addColorStop(1,"#00000000");ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#06050af0";ctx.fillRect(0,0,W,H);
+ const haze=ctx.createRadialGradient(225,365,30,225,365,410);haze.addColorStop(0,"#5c0d1e33");haze.addColorStop(.55,"#1c0d1628");haze.addColorStop(1,"#00000000");ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
 }
 function drawBackground(){
  const def=stageDefinition(),biome=def.biome,palettes={
-  meadow:{sky:["#269bff","#6cdfff","#d9fbff"],sun:"#fff3a8",far:"#4a9984",mid:"#2f7d58",near:"#1c5439",floor:["#6ca64f","#3a6933"],stone:"#768499",stoneDark:"#444f66",accent:"#ffe07a",fog:"#ffffff"},
-  forest:{sky:["#1a3f6b","#2e6f7a","#75bfa6"],sun:"#dcffc4",far:"#285259",mid:"#1c4240",near:"#112927",floor:["#3f7350","#1d3d2c"],stone:"#4c6358",stoneDark:"#283832",accent:"#a4f288",fog:"#c2f7df"},
-  cave:{sky:["#151f4d","#243d80","#3d65ad"],sun:"#89f4ff",far:"#213469",mid:"#16244f",near:"#0e1738",floor:["#394f87","#1b284f"],stone:"#4e649c",stoneDark:"#28365c",accent:"#7beeff",fog:"#a2dcff"},
-  ruins:{sky:["#cc583d","#ef8e4d","#ffe099"],sun:"#fff2a6",far:"#964b3e",mid:"#70372f",near:"#45211f",floor:["#c48e54","#6b442d"],stone:"#ad8158",stoneDark:"#66462e",accent:"#ffd87a",fog:"#ffe5ba"},
-  boss:{sky:["#331147","#6b1d5a","#c23d60"],sun:"#ffb06b",far:"#451847",mid:"#2d1036",near:"#190821",floor:["#592347","#240f24"],stone:"#6e3859",stoneDark:"#38182e",accent:"#ff9f6b",fog:"#ff96a8"}
+  meadow:{sky:["#120c17","#2b1420","#471b2d"],sun:"#e63956",far:"#241520",mid:"#1c101a",near:"#120911",floor:["#2a1e1b","#160f0d"],stone:"#404654",stoneDark:"#232833",accent:"#cf2b48",fog:"#421a28"},
+  forest:{sky:["#0e151c","#17282b","#1e3b33"],sun:"#c93a4b",far:"#141f1f",mid:"#0d1717",near:"#080f0f",floor:["#1f2b23","#101712"],stone:"#38423e",stoneDark:"#1e2422",accent:"#4ef0aa",fog:"#223b32"},
+  cave:{sky:["#0d0f1c","#161933","#25254d"],sun:"#7b3eff",far:"#131429",mid:"#0b0b1a",near:"#060610",floor:["#1d1f36","#0e0f1c"],stone:"#363b5e",stoneDark:"#1c1e33",accent:"#935eff",fog:"#2e2a52"},
+  ruins:{sky:["#1c0c0e","#381418","#591e1e"],sun:"#ff4d42",far:"#2e1013",mid:"#1f0a0c",near:"#120507",floor:["#3d211a","#21110c"],stone:"#543e36",stoneDark:"#2e211c",accent:"#ff6e42",fog:"#4f1a1a"},
+  boss:{sky:["#14040a","#2e0915","#520c22"],sun:"#ff2647",far:"#260711",mid:"#170309",near:"#0d0105",floor:["#2b0c16","#140409"],stone:"#4d1f2d",stoneDark:"#290f17",accent:"#ff385c",fog:"#450b1b"}
  };
  const p=palettes[biome]||palettes.meadow;
  const sx=state.renderShakeX||0,sy=state.renderShakeY||0,px=state.camPanX||0,py=state.camPanY||0;
@@ -559,59 +563,59 @@ function drawForegroundParallax(){
  ctx.restore();
 }
 function drawHeader(){
- const ink="#18100f";
- const wood=ctx.createLinearGradient(0,6,0,63);wood.addColorStop(0,"#6a412a");wood.addColorStop(.5,"#3f261b");wood.addColorStop(1,"#24140f");
- rounded(8,6,434,57,13,wood,ink,2.6);
- rounded(12,10,426,49,10,"#2a1b16","#ffd46644",1.3);
- // Heroic Fantasy Crest Emblem
- rounded(17,14,41,41,10,"#e89a25",ink,2.2);
- ctx.fillStyle="#fff3ad55";ctx.beginPath();ctx.roundRect(20,16,35,11,5);ctx.fill();
- inkText("⚔",37.5,35,20,"#fff9ec",ink,3,"center",DISPLAY_FONT);
+ const ink="#07050a";
+ const iron=ctx.createLinearGradient(0,6,0,63);iron.addColorStop(0,"#241a2a");iron.addColorStop(.35,"#15101c");iron.addColorStop(.8,"#0e0a14");iron.addColorStop(1,"#060408");
+ rounded(8,6,434,57,13,iron,ink,2.6);
+ rounded(12,10,426,49,10,"#120c18","#8f142e44",1.3);
+ // Predatory Beast Crest Emblem
+ rounded(17,14,41,41,10,"#7a1125",ink,2.2);
+ ctx.fillStyle="#ff3b5633";ctx.beginPath();ctx.roundRect(20,16,35,11,5);ctx.fill();
+ inkText("⚔",37.5,35,20,"#ffffff",ink,3,"center",DISPLAY_FONT);
  inkText("CLAW",66,24,14.5,"#ffd859",ink,3.2,"left",DISPLAY_FONT);
- inkText("QUEST",66,40,11.5,"#68f0ff",ink,2.8,"left",DISPLAY_FONT);
- text("RELIC VAULT",66,53,5.6,"#edd3a6",800);
- // Carved Stone & Brass Stage + Gold Counters
- rounded(164,14,90,41,9,"#1c1724",ink,2.2);
- rounded(166,16,86,37,7,"#2a2338","#ffd46633",1);
- text("ROZDZIAŁ",209,25.5,6.5,"#ebd2a4",800,"center");
+ inkText("QUEST",66,40,11.5,"#ff3b56",ink,2.8,"left",DISPLAY_FONT);
+ text("RELIC VAULT",66,53,5.6,"#d4b29b",800);
+ // Forged Dark Iron Stage + Gold Counters
+ rounded(164,14,90,41,9,"#181120",ink,2.2);
+ rounded(166,16,86,37,7,"#1f162b","#cf274233",1);
+ text("ROZDZIAŁ",209,25.5,6.5,"#d6bfa8",800,"center");
  inkText(String(state.stage).padStart(2,"0"),209,42,14.5,"#ffd86b",ink,2.6,"center",DISPLAY_FONT);
- rounded(262,14,100,41,9,"#1c1724",ink,2.2);
- rounded(264,16,96,37,7,"#2a2338","#ffd46633",1);
- text("ZŁOTO",312,25.5,6.6,"#ebd2a4",800,"center");
+ rounded(262,14,100,41,9,"#181120",ink,2.2);
+ rounded(264,16,96,37,7,"#1f162b","#cf274233",1);
+ text("KRUSZEC",312,25.5,6.6,"#d6bfa8",800,"center");
  inkText("◆ "+String(state.coins),312,42,12.5,"#ffe175",ink,2.6,"center",DISPLAY_FONT);
  for(let i=0;i<2;i++){
   const x=i===0?372:406;
-  rounded(x,17,29,34,8,"#24140e",ink,2);
-  rounded(x,15,29,31,8,i===0?(state.sound?"#2db886":"#4a3a35"):"#5b4236",ink,2);
-  ctx.fillStyle="#ffffff30";ctx.fillRect(x+4,17,21,5);
+  rounded(x,17,29,34,8,"#1a111a",ink,2);
+  rounded(x,15,29,31,8,i===0?(state.sound?"#1f8a65":"#3a2630"):"#42293b",ink,2);
+  ctx.fillStyle="#ffffff24";ctx.fillRect(x+4,17,21,5);
  }
  inkText(state.sound?"♫":"♪",386.5,31,15,state.sound?"#fff8d6":"#d8c4a6",ink,2.5,"center",UI_FONT);
  inkText(state.paused?"▶":"Ⅱ",420.5,31,12,"#ffffff",ink,2.5,"center",UI_FONT);
 }
 function drawHealth(){
- const ink="#18100f";
- const panel=ctx.createLinearGradient(0,68,0,114);panel.addColorStop(0,"#3a251bf4");panel.addColorStop(1,"#201414f4");
+ const ink="#07050a";
+ const panel=ctx.createLinearGradient(0,68,0,114);panel.addColorStop(0,"#221624f4");panel.addColorStop(1,"#0f0a14f4");
  rounded(10,68,430,46,10,panel,ink,2.2);
- rounded(14,71,422,40,8,"#221929b8","#ffd4662c",1.1);
- rounded(19,75,28,32,8,"#e84162",ink,2);
- ctx.fillStyle="#ffffff44";ctx.fillRect(22,77,22,6);
- inkText("♥",33,91.5,16,"#fff6f8",ink,2.6,"center",UI_FONT);
- // HP Bar
- rounded(52,75,226,17,6,"#120e1a",ink,2);
- const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(54,0,276,0);gr.addColorStop(0,"#ff4d6d");gr.addColorStop(.55,"#ff7e57");gr.addColorStop(1,"#ffd15c");
- if(pct>0){rounded(54,77,222*pct,13,4,gr);ctx.save();ctx.globalAlpha=.36;ctx.fillStyle="#fff";ctx.fillRect(56,78,Math.max(0,218*pct),3.5);ctx.restore()}
+ rounded(14,71,422,40,8,"#130c18b8","#8f142e3b",1.1);
+ rounded(19,75,28,32,8,"#8f142e",ink,2);
+ ctx.fillStyle="#ffffff33";ctx.fillRect(22,77,22,6);
+ inkText("♥",33,91.5,16,"#ffffff",ink,2.6,"center",UI_FONT);
+ // Visceral Blood HP Bar
+ rounded(52,75,226,17,6,"#0c0812",ink,2);
+ const pct=clamp(state.hp/state.maxHp,0,1),gr=ctx.createLinearGradient(54,0,276,0);gr.addColorStop(0,"#8f142e");gr.addColorStop(.48,"#cf2742");gr.addColorStop(1,"#ff4d6d");
+ if(pct>0){rounded(54,77,222*pct,13,4,gr);ctx.save();ctx.globalAlpha=.32;ctx.fillStyle="#fff";ctx.fillRect(56,78,Math.max(0,218*pct),3.5);ctx.restore()}
  inkText(Math.ceil(state.hp)+" / "+state.maxHp+(state.shield>0?"  🛡"+state.shield:"")+(state.poisonTurns>0?"  ☠"+state.poisonTurns:""),165,84,9.2,"#ffffff",ink,2.6,"center",DISPLAY_FONT);
- // Run XP Crystal Bar directly below HP so player tracks next 1-of-3 skill draft
- rounded(52,95,226,13,5,"#11152b",ink,1.8);
+ // Run XP Crystal Bar
+ rounded(52,95,226,13,5,"#0a0b16",ink,1.8);
  const xpPct=clamp((state.runXp||0)/Math.max(1,state.runXpNeed||15),0,1);
- const xpG=ctx.createLinearGradient(54,0,276,0);xpG.addColorStop(0,"#3bb8ff");xpG.addColorStop(1,"#7fffe0");
+ const xpG=ctx.createLinearGradient(54,0,276,0);xpG.addColorStop(0,"#195b87");xpG.addColorStop(1,"#42dfff");
  if(xpPct>0){rounded(54,97,222*xpPct,9,3.5,xpG);ctx.save();ctx.globalAlpha=.35;ctx.fillStyle="#fff";ctx.fillRect(56,97.5,Math.max(0,218*xpPct),2.5);ctx.restore()}
- inkText("POZ. "+(state.runLevel||1)+"  •  XP "+(state.runXp||0)+"/"+(state.runXpNeed||15),165,102,7.1,"#eafaff",ink,2.2,"center",UI_FONT);
+ inkText("POZ. "+(state.runLevel||1)+"  •  XP "+(state.runXp||0)+"/"+(state.runXpNeed||15),165,102,7.1,"#cceaff",ink,2.2,"center",UI_FONT);
  // Power & Score Badges
- rounded(288,75,66,32,8,state.clawEmpowered>0||state.heroVanguard>0?"#1b786c":"#2e2640",ink,2);
- text(state.heroVanguard>0?"AWANG.★":state.clawEmpowered>0?"MOC ★":"MOC",321,83.5,5.6,state.clawEmpowered>0||state.heroVanguard>0?"#a8fff0":"#ebd2a4",800,"center");
- inkText(String(currentWeaponDamage()),321,98,11.5,state.clawEmpowered>0||state.heroVanguard>0?"#a8fff0":"#8ef7c0",ink,2.4,"center",DISPLAY_FONT);
- rounded(360,75,74,32,8,"#4f3422",ink,2);
+ rounded(288,75,66,32,8,state.clawEmpowered>0||state.heroVanguard>0?"#8f142e":"#1e1628",ink,2);
+ text(state.heroVanguard>0?"AWANG.★":state.clawEmpowered>0?"MOC ★":"MOC",321,83.5,5.6,state.clawEmpowered>0||state.heroVanguard>0?"#ffd1db":"#d6bea8",800,"center");
+ inkText(String(currentWeaponDamage()),321,98,11.5,state.clawEmpowered>0||state.heroVanguard>0?"#ff9ebb":"#e295aa",ink,2.4,"center",DISPLAY_FONT);
+ rounded(360,75,74,32,8,"#2a1824",ink,2);
  text("WYNIK",397,83.5,5.7,"#ffd68a",800,"center");
  inkText(String(state.score),397,98,11.5,"#ffe485",ink,2.4,"center",DISPLAY_FONT);
 }
@@ -720,48 +724,54 @@ function drawHero(x,y){
   glow(0,-28,50,"#ffd65a",.26+.07*Math.sin(state.time*6));
   if(state.effects){for(let sp=0;sp<3;sp++){const sy=((state.time*28+sp*18)%46);ctx.save();ctx.globalAlpha=(1-sy/46)*.75;ctx.fillStyle="#ffe77a";ctx.beginPath();ctx.arc(-14+sp*14+Math.sin(state.time*5+sp)*3,-8-sy,1.6,0,Math.PI*2);ctx.fill();ctx.restore()}}
  }
- // Flowing crimson royal cape with bright gold trim
+ // Flowing dark frayed Witcher mantle
  const capeWave=Math.sin(state.time*5.3)*4;
- ctx.fillStyle="#d93256";ctx.strokeStyle=ink;ctx.lineWidth=2.2;
+ ctx.fillStyle="#3d0914";ctx.strokeStyle=ink;ctx.lineWidth=2.2;
  ctx.beginPath();ctx.moveTo(-11,-40);ctx.quadraticCurveTo(-40+capeWave,-22,-32+capeWave,7);ctx.lineTo(-21+capeWave,3);ctx.lineTo(-14+capeWave,8);ctx.quadraticCurveTo(-7,-2,2,-27);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.strokeStyle="#ffd15c";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-11,-34);ctx.quadraticCurveTo(-24+capeWave,-16,-25+capeWave,4);ctx.stroke();
- // Chunky chibi greaves & golden boots
+ ctx.strokeStyle="#8f172e";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-11,-34);ctx.quadraticCurveTo(-24+capeWave,-16,-25+capeWave,4);ctx.stroke();
+ // Veteran Witcher boots & reinforced greaves
  const step=Math.sin(state.time*5)*1.1;
- rounded(-16,-12+step,12,20,5,"#35539e",ink,2);
- rounded(2,-12-step,12,20,5,"#35539e",ink,2);
- rounded(-17,-5+step,14,7,3,"#9ab0c7",ink,1.6);rounded(1,-5-step,14,7,3,"#9ab0c7",ink,1.6);
- const bootG=ctx.createLinearGradient(0,2,0,11);bootG.addColorStop(0,"#ffcf54");bootG.addColorStop(1,"#cc7a1f");
+ rounded(-16,-12+step,12,20,5,"#1e2229",ink,2);
+ rounded(2,-12-step,12,20,5,"#1e2229",ink,2);
+ rounded(-17,-5+step,14,7,3,"#3c4352",ink,1.6);rounded(1,-5-step,14,7,3,"#3c4352",ink,1.6);
+ const bootG=ctx.createLinearGradient(0,2,0,11);bootG.addColorStop(0,"#525c6e");bootG.addColorStop(1,"#1b1f26");
  rounded(-19,2+step,17,8,4,bootG,ink,2);
  rounded(0,2-step,17,8,4,bootG,ink,2);
- // Royal-blue cel-shaded tunic & leather belt with gold buckle
- const tunic=ctx.createLinearGradient(-15,-42,16,-7);tunic.addColorStop(0,"#4ca4ff");tunic.addColorStop(.55,"#2564c9");tunic.addColorStop(1,"#163d8a");
+ // Studded dark leather tunic & bandolier with witcher potion vial
+ const tunic=ctx.createLinearGradient(-15,-42,16,-7);tunic.addColorStop(0,"#2a2024");tunic.addColorStop(.55,"#1a1216");tunic.addColorStop(1,"#0e090c");
  ctx.fillStyle=tunic;ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-17,-39);ctx.quadraticCurveTo(0,-48,17,-39);ctx.lineTo(19,-10);ctx.quadraticCurveTo(0,-1,-19,-10);ctx.closePath();ctx.fill();ctx.stroke();
- rounded(-18,-17,36,6,3,"#91492c",ink,1.6);rounded(-5,-18,10,8,3,"#ffd75e",ink,1.6);
+ rounded(-18,-17,36,6,3,"#3d2119",ink,1.6);rounded(-5,-18,10,8,3,"#c99a3e",ink,1.6);
  // Reinforced torso plates, rivets and a visible reactor seam.
- const plateG=ctx.createLinearGradient(-12,-41,13,-12);plateG.addColorStop(0,"#eef4ff");plateG.addColorStop(.5,"#9bb3d1");plateG.addColorStop(1,"#576e91");
+ const plateG=ctx.createLinearGradient(-12,-41,13,-12);plateG.addColorStop(0,"#4a5463");plateG.addColorStop(.5,"#2b323d");plateG.addColorStop(1,"#15191f");
  ctx.fillStyle=plateG;ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-13,-36);ctx.lineTo(-8,-42);ctx.lineTo(8,-42);ctx.lineTo(14,-34);ctx.lineTo(11,-17);ctx.lineTo(0,-12);ctx.lineTo(-12,-18);ctx.closePath();ctx.fill();ctx.stroke();
- rounded(-4,-32,8,11,3,"#14203b",ink,1.5);glow(0,-26,13,"#59ebff",.42);rounded(-2,-29,4,5,1,"#a8fff6");
- // Arms & shoulder pauldrons
+ // Witcher silver wolf medallion & alchemical vial on belt
+ rounded(-4,-32,8,11,3,"#12161f",ink,1.5);glow(0,-26,13,"#a8fff6",.36);rounded(-2,-29,4,5,1,"#a8fff6");
+ ctx.fillStyle="#c0c7d4";ctx.strokeStyle=ink;ctx.lineWidth=1.2;
+ ctx.beginPath();ctx.moveTo(0,-25);ctx.lineTo(-4,-21);ctx.lineTo(-3,-18);ctx.lineTo(0,-16);ctx.lineTo(3,-18);ctx.lineTo(4,-21);ctx.closePath();ctx.fill();ctx.stroke();
+ // Arms & dark studded leather gauntlets
  const armSwing=attack?-.78*swing:special?-1.05*swing:guard?-.38:Math.sin(state.time*4)*.04;
- ctx.save();ctx.translate(-18,-30);ctx.rotate(-.18);rounded(-5,-4,12,24,6,"#8ba3c2",ink,2);ctx.restore();
- ctx.save();ctx.translate(17,-29);ctx.rotate(armSwing);rounded(-5,-3,12,24,6,"#8ba3c2",ink,2);ctx.restore();
- // Heroic Fantasy Open-Faced Paladin Helm with expressive eyes, golden wings & crimson crest
- ctx.fillStyle="#ff4769";ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-4,-68);ctx.quadraticCurveTo(-20+capeWave*.45,-79,-26+capeWave*.55,-61);ctx.quadraticCurveTo(-13,-60,-1,-64);ctx.closePath();ctx.fill();ctx.stroke();
- const helmG=ctx.createLinearGradient(-16,-69,16,-36);helmG.addColorStop(0,"#ffffff");helmG.addColorStop(.45,"#b8cbe6");helmG.addColorStop(1,"#657ca3");
- ctx.fillStyle=helmG;ctx.strokeStyle=ink;ctx.lineWidth=2.3;ctx.beginPath();ctx.moveTo(-17,-58);ctx.lineTo(-11,-70);ctx.lineTo(9,-70);ctx.lineTo(17,-58);ctx.lineTo(14,-41);ctx.lineTo(0,-35);ctx.lineTo(-14,-41);ctx.closePath();ctx.fill();ctx.stroke();
- // Golden winged helm ornaments
- ctx.fillStyle="#ffd557";ctx.strokeStyle=ink;ctx.lineWidth=1.5;
- ctx.beginPath();ctx.moveTo(-16,-57);ctx.lineTo(-24,-66);ctx.lineTo(-19,-51);ctx.closePath();ctx.fill();ctx.stroke();
- ctx.beginPath();ctx.moveTo(16,-57);ctx.lineTo(24,-66);ctx.lineTo(19,-51);ctx.closePath();ctx.fill();ctx.stroke();
- // Expressive heroic face inside open helm
- rounded(-11,-57,22,15,5,"#ffd8b4",ink,1.6);
- rounded(-7,-54,5,7,2,"#231b30");rounded(3,-54,5,7,2,"#231b30");
- ctx.fillStyle="#ffffff";ctx.fillRect(-6,-53,2,2.2);ctx.fillRect(4,-53,2,2.2);
- line(-8,-57,-2,-56,"#804e32",1.5);line(8,-57,2,-56,"#804e32",1.5);
- rounded(-15,-63,30,5,2,"#ffd557",ink,1.6);
- // Bright golden shoulder pauldrons
- glow(-15,-32,16,"#ffd166",.2);rounded(-25,-38,15,12,5,"#ffd252",ink,2);rounded(10,-38,15,12,5,"#ffd252",ink,2);
- rounded(18,-13,9,8,3,"#8da4c2",ink,1.6);
+ ctx.save();ctx.translate(-18,-30);ctx.rotate(-.18);rounded(-5,-4,12,24,6,"#2d3440",ink,2);ctx.restore();
+ ctx.save();ctx.translate(17,-29);ctx.rotate(armSwing);rounded(-5,-3,12,24,6,"#2d3440",ink,2);ctx.restore();
+ // Witcher silver sword sheathed across the back
+ ctx.save();ctx.translate(-12,-48);ctx.rotate(-.42);
+ line(0,0,0,-24,"#abb4c2",2.8);line(-4,-16,4,-16,"#c99a3e",2);ctx.fillStyle="#ffffff";ctx.beginPath();ctx.arc(0,-25,2.5,0,Math.PI*2);ctx.fill();ctx.restore();
+ // Grizzled, battle-hardened Witcher hunter face & dark hair
+ ctx.fillStyle="#1a1c22";ctx.beginPath();ctx.arc(0,-61,15,0,Math.PI*2);ctx.fill();
+ rounded(-11,-57,22,16,5,"#d4bda4",ink,1.6);
+ ctx.fillStyle="#1f181644";ctx.beginPath();ctx.arc(0,-45,8,0,Math.PI);ctx.fill();
+ ctx.fillStyle="#16181f";ctx.beginPath();ctx.moveTo(-12,-63);ctx.lineTo(-8,-52);ctx.lineTo(-4,-64);ctx.lineTo(2,-51);ctx.lineTo(6,-64);ctx.lineTo(12,-53);ctx.lineTo(13,-66);ctx.closePath();ctx.fill();
+ // Piercing predatory wolf eyes (amber glow)
+ rounded(-7,-54,5,6,2,"#21150c");rounded(3,-54,5,6,2,"#21150c");
+ ctx.fillStyle="#ffb834";ctx.fillRect(-6,-53,3,3);ctx.fillRect(4,-53,3,3);
+ ctx.fillStyle="#fff";ctx.fillRect(-5,-52,1,1);ctx.fillRect(5,-52,1,1);
+ // Battle scar across left eye
+ ctx.strokeStyle="#9e2436";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-4,-58);ctx.lineTo(-4,-49);ctx.stroke();
+ // Dark forged iron headband / hood trim
+ rounded(-14,-65,28,6,2,"#232833",ink,1.6);
+ // Forged iron shoulder pauldrons with battle scratches
+ glow(-15,-32,16,"#8a1426",.25);rounded(-25,-38,15,12,5,"#38404f",ink,2);rounded(10,-38,15,12,5,"#38404f",ink,2);
+ line(-22,-34,-14,-31,"#5c667a",1.4);line(13,-34,21,-31,"#5c667a",1.4);
+ rounded(18,-13,9,8,3,"#2b3340",ink,1.6);
  ctx.save();ctx.translate(23,-28);
  const activeWeapon=(shotFx&&state.shotFxWeaponId?weaponCatalog.find(w=>w.id===state.shotFxWeaponId):null)||weaponForRun();
  const wid=activeWeapon.id;
@@ -801,103 +811,189 @@ function drawEnemy(e){
  const shadow=ctx.createRadialGradient(0,5,2,0,5,e.type==="boss"?62:40);shadow.addColorStop(0,"#090714");shadow.addColorStop(1,"#09071400");
  ctx.fillStyle=shadow;ctx.beginPath();ctx.ellipse(0,5,e.type==="boss"?62:40,e.type==="boss"?15:10,0,0,Math.PI*2);ctx.fill();ctx.restore();
  if(e.type==="slime"){
-  glow(0,-10,38,"#64f59f",.28);
-  const squash=e.hit>0?.15:Math.sin(state.time*4.2+e.phase)*.06;
+  glow(0,-12,42,"#8f1228",.34);
+  const squash=e.hit>0?.18:Math.sin(state.time*4.2+e.phase)*.06;
   ctx.save();ctx.translate(0,2);ctx.scale(1+squash,1-squash);
-  const g=ctx.createRadialGradient(-7,-29,4,0,-12,32);g.addColorStop(0,"#c7ff9c");g.addColorStop(.52,"#34d478");g.addColorStop(1,"#168a59");
+  // Visceral dark blood & bile sludge
+  const g=ctx.createRadialGradient(-7,-29,4,0,-12,32);g.addColorStop(0,"#8f172a");g.addColorStop(.52,"#420d18");g.addColorStop(1,"#1a0409");
   ctx.fillStyle=g;ctx.strokeStyle=ink;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-25,0);ctx.quadraticCurveTo(-30,-20,-15,-38);ctx.quadraticCurveTo(0,-50,17,-35);ctx.quadraticCurveTo(30,-19,25,0);ctx.quadraticCurveTo(0,12,-25,0);ctx.fill();ctx.stroke();
-  ctx.fillStyle="#125e3f88";ctx.beginPath();ctx.arc(-4,-15,7.5,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#ffffffb5";ctx.beginPath();ctx.ellipse(-10,-31,7.5,4.2,-.5,0,Math.PI*2);ctx.fill();
-  ctx.save();ctx.globalAlpha=.52;ctx.fillStyle="#eaffdd";for(let i=0;i<5;i++){const by=-6-((i*9+state.time*14)%24);ctx.beginPath();ctx.arc(-15+i*7.5,by,1.6+(i%2)*.7,0,Math.PI*2);ctx.fill()}ctx.restore();
+  // Human skull submerged inside the gore
+  ctx.fillStyle="#eae3d2";ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(0,-20,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#1a0409";ctx.beginPath();ctx.arc(-3,-21,2.5,0,Math.PI*2);ctx.arc(3,-21,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(-2,-16,4,3);
+  // Blood drips dripping from jaw
+  ctx.fillStyle="#b81630";
+  for(let d=0;d<4;d++){const dy=((state.time*32+d*14)%26);ctx.beginPath();ctx.arc(-12+d*8,1+dy*.5,1.8,0,Math.PI*2);ctx.fill()}
+  // Needle fangs around maw
+  ctx.fillStyle="#ffffff";ctx.beginPath();ctx.moveTo(-10,-6);ctx.lineTo(-7,-1);ctx.lineTo(-4,-6);ctx.lineTo(-1,-1);ctx.lineTo(2,-6);ctx.lineTo(5,-1);ctx.lineTo(8,-6);ctx.closePath();ctx.fill();
+  // Blinking feral red eye spots
   const blink=e.hit>0||Math.sin(state.time*1.35+e.phase)>.95;
-  if(blink){line(-14,-18,-4,-18,ink,2.4);line(4,-18,14,-18,ink,2.4)}
-  else{rounded(-14,-24,10,13,4,"#ffffff",ink,1.6);rounded(4,-24,10,13,4,"#ffffff",ink,1.6);rounded(-10,-20,4.5,7,2,"#182542");rounded(8,-20,4.5,7,2,"#182542");ctx.fillStyle="#fff";ctx.fillRect(-10,-21,2,2);ctx.fillRect(8,-21,2,2)}
-  ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(0,-9,7,.2,Math.PI-.2);ctx.stroke();
+  if(!blink){rounded(-12,-33,7,9,3,"#ff3653",ink,1.4);rounded(5,-33,7,9,3,"#ff3653",ink,1.4);ctx.fillStyle="#fff";ctx.fillRect(-10,-32,2,2);ctx.fillRect(7,-32,2,2)}
   ctx.restore();
  }else if(e.type==="bat"){
   const wing=Math.sin(state.time*18+e.phase)*13;
-  glow(0,-14,34,"#b37eff",.24);
-  const wg=ctx.createLinearGradient(0,-28,0,10);wg.addColorStop(0,"#a46dff");wg.addColorStop(1,"#4d278c");
+  glow(0,-14,36,"#99142e",.3);
+  // Torn, razor vampire wings
+  const wg=ctx.createLinearGradient(0,-28,0,10);wg.addColorStop(0,"#4d0d19");wg.addColorStop(1,"#1c0409");
   ctx.fillStyle=wg;ctx.strokeStyle=ink;ctx.lineWidth=2.3;
   ctx.beginPath();ctx.moveTo(-7,-13);ctx.quadraticCurveTo(-24,-34-wing,-40,-12-wing*.75);ctx.lineTo(-30,-3-wing*.4);ctx.lineTo(-20,-1-wing*.2);ctx.quadraticCurveTo(-13,3,-9,3);ctx.quadraticCurveTo(0,10,9,3);ctx.quadraticCurveTo(13,3,20,-1-wing*.2);ctx.lineTo(30,-3-wing*.4);ctx.lineTo(40,-12-wing*.75);ctx.quadraticCurveTo(24,-34-wing,7,-13);ctx.closePath();ctx.fill();ctx.stroke();
-  line(-16,-14,-28,-8-wing*.4,"#6f44b8",1.5);line(16,-14,28,-8-wing*.4,"#6f44b8",1.5);
-  const torso=ctx.createRadialGradient(-3,-17,2,0,-12,18);torso.addColorStop(0,"#d4adff");torso.addColorStop(1,"#6a3bb3");
+  line(-16,-14,-28,-8-wing*.4,"#b81d38",1.6);line(16,-14,28,-8-wing*.4,"#b81d38",1.6);
+  // Muscular vampire torso & ribbed chest
+  const torso=ctx.createRadialGradient(-3,-17,2,0,-12,18);torso.addColorStop(0,"#691222");torso.addColorStop(1,"#24050d");
   ctx.fillStyle=torso;ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(0,-12,16,18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-  rounded(-12,-23,9,12,4,"#fff",ink,1.5);rounded(3,-23,9,12,4,"#fff",ink,1.5);
-  rounded(-9,-19,4,6,2,"#ff3b6b");rounded(6,-19,4,6,2,"#ff3b6b");
-  ctx.fillStyle="#ffffff";ctx.strokeStyle=ink;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(-5,-4);ctx.lineTo(-2.5,3);ctx.lineTo(0,-4);ctx.lineTo(2.5,3);ctx.lineTo(5,-4);ctx.closePath();ctx.fill();ctx.stroke();
+  // Long curved fangs dripping gore
+  rounded(-12,-23,9,12,4,"#24060c",ink,1.5);rounded(3,-23,9,12,4,"#24060c",ink,1.5);
+  rounded(-10,-21,5,7,2,"#ff2e4c");rounded(5,-21,5,7,2,"#ff2e4c");
+  ctx.fillStyle="#ffffff";ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-6,-5);ctx.lineTo(-3,6);ctx.lineTo(0,-5);ctx.lineTo(3,6);ctx.lineTo(6,-5);ctx.closePath();ctx.fill();ctx.stroke();
+  // Blood droplets on fangs
+  ctx.fillStyle="#cf1b38";ctx.beginPath();ctx.arc(-3,7.5,1.8,0,Math.PI*2);ctx.arc(3,7.5,1.8,0,Math.PI*2);ctx.fill();
  }else if(e.type==="porcupine"){
-  glow(0,-8,46,"#ffbd74",.24);const body=ctx.createLinearGradient(0,-34,0,10);body.addColorStop(0,"#f5ba6e");body.addColorStop(1,"#994f27");
-  ctx.fillStyle="#fff2c4";ctx.strokeStyle=ink;ctx.lineWidth=2;
+  glow(0,-8,46,"#8a1a14",.26);const body=ctx.createLinearGradient(0,-34,0,10);body.addColorStop(0,"#54251b");body.addColorStop(1,"#240c06");
+  ctx.fillStyle="#ebd8c0";ctx.strokeStyle=ink;ctx.lineWidth=2;
+  // Blood-tipped bone quills
   for(let i=0;i<13;i++){
    const a=-Math.PI*.93+i*(Math.PI*1.86/12),inner=19,outer=39+(i%3)*3;
+   ctx.fillStyle=i%2?"#ffffff":"#ebd8c0";
    ctx.beginPath();ctx.moveTo(Math.cos(a)*inner,Math.sin(a)*inner-12);ctx.lineTo(Math.cos(a+.12)*outer,Math.sin(a+.12)*outer-12);ctx.lineTo(Math.cos(a-.12)*outer,Math.sin(a-.12)*outer-12);ctx.closePath();ctx.fill();ctx.stroke();
+   // Red blood tip on quill
+   ctx.fillStyle="#c41830";ctx.beginPath();ctx.arc(Math.cos(a)*outer,Math.sin(a)*outer-12,2.4,0,Math.PI*2);ctx.fill();
   }
   ctx.fillStyle=body;ctx.strokeStyle=ink;ctx.lineWidth=2.3;ctx.beginPath();ctx.ellipse(0,-8,26,20,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.ellipse(18,-6,12,10,.1,0,Math.PI*2);ctx.fill();ctx.stroke();
-  rounded(5,-23,8,11,4,"#ffffff",ink,1.5);rounded(16,-22,8,11,4,"#ffffff",ink,1.5);rounded(8,-20,4,7,2,"#1f2942");rounded(19,-19,4,7,2,"#1f2942");
-  ctx.fillStyle="#331e24";ctx.beginPath();ctx.arc(27,-7,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#6e3728";ctx.beginPath();ctx.ellipse(18,-6,12,10,.1,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // Horned snout & red predator eyes
+  rounded(5,-23,8,11,4,"#1f0a06",ink,1.5);rounded(16,-22,8,11,4,"#1f0a06",ink,1.5);rounded(8,-20,4,7,2,"#ff2e3b");rounded(19,-19,4,7,2,"#ff2e3b");
+  ctx.fillStyle="#1a0805";ctx.beginPath();ctx.arc(27,-7,4,0,Math.PI*2);ctx.fill();
+  // Razor tusk
+  ctx.fillStyle="#ffffff";ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(22,-3);ctx.lineTo(31,-11);ctx.lineTo(25,-1);ctx.closePath();ctx.fill();ctx.stroke();
+ }else if(e.type==="fire_elemental"){
+  glow(0,-18,52,"#ff3b1e",.42);
+  const fg=ctx.createRadialGradient(0,-18,3,0,-18,34);fg.addColorStop(0,"#fff2a8");fg.addColorStop(.38,"#ff5a1e");fg.addColorStop(1,"#360905");
+  ctx.fillStyle=fg;ctx.strokeStyle=ink;ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.moveTo(-18,-2);ctx.lineTo(-24,-18);ctx.lineTo(-12,-38);ctx.lineTo(0,-46);ctx.lineTo(12,-38);ctx.lineTo(24,-18);ctx.lineTo(18,-2);ctx.lineTo(0,8);ctx.closePath();ctx.fill();ctx.stroke();
+  // Cragged obsidian crust plates
+  ctx.fillStyle="#1c1214";
+  ctx.beginPath();ctx.moveTo(-14,-14);ctx.lineTo(-8,-26);ctx.lineTo(-2,-16);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(4,-14);ctx.lineTo(12,-24);ctx.lineTo(14,-12);ctx.closePath();ctx.fill();ctx.stroke();
+  // Flaming brow horns
+  ctx.fillStyle="#ffd747";ctx.strokeStyle=ink;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-10,-38);ctx.lineTo(-18,-54);ctx.lineTo(-4,-42);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(10,-38);ctx.lineTo(18,-54);ctx.lineTo(4,-42);ctx.closePath();ctx.fill();ctx.stroke();
+  // Glowing magma eye slits
+  rounded(-10,-28,6,3,1,"#ffffff");rounded(4,-28,6,3,1,"#ffffff");
+ }else if(e.type==="dragon"){
+  glow(0,-18,58,"#a61436",.38);
+  const dg=ctx.createLinearGradient(0,-45,0,15);dg.addColorStop(0,"#4a1525");dg.addColorStop(.55,"#2b0d18");dg.addColorStop(1,"#120409");
+  ctx.fillStyle=dg;ctx.strokeStyle=ink;ctx.lineWidth=2.6;
+  ctx.beginPath();ctx.moveTo(-22,4);ctx.lineTo(-28,-22);ctx.lineTo(-16,-46);ctx.lineTo(16,-46);ctx.lineTo(28,-22);ctx.lineTo(22,4);ctx.lineTo(0,14);ctx.closePath();ctx.fill();ctx.stroke();
+  // Crimson belly scales
+  ctx.fillStyle="#8f152d";rounded(-12,-20,24,24,6,null,ink,1.4);
+  // Horned draconic brow
+  ctx.fillStyle="#c99a3e";ctx.strokeStyle=ink;ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(-14,-46);ctx.lineTo(-26,-66);ctx.lineTo(-8,-50);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(14,-46);ctx.lineTo(26,-66);ctx.lineTo(8,-50);ctx.closePath();ctx.fill();ctx.stroke();
+  // Slit predatory eyes
+  rounded(-12,-36,7,4,1,"#ffcc33",ink,1.2);rounded(5,-36,7,4,1,"#ffcc33",ink,1.2);
+  line(-8,-36,-8,-32,"#000",1.6);line(9,-36,9,-32,"#000",1.6);
+  // Fangs dripping fiery ichor
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(-6,-24);ctx.lineTo(-3,-16);ctx.lineTo(0,-24);ctx.lineTo(3,-16);ctx.lineTo(6,-24);ctx.closePath();ctx.fill();
+ }else if(e.type==="golem"){
+  glow(0,-16,48,"#cf2547",.32);
+  ctx.fillStyle="#262b36";ctx.strokeStyle=ink;ctx.lineWidth=2.6;
+  ctx.fillRect(-22,-36,44,42);ctx.strokeRect(-22,-36,44,42);
+  ctx.fillStyle="#171b24";rounded(-16,-52,32,20,5,null,ink,2.2);
+  // Glowing crimson runic lifeblood veins
+  ctx.strokeStyle="#ff2e51";ctx.lineWidth=2.2;
+  ctx.beginPath();ctx.moveTo(-18,-24);ctx.lineTo(0,-14);ctx.lineTo(16,-26);ctx.moveTo(0,-14);ctx.lineTo(0,4);ctx.stroke();
+  glow(0,-42,12,"#ff2e51",.45);ctx.fillStyle="#ffffff";ctx.beginPath();ctx.arc(0,-42,3.5,0,Math.PI*2);ctx.fill();
+ }else if(e.type==="hydra"){
+  glow(0,-18,52,"#1a7a48",.34);
+  const hg=ctx.createLinearGradient(0,-35,0,10);hg.addColorStop(0,"#1b402c");hg.addColorStop(1,"#091710");
+  ctx.fillStyle=hg;ctx.strokeStyle=ink;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.ellipse(0,0,24,18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // 3 vicious serpent necks & heads
+  for(const hDir of [-1,0,1]){
+   const hx=hDir*18,hy=-38+Math.abs(hDir)*8+Math.sin(state.time*4+hDir)*4;
+   ctx.strokeStyle=ink;ctx.lineWidth=4.5;line(0,-10,hx,hy);
+   ctx.strokeStyle="#2e6347";ctx.lineWidth=2.8;line(0,-10,hx,hy);
+   ctx.fillStyle="#1b422e";ctx.strokeStyle=ink;ctx.lineWidth=1.8;
+   ctx.beginPath();ctx.ellipse(hx,hy,8,6,hDir*.3,0,Math.PI*2);ctx.fill();ctx.stroke();
+   // Fangs & dripping acid venom
+   ctx.fillStyle="#ffffff";ctx.fillRect(hx-2,hy+2,2,3);ctx.fillRect(hx+2,hy+2,2,3);
+   ctx.fillStyle="#6cf59b";ctx.beginPath();ctx.arc(hx,hy+7,1.8,0,Math.PI*2);ctx.fill();
+  }
  }else if(e.type==="boss"){
   const pulse=1+Math.sin(state.time*3+e.phase)*.035;
   ctx.save();ctx.scale(pulse,pulse);
-  glow(0,-15,72,e.enraged?"#ff5e74":"#c06aff",.38);
+  glow(0,-15,82,e.enraged?"#ff1e38":"#a81033",.48);
   ctx.save();ctx.rotate(state.time*(e.enraged?1.7:.55));
-  for(let i=0;i<6;i++){const a=i*Math.PI/3,r=50+(i%2)*7;ctx.save();ctx.translate(Math.cos(a)*r,Math.sin(a)*r-15);ctx.rotate(a+Math.PI/2);ctx.fillStyle=e.enraged?"#ff8870":"#e09eff";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,0);ctx.lineTo(0,7);ctx.lineTo(-5,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}ctx.restore();
-  ctx.fillStyle="#ffe175";ctx.strokeStyle=ink;ctx.lineWidth=2.3;ctx.beginPath();ctx.moveTo(-28,-28);ctx.lineTo(-45,-58);ctx.quadraticCurveTo(-18,-51,-12,-36);ctx.quadraticCurveTo(0,-46,12,-36);ctx.quadraticCurveTo(25,-55,45,-58);ctx.lineTo(28,-20);ctx.closePath();ctx.fill();ctx.stroke();
-  const bg=ctx.createLinearGradient(0,-47,0,18);bg.addColorStop(0,"#ff78d4");bg.addColorStop(.48,"#9c3bc9");bg.addColorStop(1,"#46166b");
+  for(let i=0;i<6;i++){const a=i*Math.PI/3,r=50+(i%2)*7;ctx.save();ctx.translate(Math.cos(a)*r,Math.sin(a)*r-15);ctx.rotate(a+Math.PI/2);ctx.fillStyle=e.enraged?"#ff2e4a":"#8f1228";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(5,0);ctx.lineTo(0,7);ctx.lineTo(-5,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}ctx.restore();
+  // Great Horned Crown of the Dreadlord
+  ctx.fillStyle="#1c1622";ctx.strokeStyle=ink;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-28,-28);ctx.lineTo(-45,-58);ctx.quadraticCurveTo(-18,-51,-12,-36);ctx.quadraticCurveTo(0,-46,12,-36);ctx.quadraticCurveTo(25,-55,45,-58);ctx.lineTo(28,-20);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#8f142e";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-45,-58);ctx.lineTo(-20,-34);ctx.moveTo(45,-58);ctx.lineTo(20,-34);ctx.stroke();
+  const bg=ctx.createLinearGradient(0,-47,0,18);bg.addColorStop(0,"#4a0b17");bg.addColorStop(.48,"#29050d");bg.addColorStop(1,"#120105");
   ctx.fillStyle=bg;ctx.strokeStyle=ink;ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(-32,4);ctx.quadraticCurveTo(-39,-26,-24,-43);ctx.quadraticCurveTo(0,-58,24,-43);ctx.quadraticCurveTo(39,-26,32,4);ctx.quadraticCurveTo(0,22,-32,4);ctx.fill();ctx.stroke();
-  rounded(-20,-27,14,13,5,"#ffe869",ink,1.8);rounded(6,-27,14,13,5,"#ffe869",ink,1.8);
-  rounded(-15,-24,6,8,2,"#a81d45");rounded(9,-24,6,8,2,"#a81d45");
-  ctx.fillStyle="#2b1236";ctx.beginPath();ctx.moveTo(-10,-4);ctx.lineTo(-5,5);ctx.lineTo(0,-3);ctx.lineTo(5,5);ctx.lineTo(10,-4);ctx.closePath();ctx.fill();
-  rounded(-44,-54,88,10,4,"#141024",ink,1.8);rounded(-42,-52,84*clamp(e.hp/e.maxHp,0,1),6,2,e.enraged?"#ff5768":"#ff6e9c");
+  // Burning eyes
+  rounded(-20,-27,14,13,5,"#120205",ink,1.8);rounded(6,-27,14,13,5,"#120205",ink,1.8);
+  rounded(-15,-24,6,8,2,"#ff2e4c");rounded(9,-24,6,8,2,"#ff2e4c");
+  ctx.fillStyle="#ffffff";ctx.fillRect(-14,-22,2,3);ctx.fillRect(10,-22,2,3);
+  // Blood-dripping iron dreadlord jaw
+  ctx.fillStyle="#1a0409";ctx.beginPath();ctx.moveTo(-10,-4);ctx.lineTo(-5,5);ctx.lineTo(0,-3);ctx.lineTo(5,5);ctx.lineTo(10,-4);ctx.closePath();ctx.fill();
+  rounded(-44,-54,88,10,4,"#141024",ink,1.8);rounded(-42,-52,84*clamp(e.hp/e.maxHp,0,1),6,2,e.enraged?"#ff1f3a":"#a3152c");
   ctx.restore();
  }else{
   const arm=Math.sin(attackProgress*Math.PI)*.72;
-  glow(0,-18,34,"#7be058",.18);
-  // Hunched goblin raider body & leather cuirass
-  const gTorso=ctx.createLinearGradient(-16,-24,16,8);gTorso.addColorStop(0,"#7de05a");gTorso.addColorStop(1,"#2f7a2c");
+  glow(0,-18,34,"#8a1a1f",.24);
+  // Savage Feral Goblin Berserker
+  const gTorso=ctx.createLinearGradient(-16,-24,16,8);gTorso.addColorStop(0,"#454d4a");gTorso.addColorStop(1,"#202422");
   ctx.fillStyle=gTorso;ctx.strokeStyle=ink;ctx.lineWidth=2.3;
   ctx.beginPath();ctx.moveTo(-17,4);ctx.quadraticCurveTo(-20,-18,-10,-26);ctx.lineTo(10,-26);ctx.quadraticCurveTo(20,-18,17,4);ctx.quadraticCurveTo(0,9,-17,4);ctx.closePath();ctx.fill();ctx.stroke();
-  // Leather harness & shoulder pad
-  rounded(-14,-19,28,13,5,"#78452b",ink,1.7);
-  line(-12,-18,12,-10,"#c7914a",2);
-  rounded(-21,-26,13,10,4,"#915435",ink,1.7);
-  // Goblin boots
-  rounded(-16,1,11,7,3,"#593422",ink,1.6);rounded(5,1,11,7,3,"#593422",ink,1.6);
-  // Sculpted goblin head, pointed ears & spiked iron/leather helm
-  ctx.fillStyle="#5ac447";ctx.strokeStyle=ink;ctx.lineWidth=2;
+  // Blood war-paint slash across torso
+  ctx.strokeStyle="#a81528";ctx.lineWidth=3;line(-12,-20,8,-6);
+  // Jagged iron harness & shoulder spike
+  rounded(-14,-19,28,13,5,"#2e2523",ink,1.7);
+  rounded(-21,-26,13,10,4,"#4a3734",ink,1.7);
+  // Spiked war boots
+  rounded(-16,1,11,7,3,"#1e1817",ink,1.6);rounded(5,1,11,7,3,"#1e1817",ink,1.6);
+  // Sculpted head, war tusks & horned skullcap
+  ctx.fillStyle="#3d4742";ctx.strokeStyle=ink;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(-14,-35);ctx.lineTo(-30,-44);ctx.lineTo(-16,-27);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.beginPath();ctx.moveTo(14,-35);ctx.lineTo(30,-44);ctx.lineTo(16,-27);ctx.closePath();ctx.fill();ctx.stroke();
-  const gHead=ctx.createRadialGradient(-3,-36,2,0,-32,18);gHead.addColorStop(0,"#9bf06e");gHead.addColorStop(1,"#3b9436");
+  const gHead=ctx.createRadialGradient(-3,-36,2,0,-32,18);gHead.addColorStop(0,"#535e58");gHead.addColorStop(1,"#272e2a");
   ctx.fillStyle=gHead;ctx.strokeStyle=ink;ctx.lineWidth=2.2;
   ctx.beginPath();ctx.ellipse(0,-33,17,14,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-  // Iron pot helm with brass crest
-  ctx.fillStyle="#6c7d96";ctx.strokeStyle=ink;ctx.lineWidth=2;
+  // Iron pot helm
+  ctx.fillStyle="#3c434f";ctx.strokeStyle=ink;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(-18,-37);ctx.quadraticCurveTo(0,-54,18,-37);ctx.closePath();ctx.fill();ctx.stroke();
-  rounded(-19,-40,38,6,3,"#9b633d",ink,1.6);rounded(-5,-50,10,8,3,"#ffd254",ink,1.5);
-  // Fierce eyes & lower tusk grin
-  rounded(-12,-35,9,11,3,"#fffbe3",ink,1.5);rounded(3,-35,9,11,3,"#fffbe3",ink,1.5);
-  rounded(-9,-32,4,6,1.5,"#cc293e");rounded(6,-32,4,6,1.5,"#cc293e");
-  ctx.fillStyle="#fff6d4";ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-8,-21);ctx.lineTo(-5,-27);ctx.lineTo(-2,-21);ctx.lineTo(2,-21);ctx.lineTo(5,-27);ctx.lineTo(8,-21);ctx.closePath();ctx.fill();ctx.stroke();
-  // Goblin cleaver arm
+  rounded(-19,-40,38,6,3,"#231d1c",ink,1.6);
+  // Red eyes & long tusks jutting up
+  rounded(-12,-35,9,11,3,"#1f0b0d",ink,1.5);rounded(3,-35,9,11,3,"#1f0b0d",ink,1.5);
+  rounded(-9,-32,4,6,1.5,"#ff2945");rounded(6,-32,4,6,1.5,"#ff2945");
+  // Upward curving tusks
+  ctx.fillStyle="#fff6d4";ctx.strokeStyle=ink;ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(-9,-25);ctx.lineTo(-7,-34);ctx.lineTo(-5,-25);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(5,-25);ctx.lineTo(7,-34);ctx.lineTo(9,-25);ctx.closePath();ctx.fill();ctx.stroke();
+  // Cleaver arm with dripping blood
   ctx.save();ctx.translate(-17,-20);ctx.rotate(-arm*.75);
-  ctx.fillStyle="#c9d6e3";ctx.strokeStyle=ink;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-8,8);ctx.lineTo(-19,-7);ctx.lineTo(-10,-15);ctx.lineTo(-2,4);ctx.closePath();ctx.fill();ctx.stroke();
-  rounded(-6,-3,10,20,5,"#63cf4c",ink,1.9);ctx.restore();
-  ctx.save();ctx.translate(16,-20);ctx.rotate(arm);rounded(-4,-3,10,19,5,"#63cf4c",ink,1.9);ctx.restore();
+  ctx.fillStyle="#525c69";ctx.strokeStyle=ink;ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(-8,8);ctx.lineTo(-24,-7);ctx.lineTo(-12,-17);ctx.lineTo(-2,4);ctx.closePath();ctx.fill();ctx.stroke();
+  // Dripping blood on cleaver edge
+  ctx.fillStyle="#b8162f";ctx.beginPath();ctx.arc(-22,-4,2.5,0,Math.PI*2);ctx.fill();
+  rounded(-6,-3,10,20,5,"#3e4742",ink,1.9);ctx.restore();
+  ctx.save();ctx.translate(16,-20);ctx.rotate(arm);rounded(-4,-3,10,19,5,"#3e4742",ink,1.9);ctx.restore();
  }
  // Material pass: bone ridges, plated carapace and restrained glowing cores.
  ctx.save();
  if(e.type==="slime"){
-  glow(0,-16,18,"#c7ff83",.26);
+  glow(0,-16,18,"#b8142c",.32);
  }else if(e.type==="bat"){
-  ctx.fillStyle="#452778";ctx.strokeStyle=ink;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-10,-25);ctx.lineTo(-15,-40);ctx.lineTo(-2,-31);ctx.lineTo(0,-42);ctx.lineTo(5,-30);ctx.lineTo(15,-39);ctx.lineTo(10,-22);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#380914";ctx.strokeStyle=ink;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-10,-25);ctx.lineTo(-15,-40);ctx.lineTo(-2,-31);ctx.lineTo(0,-42);ctx.lineTo(5,-30);ctx.lineTo(15,-39);ctx.lineTo(10,-22);ctx.closePath();ctx.fill();ctx.stroke();
  }else if(e.type==="porcupine"){
-  if(e.spinesActive){glow(0,-11,48,"#ffb66e",.28);ctx.strokeStyle="#fff0bd";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-11,43,-2.65,-.25);ctx.stroke()}
+  if(e.spinesActive){glow(0,-11,48,"#cf1d38",.34);ctx.strokeStyle="#ff3857";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-11,43,-2.65,-.25);ctx.stroke()}
  }else if(e.type==="boss"){
-  glow(0,-16,21,e.enraged?"#ff5f54":"#c475ff",.42);ctx.fillStyle=e.enraged?"#ffb078":"#f0d4ff";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-14,5,0,Math.PI*2);ctx.fill();ctx.stroke();
-  if(e.enraged){ctx.strokeStyle="#ff886c";ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(0,-17,53,-2.7,-.4);ctx.stroke()}
+  glow(0,-16,21,e.enraged?"#ff1f3a":"#a8152e",.48);ctx.fillStyle=e.enraged?"#ff8093":"#ff3355";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-14,5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  if(e.enraged){ctx.strokeStyle="#ff2647";ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(0,-17,53,-2.7,-.4);ctx.stroke()}
  }else{
-  rounded(-12,-14,24,8,3,"#7c8ea8",ink,1.5);
+  rounded(-12,-14,24,8,3,"#353c47",ink,1.5);
  }
  if(e.guard>0){ctx.strokeStyle="#6ce2ff";ctx.globalAlpha=.85;ctx.lineWidth=2.8;ctx.beginPath();ctx.arc(0,-18,34,-2.4,-.5);ctx.stroke();ctx.globalAlpha=1}
  if(e.bleedTurns>0){ctx.fillStyle="#ff5773";ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(-8,-68,3.4,0,Math.PI*2);ctx.fill();ctx.stroke()}
@@ -1160,23 +1256,27 @@ function drawArena(){
    ctx.fillStyle="#7cf7ff";ctx.strokeStyle="#141024";ctx.lineWidth=1.5;
    ctx.beginPath();ctx.arc(orb.x,orb.y,4.2,0,Math.PI*2);ctx.fill();ctx.stroke();
   }
-  // Carved Oak & Brass Tactical Command Deck
-  const deckG=ctx.createLinearGradient(0,418,0,498);deckG.addColorStop(0,"#593622f5");deckG.addColorStop(.5,"#3b2317f5");deckG.addColorStop(1,"#21120df5");
-  rounded(10,419,430,78,12,deckG,"#18100f",2.5);
-  rounded(14,422,422,72,9,"#291914","#ffd4663b",1.2);
+  // Forged Dark Iron & Obsidian Tactical Command Deck
+  const deckG=ctx.createLinearGradient(0,418,0,498);deckG.addColorStop(0,"#241829f5");deckG.addColorStop(.5,"#150e1bf5");deckG.addColorStop(1,"#09060df5");
+  rounded(10,419,430,78,12,deckG,"#07050a",2.5);
+  rounded(14,422,422,72,9,"#120c18","#8f142e3b",1.2);
   // Row 1: Tactical Positioning Controls (1 free step per hero turn) + Phase Badge
   const curTile=nearestTileIndex(state.playerX),maxTile=maxHeroTileIndex(),canStep=state.turnPhase==="hero"&&!state.heroMovedThisTurn&&!state.heroActionUsedThisTurn;
   button(20,425,84,24,"◀ COFNIJ","",canStep&&curTile>0,"blue");
   button(109,425,84,24,"NAPRZÓD ▶","",canStep&&curTile<maxTile,"teal");
   const phaseLabel=state.turnPhase==="claw"?"FAZA 1/2 • ZŁAP RELIKT":state.turnPhase==="hero"?(state.heroMovedThisTurn?"FAZA 2/2 • WYBIERZ AKCJĘ":"FAZA 2/2 • RUCH + AKCJA"):state.turnPhase==="enemy"?"RUCH WROGÓW":"KONIEC POTYCZKI";
-  rounded(199,426,230,22,6,state.turnPhase==="claw"?"#5c3e1b":state.turnPhase==="hero"?"#1d6b58":"#402a20",state.turnPhase==="claw"?"#ffd55e":"#18100f",1.6);
-  text(phaseLabel+" • POLE "+(curTile+1)+"/6",314,437.5,6.6,state.turnPhase==="hero"?"#d8fff1":"#ffe2b0",900,"center");
-  // Row 2: Combat Action Buttons (preserving exact y>=451..495 hitboxes)
+  rounded(199,426,230,22,6,state.turnPhase==="claw"?"#3d1622":state.turnPhase==="hero"?"#154d3d":"#231526",state.turnPhase==="claw"?"#ff3b56":"#07050a",1.6);
+  text(phaseLabel+" • POLE "+(curTile+1)+"/6",314,437.5,6.6,state.turnPhase==="hero"?"#d8fff1":"#ffd88a",900,"center");
+  // Row 2: Combat Action Buttons (Single Dominant Attack Action with Active Passives)
   const ready=state.turnPhase==="hero";
   const estDmg=currentWeaponDamage();
-  button(22,454,119,38,"ATAK","J • ~"+estDmg+" OBR.",ready,"red");
-  button(151,454,119,38,"KONTRATAK","K • ~"+(estDmg+state.runCounterBonus)+" + BLOK",ready,"blue");
-  button(280,454,148,38,"UMIEJĘTNOŚĆ",state.skillCooldownTurns>0?"L • ZA "+state.skillCooldownTurns+" TUR":"L • ~"+Math.ceil(state.damage*1.8+3+state.runSkillBonus)+" AOE",ready&&state.skillCooldownTurns===0,"violet");
+  const passives=[];
+  if(state.runCritBonus>0)passives.push("KRYT +"+state.runCritBonus+"%");
+  if(state.runBleed>0)passives.push("KRWAWIENIE");
+  if(state.runVenom>0)passives.push("JAD");
+  if(state.clawEmpowered>0)passives.push("MOC PAZURA");
+  const subAction="J / SPACJA • ~"+estDmg+" OBR."+(passives.length?"  (" + passives.join(" • ") + ")":"");
+  button(22,454,406,38,"WYMIERZ CIOS",subAction,ready,"red");
 }
 function drawPrize(type,x,y,scale=1){
  const ink="#171226";
@@ -1403,78 +1503,79 @@ function updateChamberPhysics(dt){
  for(let s=0;s<3;s++)stepChamberPhysics(h,true,state.machinePrizes);
 }
 function drawClawMachine(){
- const ink="#18100f";
- // Sculpted Heroic Fantasy Treasure Chest & Arcane Relic Vault
- const shell=ctx.createLinearGradient(0,500,0,788);shell.addColorStop(0,"#8f532c");shell.addColorStop(.16,"#5e341d");shell.addColorStop(.68,"#371e14");shell.addColorStop(1,"#1c0f0c");
+ const ink="#07050a";
+ // Forged Dark-Iron Reliquary & Dragon-Claw Vault
+ const shell=ctx.createLinearGradient(0,500,0,788);shell.addColorStop(0,"#221626");shell.addColorStop(.18,"#160f1c");shell.addColorStop(.65,"#0d0812");shell.addColorStop(1,"#060408");
  rounded(6,500,438,288,15,shell,ink,2.8);
- rounded(12,506,426,276,11,"#2d1a13","#e8b24c",2);
- // Brass chest brackets & hammered gold corner studs
- for(const [bx,by] of [[10,504],[416,504],[10,764],[416,764]])rounded(bx,by,24,20,5,"#cf9532",ink,1.8);
+ rounded(12,506,426,276,11,"#120c16","#8f142e",2);
+ // Forged iron chest brackets & blood-ruby corner studs
+ for(const [bx,by] of [[10,504],[416,504],[10,764],[416,764]])rounded(bx,by,24,20,5,"#251b2c",ink,1.8);
  for(const [x,y] of [[20,514],[430,514],[20,774],[430,774],[96,512],[354,512]]){
-  ctx.fillStyle="#ffe175";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#cf2742";ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#ff8099";ctx.beginPath();ctx.arc(x-1,y-1,1.2,0,Math.PI*2);ctx.fill();
  }
- // Illuminated arcane relic pit chamber (y=527..686, cleanly above the oak control console)
- const glass=ctx.createLinearGradient(0,527,0,686);glass.addColorStop(0,"#2a547d");glass.addColorStop(.42,"#1b375c");glass.addColorStop(.84,"#11223d");glass.addColorStop(1,"#0b1429");
+ // Abyssal pit chamber with crimson runic ward lines (y=527..686)
+ const glass=ctx.createLinearGradient(0,527,0,686);glass.addColorStop(0,"#200f1e");glass.addColorStop(.42,"#120914");glass.addColorStop(.84,"#0a050e");glass.addColorStop(1,"#050308");
  rounded(26,527,398,159,10,glass,ink,2.4);
- ctx.save();ctx.globalAlpha=.1;ctx.strokeStyle="#ffe188";ctx.lineWidth=1;
- for(let gx=54;gx<410;gx+=42)line(gx,532,gx,680,"#ffe188",1);
- for(let gy=564;gy<680;gy+=38)line(30,gy,420,gy,"#9beeff",1);
+ ctx.save();ctx.globalAlpha=.12;ctx.strokeStyle="#ff3b56";ctx.lineWidth=1;
+ for(let gx=54;gx<410;gx+=42)line(gx,532,gx,680,"#ff3b56",1);
+ for(let gy=564;gy<680;gy+=38)line(30,gy,420,gy,"#79f2ff",1);
  ctx.restore();
  for(const vx of [30,412]){
-  rounded(vx,576,8,52,3,"#281b18","#e6b04d",1.3);
-  for(let k=0;k<4;k++)line(vx+2,584+k*11,vx+6,584+k*11,"#ffd870",1.5);
+  rounded(vx,576,8,52,3,"#1c1422","#8f142e",1.3);
+  for(let k=0;k<4;k++)line(vx+2,584+k*11,vx+6,584+k*11,"#ff3b56",1.5);
  }
- glow(225,606,155,"#67e6ff",.2);
+ glow(225,606,155,"#8f142e",.26);
  ctx.save();ctx.globalAlpha=.14;ctx.fillStyle="#ffffff";ctx.beginPath();ctx.moveTo(36,529);ctx.lineTo(92,529);ctx.lineTo(186,683);ctx.lineTo(126,683);ctx.closePath();ctx.fill();
  ctx.globalAlpha=.09;ctx.beginPath();ctx.moveTo(392,529);ctx.lineTo(414,529);ctx.lineTo(328,683);ctx.lineTo(306,683);ctx.closePath();ctx.fill();ctx.restore();
- // Curved carved oak & gold treasure floor tray aligned flush with chamberFloorY (673..678)
- const trayG=ctx.createLinearGradient(0,668,0,686);trayG.addColorStop(0,"#63402a");trayG.addColorStop(.48,"#3d2418");trayG.addColorStop(1,"#1c100d");
+ // Obsidian slab tray with blood-runic bevel aligned with chamberFloorY (673..678)
+ const trayG=ctx.createLinearGradient(0,668,0,686);trayG.addColorStop(0,"#2b1522");trayG.addColorStop(.48,"#180913");trayG.addColorStop(1,"#0d050a");
  ctx.fillStyle=trayG;
  ctx.beginPath();ctx.moveTo(28,671);ctx.quadraticCurveTo(225,682,422,671);ctx.lineTo(422,685);ctx.lineTo(28,685);ctx.closePath();ctx.fill();
- ctx.strokeStyle="#ffd36b88";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(29,671);ctx.quadraticCurveTo(225,682,421,671);ctx.stroke();
+ ctx.strokeStyle="#8f142e88";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(29,671);ctx.quadraticCurveTo(225,682,421,671);ctx.stroke();
  const ballCount=(state.machinePrizes||[]).filter(p=>p.type==="ball").length;
  const bonusActive=ballCount<=CHAMBER_BONUS_LIMIT;
  const targetCandidate=(state.turnPhase==="claw"&&state.clawMode==="idle")?getClawTargetCandidate():null;
  if(state.turnPhase==="claw"&&state.clawMode==="idle"){
   const endY=targetCandidate?targetCandidate.pos.y:672;
   const isBall=targetCandidate&&targetCandidate.p.type==="ball";
-  const beamColor=targetCandidate?(isBall?"#ffad66":"#79f2ff"):"#ffd56e";
-  ctx.save();ctx.globalAlpha=.56;ctx.strokeStyle=beamColor;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  const beamColor=targetCandidate?(isBall?"#ff7242":"#ff2e4c"):"#ff4f68";
+  ctx.save();ctx.globalAlpha=.58;ctx.strokeStyle=beamColor;ctx.lineWidth=2;ctx.setLineDash([5,4]);
   ctx.beginPath();ctx.moveTo(state.clawX,state.clawY+8);ctx.lineTo(state.clawX,endY);ctx.stroke();ctx.setLineDash([]);
-  glow(state.clawX,endY,22,beamColor,.32);
-  ctx.strokeStyle=isBall?"#ffc98f":"#a4faff";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(state.clawX,endY,targetCandidate?(targetCandidate.p.radius||12)+5:19,targetCandidate?6:5.5,0,0,Math.PI*2);ctx.stroke();
+  glow(state.clawX,endY,22,beamColor,.34);
+  ctx.strokeStyle=isBall?"#ffa57a":"#ff8099";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(state.clawX,endY,targetCandidate?(targetCandidate.p.radius||12)+5:19,targetCandidate?6:5.5,0,0,Math.PI*2);ctx.stroke();
   ctx.restore();
  }
- // Carved Gold Chest Marquee cleanly above the gantry rail (y=502..524)
- rounded(112,502,226,22,7,"#dfa02e",ink,2.2);
- ctx.fillStyle="#fff5b855";ctx.beginPath();ctx.roundRect(117,504,216,6,3);ctx.fill();
- inkText("SKARBNICA RELIKTÓW",225,513.5,8.8,"#fff9eb",ink,2.5,"center",DISPLAY_FONT);
+ // Forged Iron Marquee with Blood-Ruby Crest (y=502..524)
+ rounded(112,502,226,22,7,"#36121e",ink,2.2);
+ ctx.fillStyle="#ff3b5633";ctx.beginPath();ctx.roundRect(117,504,216,6,3);ctx.fill();
+ inkText("KRYPTA RELIKWII",225,513.5,8.8,"#ffe096",ink,2.5,"center",DISPLAY_FONT);
  for(let i=0;i<6;i++){
   const lx=123+i*40.8,lit=Math.floor(state.time*4+i)%2===0;
-  ctx.fillStyle=lit?"#fff6a6":"#ffd257";ctx.strokeStyle=ink;ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(lx,506.5,1.9,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle=lit?"#ff4d6d":"#8f142e";ctx.strokeStyle=ink;ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(lx,506.5,1.9,0,Math.PI*2);ctx.fill();ctx.stroke();
  }
- // Gilded Dragon-Claw Gantry & Brass Chain strictly below marquee (y=527..544)
- rounded(32,533,386,7,3,"#967144",ink,1.8);
- const carriage=ctx.createLinearGradient(state.clawX-20,0,state.clawX+20,0);carriage.addColorStop(0,"#b53b35");carriage.addColorStop(.5,"#ffd154");carriage.addColorStop(1,"#b53b35");
+ // Dark-Iron Gantry & Dragon-Claw Mechanism (y=527..544)
+ rounded(32,533,386,7,3,"#2b1e33",ink,1.8);
+ const carriage=ctx.createLinearGradient(state.clawX-20,0,state.clawX+20,0);carriage.addColorStop(0,"#38111e");carriage.addColorStop(.5,"#cf2742");carriage.addColorStop(1,"#38111e");
  rounded(state.clawX-20,527,40,17,5,carriage,ink,2);
- line(state.clawX,544,state.clawX,state.clawY-24,ink,6);line(state.clawX,544,state.clawX,state.clawY-24,"#f5cf6e",2.4);
+ line(state.clawX,544,state.clawX,state.clawY-24,ink,6);line(state.clawX,544,state.clawX,state.clawY-24,"#8a9bb2",2.4);
  if(state.clawY-24>548){
-  ctx.save();ctx.strokeStyle="#ffd166";ctx.lineWidth=1.3;ctx.beginPath();
+  ctx.save();ctx.strokeStyle="#8a9bb2";ctx.lineWidth=1.3;ctx.beginPath();
   for(let cy=545;cy<=state.clawY-26;cy+=5){
    const wx=state.clawX+Math.sin((cy-545)*.45)*3.4;
    if(cy===545)ctx.moveTo(wx,cy);else ctx.lineTo(wx,cy);
   }
   ctx.stroke();ctx.restore();
  }
- rounded(state.clawX-14,state.clawY-27,28,18,6,"#d6a149",ink,2);
- rounded(state.clawX-7,state.clawY-22,14,7,3,"#54f2ff",ink,1.3);
+ rounded(state.clawX-14,state.clawY-27,28,18,6,"#2b1e33",ink,2);
+ rounded(state.clawX-7,state.clawY-22,14,7,3,"#ff2e4c",ink,1.3);
  const gripProgress=state.clawMode==="grab"?1-clamp(state.clawGripDelay/.17,0,1):0;
  const gripEase=gripProgress*gripProgress*(3-2*gripProgress);
  const spread=state.clawMode==="down"?22:state.clawMode==="grab"?22-19*gripEase:state.clawMode==="return"?7:19;
  for(const dir of [-1,1]){
   ctx.strokeStyle=ink;ctx.lineWidth=6.2;ctx.lineCap="round";
   ctx.beginPath();ctx.moveTo(state.clawX+dir*7,state.clawY-11);ctx.quadraticCurveTo(state.clawX+dir*spread*.68,state.clawY+1,state.clawX+dir*spread,state.clawY+11);ctx.stroke();
-  ctx.strokeStyle="#ffebad";ctx.lineWidth=3;
+  ctx.strokeStyle="#e2ebf7";ctx.lineWidth=3;
   ctx.beginPath();ctx.moveTo(state.clawX+dir*7,state.clawY-11);ctx.quadraticCurveTo(state.clawX+dir*spread*.68,state.clawY+1,state.clawX+dir*spread,state.clawY+11);ctx.stroke();
  }
  const edges={coin:"#ffd854",gem:"#5cebff",heart:"#ff6b94",star:"#ffd95c",bomb:"#ff8a5e",xp:"#6bd6ff",ammo:"#63f2a8",weapon:"#7be3ff",skill:"#c29eff"};
@@ -1518,87 +1619,87 @@ function drawClawMachine(){
   rounded(129,547,180,18,6,isBall?"#6b3c22e0":"#144769e0",isBall?"#ffb86b":"#79f2ff",1.4);
   text(badgeText,219,556,6.1,isBall?"#ffe2b8":"#d8fbff",900,"center");
  }
- // Dedicated Oak & Brass Control Console BELOW the glass (y=689..744)
- rounded(18,689,414,55,10,"#3a2116",ink,2.2);
- rounded(22,692,406,49,8,"#261510","#ffd46638",1.2);
+ // Dedicated Forged Dark-Iron Control Console (y=689..744)
+ rounded(18,689,414,55,10,"#1c1324",ink,2.2);
+ rounded(22,692,406,49,8,"#100a16","#8f142e38",1.2);
  const clawReady=state.turnPhase==="claw"&&state.clawMode==="idle"&&!state.clawUsedThisTurn;
  button(32,696,48,41,"◀","PAZUR",clawReady,"blue");button(88,696,48,41,"▶","PAZUR",clawReady,"blue");
- pill(152,704,132,state.turnPhase==="claw"?"FAZA 1/2":state.turnPhase==="hero"?"FAZA 2/2":"TURA WROGÓW",state.turnPhase==="hero"?"#1d8768":"#4c3c73","#ffffff");
+ pill(152,704,132,state.turnPhase==="claw"?"FAZA 1/2":state.turnPhase==="hero"?"FAZA 2/2":"TURA WROGÓW",state.turnPhase==="hero"?"#154d3d":"#361224","#ffffff");
  const clawLabel=state.clawMode==="down"?"CHWYT...":state.clawMode==="return"?"POWRÓT":clawReady?"ZŁAP ŁUP":"ZUŻYTO";
  const clawSub=state.turnPhase==="hero"?"NASTĘPNA TURA":state.turnPhase==="claw"?"1 PRÓBA / TURĘ":"OCZEKIWANIE";
  button(298,696,120,41,clawLabel,clawSub,clawReady,"gold");
- // Bottom chest status strip
- rounded(24,749,402,26,7,"#1b1210",ink,2);
- text("KULKI "+ballCount+"  •  "+(bonusActive?"PRÓG PREMII AKTYWNY (+2◆ +10 WYNIK)":"KOMORA ZAGĘSZCZONA"),225,762,7.1,bonusActive?"#8effdf":"#ffd68a",800,"center");
+ // Bottom reliquary status strip
+ rounded(24,749,402,26,7,"#0d0813",ink,2);
+ text("KULKI "+ballCount+"  •  "+(bonusActive?"PRÓG PREMII AKTYWNY (+2◆ +10 WYNIK)":"KOMORA ZAGĘSZCZONA"),225,762,7.1,bonusActive?"#a4ffdf":"#ffd68a",800,"center");
 }
 function drawMenuScene(){
- const ink="#18100f";
- // Warm Heroic Fantasy Guild Vault & Torchlit Stone Hall
+ const ink="#07050a";
+ // Dark Heroic Fantasy Stronghold & Torchlit Obsidian Hall
  const bg=ctx.createLinearGradient(0,0,0,H);
- bg.addColorStop(0,"#1c1729");bg.addColorStop(.45,"#2c2136");bg.addColorStop(.78,"#241926");bg.addColorStop(1,"#130d15");
+ bg.addColorStop(0,"#150c18");bg.addColorStop(.42,"#1a1020");bg.addColorStop(.78,"#110915");bg.addColorStop(1,"#060408");
  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
  const halo=ctx.createRadialGradient(225,305,18,225,305,295);
- halo.addColorStop(0,"#ffd36648");halo.addColorStop(.42,"#5ce3ff26");halo.addColorStop(1,"#00000000");
+ halo.addColorStop(0,"#8f142e3b");halo.addColorStop(.45,"#ff3b5618");halo.addColorStop(1,"#00000000");
  ctx.fillStyle=halo;ctx.fillRect(0,60,W,460);
- ctx.save();ctx.globalAlpha=.2;ctx.strokeStyle="#8a6c59";ctx.lineWidth=1.5;
+ ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle="#3a2538";ctx.lineWidth=1.5;
  for(let r=0;r<7;r++){
   const ry=112+r*48;
   ctx.beginPath();ctx.moveTo(0,ry);ctx.lineTo(W,ry);ctx.stroke();
   for(let c=(r%2)*45;c<W;c+=90){ctx.beginPath();ctx.moveTo(c,ry);ctx.lineTo(c,ry+48);ctx.stroke()}
  }
  ctx.restore();
- // Carved stone & gold sanctuary archway
+ // Gothic carved obsidian & blood-iron sanctuary archway
  ctx.save();
  ctx.strokeStyle=ink;ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(22,482);ctx.lineTo(22,208);ctx.quadraticCurveTo(225,18,428,208);ctx.lineTo(428,482);ctx.stroke();
- ctx.strokeStyle="#a67a42";ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(22,482);ctx.lineTo(22,208);ctx.quadraticCurveTo(225,18,428,208);ctx.lineTo(428,482);ctx.stroke();
+ ctx.strokeStyle="#5e1a2f";ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(22,482);ctx.lineTo(22,208);ctx.quadraticCurveTo(225,18,428,208);ctx.lineTo(428,482);ctx.stroke();
  ctx.restore();
  for(let side=0;side<2;side++){
   const x=side?402:48;
-  rounded(x-16,184,32,298,6,"#422c24",ink,2.4);
-  ctx.fillStyle="#6b4636";ctx.fillRect(x-12,190,8,286);
-  rounded(x-21,178,42,13,5,"#ffd154",ink,2.2);
-  rounded(x-21,472,42,14,5,"#8a6345",ink,2.2);
+  rounded(x-16,184,32,298,6,"#201627",ink,2.4);
+  ctx.fillStyle="#331e3b";ctx.fillRect(x-12,190,8,286);
+  rounded(x-21,178,42,13,5,"#8f142e",ink,2.2);
+  rounded(x-21,472,42,14,5,"#3a2034",ink,2.2);
   const sway=Math.sin(state.time*2.2+side*2)*2,bx=x+sway,by=248;
   const flick=.9+.12*Math.sin(state.time*10+side*3);
-  glow(bx,by-10,48*flick,"#ff9d42",.34);
-  ctx.fillStyle="#6c5243";ctx.strokeStyle=ink;ctx.lineWidth=2;
+  glow(bx,by-10,48*flick,"#ff2e4c",.36);
+  ctx.fillStyle="#2d1726";ctx.strokeStyle=ink;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(bx-10,by-3);ctx.lineTo(bx+10,by-3);ctx.lineTo(bx+6,by+8);ctx.lineTo(bx-6,by+8);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle="#ff7b3b";ctx.strokeStyle=ink;ctx.lineWidth=1.8;
+  ctx.fillStyle="#ff3857";ctx.strokeStyle=ink;ctx.lineWidth=1.8;
   ctx.beginPath();ctx.moveTo(bx-7,by-3);ctx.quadraticCurveTo(bx-3,by-22*flick,bx,by-25*flick);ctx.quadraticCurveTo(bx+4,by-20*flick,bx+7,by-3);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle="#ffe566";
+  ctx.fillStyle="#ffd454";
   ctx.beginPath();ctx.moveTo(bx-3.8,by-3);ctx.quadraticCurveTo(bx,by-16*flick,bx+3.8,by-3);ctx.closePath();ctx.fill();
  }
  const floor=ctx.createLinearGradient(0,440,0,800);
- floor.addColorStop(0,"#593c2c");floor.addColorStop(.38,"#38231c");floor.addColorStop(1,"#1a100e");
+ floor.addColorStop(0,"#2a1826");floor.addColorStop(.38,"#1a0f1b");floor.addColorStop(1,"#0b060d");
  ctx.fillStyle=floor;ctx.fillRect(0,440,W,360);
  line(0,441,W,441,ink,2.5);
- ctx.save();ctx.globalAlpha=.24;ctx.strokeStyle="#b88856";ctx.lineWidth=1.5;
- for(let y=462;y<800;y+=28)line(0,y,W,y,"#b88856",1.2);
- for(let x=-180;x<660;x+=60)line(225,440,x,800,"#b88856",1.2);
+ ctx.save();ctx.globalAlpha=.22;ctx.strokeStyle="#5e2b46";ctx.lineWidth=1.5;
+ for(let y=462;y<800;y+=28)line(0,y,W,y,"#5e2b46",1.2);
+ for(let x=-180;x<660;x+=60)line(225,440,x,800,"#5e2b46",1.2);
  ctx.restore();
  ctx.save();
- const cone=ctx.createLinearGradient(225,130,225,478);cone.addColorStop(0,"#ffe38f22");cone.addColorStop(1,"#ffe38f00");
+ const cone=ctx.createLinearGradient(225,130,225,478);cone.addColorStop(0,"#ff3b561c");cone.addColorStop(1,"#ff3b5600");
  ctx.fillStyle=cone;ctx.beginPath();ctx.moveTo(155,130);ctx.lineTo(295,130);ctx.lineTo(355,478);ctx.lineTo(95,478);ctx.closePath();ctx.fill();
  ctx.restore();
- // Sculpted Wooden & Brass Fantasy Relic Vault Showcase Machine behind the Hero
+ // Forged Dark Iron Reliquary Showcase Machine behind the Hero
  ctx.save();
- rounded(78,138,294,282,18,"#382016",ink,3);
- rounded(84,144,282,270,14,"#8c4f28",ink,2.2);
- rounded(90,160,270,250,11,"#261510",ink,2.2);
+ rounded(78,138,294,282,18,"#181020",ink,3);
+ rounded(84,144,282,270,14,"#28182f",ink,2.2);
+ rounded(90,160,270,250,11,"#120a18",ink,2.2);
  const chamber=ctx.createLinearGradient(0,164,0,406);
- chamber.addColorStop(0,"#28527d");chamber.addColorStop(.55,"#183457");chamber.addColorStop(1,"#10203a");
- rounded(94,164,262,242,9,chamber,"#ffd166",1.8);
- rounded(114,138,222,25,9,"#e6a42e",ink,2.4);
- ctx.fillStyle="#fff0a6";ctx.fillRect(124,141,202,4.5);
- inkText("AUTOMAT RELIKTÓW",225,150.5,10.2,"#fffdf5",ink,2.6,"center",DISPLAY_FONT);
- ctx.save();ctx.globalAlpha=.16;ctx.fillStyle="#ffffff";
+ chamber.addColorStop(0,"#1c0c1e");chamber.addColorStop(.55,"#100816");chamber.addColorStop(1,"#07040b");
+ rounded(94,164,262,242,9,chamber,"#8f142e",1.8);
+ rounded(114,138,222,25,9,"#4a1524",ink,2.4);
+ ctx.fillStyle="#ff3b5644";ctx.fillRect(124,141,202,4.5);
+ inkText("KRYPTA RELIKWII",225,150.5,10.2,"#ffe096",ink,2.6,"center",DISPLAY_FONT);
+ ctx.save();ctx.globalAlpha=.14;ctx.fillStyle="#ffffff";
  ctx.beginPath();ctx.moveTo(106,172);ctx.lineTo(132,172);ctx.lineTo(166,400);ctx.lineTo(140,400);ctx.closePath();ctx.fill();
  ctx.beginPath();ctx.moveTo(146,172);ctx.lineTo(158,172);ctx.lineTo(192,400);ctx.lineTo(180,400);ctx.closePath();ctx.fill();
  ctx.restore();
- // Curved oak & gold showcase tray at bottom of glass
- const sTray=ctx.createLinearGradient(0,376,0,405);sTray.addColorStop(0,"#63402a");sTray.addColorStop(1,"#24140f");
+ // Curved dark obsidian showcase tray at bottom of glass
+ const sTray=ctx.createLinearGradient(0,376,0,405);sTray.addColorStop(0,"#2a1420");sTray.addColorStop(1,"#0d050a");
  ctx.fillStyle=sTray;ctx.beginPath();ctx.moveTo(96,384);ctx.quadraticCurveTo(225,396,354,384);ctx.lineTo(354,405);ctx.lineTo(96,405);ctx.closePath();ctx.fill();
- ctx.strokeStyle="#ffd36b88";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(97,384);ctx.quadraticCurveTo(225,396,353,384);ctx.stroke();
+ ctx.strokeStyle="#8f142e88";ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(97,384);ctx.quadraticCurveTo(225,396,353,384);ctx.stroke();
  // Settled pyramid mound of spheres & nested relics along the showcase floor
  const demoColors=["#ff7ea8","#72d6ff","#ffe270","#87f0b0","#c29eff","#ffb470"];
  const moundRows=[
@@ -1617,90 +1718,90 @@ function drawMenuScene(){
  }
  drawPrize("coin",134,368+Math.sin(state.time*2.1)*1.5,.58);
  drawPrize("xp",316,366+Math.cos(state.time*2.3)*1.5,.6);
- // Animated showcase brass claw sweeping gently above the prize mound
- rounded(106,169,238,6,3,"#967144",ink,1.6);
+ // Animated dragon claw sweeping gently above the prize mound
+ rounded(106,169,238,6,3,"#2b1e33",ink,1.6);
  const demoClawX=225+Math.sin(state.time*.75)*62,demoClawY=236+Math.sin(state.time*1.3)*10,clawSway=Math.sin(state.time*1.5)*.06;
- rounded(demoClawX-15,165,30,13,4,"#cf9532",ink,1.8);
- line(demoClawX,178,demoClawX,demoClawY-5,ink,5.2);line(demoClawX,178,demoClawX,demoClawY-5,"#f5d273",2.4);
+ rounded(demoClawX-15,165,30,13,4,"#3a1a2b",ink,1.8);
+ line(demoClawX,178,demoClawX,demoClawY-5,ink,5.2);line(demoClawX,178,demoClawX,demoClawY-5,"#8a9bb2",2.4);
  ctx.save();ctx.translate(demoClawX,demoClawY);ctx.rotate(clawSway);
  ctx.strokeStyle=ink;ctx.lineWidth=6.2;ctx.lineCap="round";
  ctx.beginPath();ctx.moveTo(-8,5);ctx.quadraticCurveTo(-22,19,-18,32);ctx.stroke();
  ctx.beginPath();ctx.moveTo(8,5);ctx.quadraticCurveTo(22,19,18,32);ctx.stroke();
- ctx.strokeStyle="#ffe7a8";ctx.lineWidth=3;
+ ctx.strokeStyle="#e2ebf7";ctx.lineWidth=3;
  ctx.beginPath();ctx.moveTo(-8,5);ctx.quadraticCurveTo(-22,19,-18,32);ctx.stroke();
  ctx.beginPath();ctx.moveTo(8,5);ctx.quadraticCurveTo(22,19,18,32);ctx.stroke();
- rounded(-16,-10,32,18,6,"#c96e2c",ink,2);
- rounded(-11,-7,22,6,3,"#ffd66b");
+ rounded(-16,-10,32,18,6,"#2b1e33",ink,2);
+ rounded(-11,-7,22,6,3,"#ff2e4c");
  ctx.restore();
  ctx.restore();
- // Stone & Gold Pedestal in front of showcase
- ctx.fillStyle="#10090e";ctx.beginPath();ctx.ellipse(225,484,154,30,0,0,Math.PI*2);ctx.fill();
- rounded(84,450,282,40,19,"#4b3a54",ink,2.6);
- rounded(92,454,266,26,13,"#6d5678",ink,2);
- ctx.fillStyle="#967ea3";ctx.beginPath();ctx.ellipse(225,464,118,11,0,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#ffcf5c";ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(225,465,124,13,0,0,Math.PI*2);ctx.stroke();
- ctx.save();ctx.strokeStyle="#ffe78a";ctx.lineWidth=1.8;
+ // Carved Dark Basalt Altar Pedestal with Blood Runes in front of showcase
+ ctx.fillStyle="#060408";ctx.beginPath();ctx.ellipse(225,484,154,30,0,0,Math.PI*2);ctx.fill();
+ rounded(84,450,282,40,19,"#221629",ink,2.6);
+ rounded(92,454,266,26,13,"#331f3b",ink,2);
+ ctx.fillStyle="#1a1022";ctx.beginPath();ctx.ellipse(225,464,118,11,0,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#cf2742";ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(225,465,124,13,0,0,Math.PI*2);ctx.stroke();
+ ctx.save();ctx.strokeStyle="#ff4f68";ctx.lineWidth=1.8;
  for(let t=0;t<12;t++){
   const ang=state.time*.6+t*(Math.PI*2/12);
   ctx.globalAlpha=.35+.35*Math.sin(ang*2+state.time*2);
   ctx.beginPath();ctx.arc(225+Math.cos(ang)*118,465+Math.sin(ang)*11.5,1.8,0,Math.PI*2);ctx.fill();
  }
  ctx.restore();
- // Hero Paladin standing proudly IN FRONT of the showcase on the pedestal
+ // Hero Monster Hunter standing proudly on the Altar Pedestal
  ctx.save();ctx.translate(225,456);ctx.scale(1.26,1.26);drawHero(0,0);ctx.restore();
  drawPrize("gem",84,424+Math.sin(state.time*2.6)*4,.66);
  drawPrize("xp",366,424+Math.cos(state.time*2.3)*4,.66);
- for(let i=0;i<18;i++){
+ for(let i=0;i<22;i++){
   const sx=(i*67+Math.sin(state.time*.6+i)*12+W)%W;
-  const sy=140+((i*49-state.time*(8+i%4))%340+340)%340;
+  const sy=140+((i*49-state.time*(12+i%4))%340+340)%340;
   ctx.save();ctx.globalAlpha=.35+.25*Math.sin(state.time*2.4+i);
-  ctx.fillStyle=i%2?"#ffe678":"#7cf3ff";
-  ctx.beginPath();ctx.arc(sx,sy,1.5+(i%2)*.7,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.fillStyle=i%3===0?"#ff3b56":i%3===1?"#ff8042":"#ffd254";
+  ctx.beginPath();ctx.arc(sx,sy,1.6+(i%2)*.8,0,Math.PI*2);ctx.fill();ctx.restore();
  }
 }
 function drawHubTabBar(){
- const ink="#18100f";
- rounded(10,716,430,68,14,"#3b2217",ink,2.6);
- rounded(14,720,422,60,11,"#261611","#ffd46644",1.2);
+ const ink="#07050a";
+ rounded(10,716,430,68,14,"#1f1526",ink,2.6);
+ rounded(14,720,422,60,11,"#110a17","#8f142e44",1.2);
  const tabs=[
-  {id:"forge",x:20,w:98,icon:"⚒",label:"KUŹNIA",tone:"#ff884d"},
-  {id:"battle",x:124,w:98,icon:"⚔",label:"BITWA",tone:"#29c287"},
-  {id:"arsenal",x:228,w:98,icon:"❖",label:"ARSENAŁ",tone:"#4d96ff"},
-  {id:"codex",x:332,w:98,icon:"◈",label:"KODEKS",tone:"#9a72ff"}
+  {id:"forge",x:20,w:98,icon:"⚒",label:"KUŹNIA",tone:"#ff7a42"},
+  {id:"battle",x:124,w:98,icon:"⚔",label:"BITWA",tone:"#cf2742"},
+  {id:"arsenal",x:228,w:98,icon:"❖",label:"ARSENAŁ",tone:"#3898ec"},
+  {id:"codex",x:332,w:98,icon:"◈",label:"KODEKS",tone:"#a872ff"}
  ];
  for(const t of tabs){
   const active=(t.id==="forge"&&state.upgradesOpen)||(t.id==="codex"&&state.helpOpen)||(!state.upgradesOpen&&!state.helpOpen&&state.hubTab===t.id);
   const topY=active?721:725,h=active?55:50;
   rounded(t.x,topY+2,t.w,h,10,ink);
-  rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#3e2820",ink,2.2);
+  rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#211728",ink,2.2);
   ctx.save();ctx.globalAlpha=active?.35:.14;ctx.fillStyle="#ffffff";
   rounded(t.x+4,topY+2,t.w-8,12,6,"#ffffff");ctx.restore();
   if(active)glow(t.x+t.w/2,topY+24,32,t.tone,.28);
-  inkText(t.icon,t.x+t.w/2,topY+18,16,active?"#ffffff":"#e8d4b5",ink,2.4,"center",UI_FONT);
-  inkText(t.label,t.x+t.w/2,topY+38,8.8,active?"#ffffff":"#d6bea0",ink,2.2,"center",DISPLAY_FONT);
+  inkText(t.icon,t.x+t.w/2,topY+18,16,active?"#ffffff":"#d6bea0",ink,2.4,"center",UI_FONT);
+  inkText(t.label,t.x+t.w/2,topY+38,8.8,active?"#ffffff":"#c4ad95",ink,2.2,"center",DISPLAY_FONT);
  }
 }
 function drawArsenalTab(){
- const ink="#18100f";
+ const ink="#07050a";
  drawMenuScene();
- ctx.fillStyle="#0e0912cc";ctx.fillRect(0,130,W,588);
- drawModalFrame(17,138,416,570,"#ffd04d");
+ ctx.fillStyle="#07050ac9";ctx.fillRect(0,130,W,588);
+ drawModalFrame(17,138,416,570,"#8f142e");
  inkText("ARSENAŁ I SYNERGIE",225,165,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
- text("5 ARCHETYPÓW BRONI  •  12 SKILLI  •  4 SYNERGIE",225,186,7.4,"#ffe39c",800,"center");
+ text("5 ARCHETYPÓW BRONI  •  12 SKILLI  •  4 SYNERGIE",225,186,7.4,"#ffd58a",800,"center");
  line(38,200,412,200,"#ffffff26",1.2);
  const activeW=weaponCatalog.find(w=>w.id===state.arsenalWeapon)||weaponCatalog[0];
- rounded(34,209,382,129,11,"#261918",ink,2.2);
+ rounded(34,209,382,129,11,"#18101e",ink,2.2);
  ctx.fillStyle=activeW.color;ctx.fillRect(36,213,5,121);
- rounded(48,220,124,78,9,"#171117",activeW.color,1.8);
+ rounded(48,220,124,78,9,"#100a16",activeW.color,1.8);
  glow(108,260,44,activeW.color,.22);
  ctx.save();ctx.translate(92,260);ctx.scale(1.45,1.45);drawWeaponModel(activeW.id,activeW.color,0,false,false,3);ctx.restore();
  inkText(activeW.name.toUpperCase(),186,232,11.5,activeW.color,ink,2.4,"left",DISPLAY_FONT);
- text(activeW.role,186,252,8.4,"#f5ead8",700);
+ text(activeW.role,186,252,8.4,"#f0e3d2",700);
  text("OBRAŻENIA: "+activeW.damage+" (+"+profile.attackRank+" RANGA)  •  MAX POZ. III",186,274,7.5,"#ffe078",800);
  text("KLIKNIJ IKONĘ PONIŻEJ, ABY OBEJRZEĆ MODEL",186,294,6.9,"#cdb8a3",700);
  for(let i=0;i<weaponCatalog.length;i++){
   const w=weaponCatalog[i],bx=42+i*74,sel=w.id===activeW.id;
-  rounded(bx,306,68,25,7,sel?"#633d28":"#231817",sel?w.color:"#6b4e3c",sel?2:1.2);
+  rounded(bx,306,68,25,7,sel?"#481628":"#19101d",sel?w.color:"#473245",sel?2:1.2);
   inkText(w.id.toUpperCase(),bx+34,318.5,7.2,sel?"#ffffff":"#cbb89d",ink,1.8,"center",DISPLAY_FONT);
  }
  line(38,348,412,348,"#ffffff26",1.2);
@@ -1708,89 +1809,89 @@ function drawArsenalTab(){
  for(let i=0;i<abilityPool.length;i++){
   const a=abilityPool[i],col=i%2,row=Math.floor(i/2);
   const cx=34+col*194,cy=378+row*45;
-  rounded(cx,cy,186,39,8,"#241918",ink,1.8);
+  rounded(cx,cy,186,39,8,"#18101e",ink,1.8);
   ctx.fillStyle=a.color;ctx.fillRect(cx+2,cy+3,4,33);
   text(a.name,cx+13,cy+13,8.5,"#ffffff",900);
   ctx.fillStyle="#d1beaa";ctx.font="700 6.5px "+UI_FONT;ctx.textAlign="left";ctx.fillText(a.desc,cx+13,cy+28,166);
  }
- rounded(34,650,382,48,8,"#243d29",ink,2);
+ rounded(34,650,382,48,8,"#1a2a1f",ink,2);
  text("SYNERGIE: KOROZJA (Trucizna+Krwaw.) • BASTION (Tarcza+Riposta)",225,665,6.6,"#c5ff94",900,"center");
  text("FURIA ETERU (Kryt+Ostrze/Burza) • ZŁOTY CHWYT (Fortuna+Pazur)",225,682,6.6,"#ffe58f",900,"center");
 }
 function drawTitle(){
- const ink="#18100f";
+ const ink="#07050a";
  const activeStage=clamp(state.hubStage||profile.unlockedStage,1,profile.unlockedStage);
  const def=stageDefinition(activeStage);
  if(state.hubTab==="arsenal"&&!state.upgradesOpen&&!state.helpOpen&&!state.settingsOpen){
   drawArsenalTab();
  }else{
   drawMenuScene();
-  // Carved Oak & Hammered Brass Heroic Fantasy Mission Board
+  // Forged Dark-Iron & Blood-Ruby Monster Hunter Mission Ledger
   rounded(21,497,408,214,15,ink);
-  rounded(23,495,404,212,14,"#4f3021",ink,2.6);
-  rounded(28,500,394,202,11,"#291915","#ffd4663b",1.2);
-  rounded(23,495,404,10,8,"#f2b33d",ink,2);
-  ctx.fillStyle="#ffcf54";ctx.fillRect(38,516,4,18);
-  inkText("01  /  TABLICA WYPRAW",50,524,9,"#ffd970",ink,2,"left",DISPLAY_FONT);
+  rounded(23,495,404,212,14,"#221626",ink,2.6);
+  rounded(28,500,394,202,11,"#120c18","#8f142e3b",1.2);
+  rounded(23,495,404,10,8,"#7a1125",ink,2);
+  ctx.fillStyle="#cf2742";ctx.fillRect(38,516,4,18);
+  inkText("01  /  TABLICA WYPRAW",50,524,9,"#ffd580",ink,2,"left",DISPLAY_FONT);
   if(profile.unlockedStage>1){
-   rounded(334,512,34,23,6,"#2f6bc9",ink,2);inkText("◀",351,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
-   rounded(373,512,34,23,6,"#2f6bc9",ink,2);inkText("▶",390,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
+   rounded(334,512,34,23,6,"#243c68",ink,2);inkText("◀",351,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
+   rounded(373,512,34,23,6,"#243c68",ink,2);inkText("▶",390,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
   }else{
-   rounded(320,512,88,22,7,"#186e5c",ink,1.8);
+   rounded(320,512,88,22,7,"#154d3d",ink,1.8);
    text(def.waves.length+" FALE • +"+def.coins+"◆",364,523,7.2,"#b8ffea",900,"center");
   }
   inkText("ROZDZIAŁ "+String(activeStage).padStart(2,"0")+" • "+def.title.toUpperCase(),42,548,14,"#ffffff",ink,2.8,"left",DISPLAY_FONT);
   ctx.fillStyle="#e3d0ba";ctx.font="700 7.2px "+UI_FONT;ctx.textAlign="left";ctx.textBaseline="middle";
   ctx.fillText(def.objective,42,566,364);
   const previewTypes=[...new Set(def.waves.flat())].map(t=>enemyName({type:t})).join(", ");
-  text("ZAGROŻENIA: "+previewTypes.toUpperCase(),42,579,6.7,"#ffd68a",900);
-  rounded(42,589,366,7,3.5,"#140d0c",ink,1.5);
-  const prog=clamp((activeStage-1)/Math.max(1,profile.unlockedStage),.08,1);rounded(44,590.5,362*prog,4,2,"#ffd254");
-  const stats=[["RANGA",String(profile.level),"#ffe075","#4a3225"],["REKORD ETAPU",String(profile.bestStage),"#9deeff","#2d3e5e"],["NAGRODA",def.waves.length+" FALE • +"+def.coins+"◆","#9effcf","#215447"]];
+  text("ZAGROŻENIA: "+previewTypes.toUpperCase(),42,579,6.7,"#ff4d6d",900);
+  rounded(42,589,366,7,3.5,"#0b070f",ink,1.5);
+  const prog=clamp((activeStage-1)/Math.max(1,profile.unlockedStage),.08,1);rounded(44,590.5,362*prog,4,2,"#cf2742");
+  const stats=[["RANGA",String(profile.level),"#ffe075","#26182c"],["REKORD ETAPU",String(profile.bestStage),"#ff8ea5","#381424"],["NAGRODA",def.waves.length+" FALE • +"+def.coins+"◆","#9effcf","#16382b"]];
   for(let i=0;i<3;i++){
    const x=42+i*123;rounded(x,602,115,39,8,stats[i][3],ink,2);
-   text(stats[i][0],x+10,613,6.4,"#e8d4b5",800);
+   text(stats[i][0],x+10,613,6.4,"#d6bfa8",800);
    inkText(stats[i][1],x+10,629,i===2?9.4:13,stats[i][2],ink,2,"left",DISPLAY_FONT);
   }
   line(42,649,408,649,"#ffffff22",1.2);
-  button(43,660,364,44,"ROZPOCZNIJ WYPRAWĘ","MISJA  /  "+def.title.toUpperCase(),true,"gold");
+  button(43,660,364,44,"ROZPOCZNIJ WYPRAWĘ","MISJA  /  "+def.title.toUpperCase(),true,"red");
  }
- // Top Title Emblem Header Plate (Carved Oak & Brass Crest)
+ // Top Title Emblem Header Plate (Carved Obsidian & Blood-Ruby Crest)
  rounded(15,18,420,111,16,ink);
- rounded(17,15,416,110,15,"#593622",ink,2.8);
- rounded(22,20,406,100,12,"#2a1914","#ffd46644",1.2);
- ctx.fillStyle="#ffffff18";rounded(24,22,402,22,8,"#ffffff");
- glow(126,64,74,"#ffd254",.22);
- text("TACTICAL ARCADE  /  ROGUELITE",38,34,7.4,"#ffe396",900);
+ rounded(17,15,416,110,15,"#251a2d",ink,2.8);
+ rounded(22,20,406,100,12,"#120c18","#8f142e44",1.2);
+ ctx.fillStyle="#ffffff12";rounded(24,22,402,22,8,"#ffffff");
+ glow(126,64,74,"#8f142e",.26);
+ text("TACTICAL ARCADE  /  ROGUELITE",38,34,7.4,"#ff8ea3",900);
  inkText("CLAW",38,65,30,"#ffd754",ink,4.2,"left",DISPLAY_FONT);
- inkText("QUEST",132,65,30,"#6cf2ff",ink,4.2,"left",DISPLAY_FONT);
- text("THE RELIC VAULT  /  PRECISION ROGUELITE",38,98,7,"#ebd2b5",800);
- line(262,32,262,107,"#ffd46633",1.4);
- rounded(272,27,108,22,7,"#4d3726",ink,1.8);inkText("◆ "+profile.coins,326,38,9.5,"#ffe370",ink,2,"center",DISPLAY_FONT);
+ inkText("QUEST",132,65,30,"#ff2e4c",ink,4.2,"left",DISPLAY_FONT);
+ text("THE RELIC VAULT  /  PRECISION ROGUELITE",38,98,7,"#d6bfa8",800);
+ line(262,32,262,107,"#8f142e44",1.4);
+ rounded(272,27,108,22,7,"#221629",ink,1.8);inkText("◆ "+profile.coins,326,38,9.5,"#ffe370",ink,2,"center",DISPLAY_FONT);
  text("ETAP "+String(activeStage).padStart(2,"0")+"/"+String(profile.unlockedStage).padStart(2,"0"),274,62,9,"#ffffff",900);
  text("REKORD "+profile.bestScore,274,80,7.8,"#edd3b2",800);
- rounded(274,92,98,7,3,"#140d0c",ink,1.4);rounded(275,93,96*clamp(profile.xp/Math.max(1,profile.level*30),.08,1),5,2,"#4af0d4");
+ rounded(274,92,98,7,3,"#0d0813",ink,1.4);rounded(275,93,96*clamp(profile.xp/Math.max(1,profile.level*30),.08,1),5,2,"#4af0d4");
  text("POZ. "+profile.level,274,108,6.8,"#9cecff",900);
  // Settings gear button (exact hitbox x=382..428, y=22..66)
  rounded(388,30,32,32,8,ink);
- rounded(388,28,32,32,8,"#6b4531",ink,2.2);
+ rounded(388,28,32,32,8,"#381c2e",ink,2.2);
  inkText("⚙",404,44,16,"#ffe075",ink,2,"center",UI_FONT);
  drawHubTabBar();
 }
 function drawSettingsOverlay(){
- const ink="#18100f";
+ const ink="#07050a";
  drawModalBackdrop();
- drawModalFrame(35,226,380,354,"#ffd04d");
+ drawModalFrame(35,226,380,354,"#8f142e");
  inkText("USTAWIENIA SYSTEMU",225,264,18,"#ffffff",ink,3,"center",DISPLAY_FONT);
  text("KONFIGURACJA SESJI",225,286,8,"#ffd670",800,"center");
  line(62,306,388,306,"#ffffff26",1.2);
- rounded(57,323,336,69,9,"#241918",ink,2);
- ctx.fillStyle="#ffd04d";ctx.fillRect(59,327,4,61);
+ rounded(57,323,336,69,9,"#18101e",ink,2);
+ ctx.fillStyle="#cf2742";ctx.fillRect(59,327,4,61);
  text("01  /  DŹWIĘK",76,345,11,"#ffffff",900);
  text("Sygnały interfejsu i efekty audio",76,369,8.5,"#cdb8a3",700);
  button(284,338,96,39,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound,state.sound?"teal":"dim");
- rounded(57,405,336,69,9,"#241918",ink,2);
- ctx.fillStyle="#5ce8ff";ctx.fillRect(59,409,4,61);
+ rounded(57,405,336,69,9,"#18101e",ink,2);
+ ctx.fillStyle="#ff4d6d";ctx.fillRect(59,409,4,61);
  text("02  /  EFEKTY WIZUALNE",76,427,11,"#ffffff",900);
  text("Poświaty, cząsteczki i drobne animacje",76,451,8.2,"#cdb8a3",700);
  button(284,420,96,39,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects,state.effects?"teal":"dim");
@@ -1799,15 +1900,15 @@ function drawSettingsOverlay(){
  button(112,521,226,42,"ZAMKNIJ USTAWIENIA","",true,"blue");
 }
 function drawHelpOverlay(){
- const ink="#18100f";
+ const ink="#07050a";
  drawModalBackdrop();
- drawModalFrame(32,198,386,414,"#9a72ff");
+ drawModalFrame(32,198,386,414,"#8f142e");
  inkText("KODEKS TAKTYCZNY",225,234,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
  text("JEDNA TURA  /  RUCH TAKTYCZNY  /  BESTIARIUSZ",225,255,7.4,"#dfcaff",800,"center");line(59,272,391,272,"#ffffff26",1.2);
  const rows=[
-  ["01","USTAW I ZŁAP","Przesuń pazur w skrzyni. Kryształy XP ładują karty skilli."],
-  ["02","RUCH I AKCJA","Przesuń bohatera o 1 pole (Unik/Awangarda) i użyj broni."],
-  ["03","RUCH WROGÓW","Wrogowie pokazują zamiar oraz strzałki podejścia na podłodze."]
+  ["01","USTAW I ZŁAP","Przesuń pazur w krypcie. Kryształy XP ładują karty skilli."],
+  ["02","RUCH I CIOS","Przesuń łowcę o 1 pole i wymierz cios wybraną bronią."],
+  ["03","ZAGROŻENIA","Wrogowie pokazują zamiar oraz strzałki podejścia na posadzce."]
  ];
  let y=299;for(const r of rows){inkText(r[0],62,y,9.5,"#ffd45c",ink,2);text(r[1],92,y-2,9.5,"#ffffff",900);text(r[2],92,y+14,7.4,"#d4c2ae",700);line(92,y+26,386,y+26,"#ffffff18",1);y+=48}
  inkText("BESTIARIUSZ ARENY",225,442,8.5,"#ffd875",ink,2,"center",DISPLAY_FONT);
@@ -1819,19 +1920,19 @@ function drawHelpOverlay(){
   ["STRAŻNIK","Szał poniżej 50% HP","#ff799c"]
  ];
  for(let i=0;i<beasts.length;i++){
-  const bx=54+i*70;rounded(bx,456,64,54,7,"#241918",beasts[i][2],1.6);
+  const bx=54+i*70;rounded(bx,456,64,54,7,"#18101e",beasts[i][2],1.6);
   text(beasts[i][0],bx+32,473,6.4,beasts[i][2],900,"center");
   ctx.fillStyle="#e8d8c8";ctx.font="700 5.6px "+UI_FONT;ctx.textAlign="center";ctx.fillText(beasts[i][1],bx+32,495,58);
  }
- rounded(59,520,332,42,7,"#1d1413",ink,1.8);
- text("A/D LUB ←/→: PAZUR  •  SPACJA/F: ZŁAP  •  Q/E: KROK",225,534,7.4,"#ffe088",800,"center");
- text("J ATAK  •  K KONTRATAK  •  L UMIEJĘTNOŚĆ",225,549,7.8,"#9ceeff",800,"center");
+ rounded(59,520,332,42,7,"#120a16",ink,1.8);
+ text("A/D LUB ←/→: PAZUR  •  SPACJA/F: ZŁAP  •  Q/E: KROK",225,534,7.4,"#ffd88a",800,"center");
+ text("J / SPACJA: WYMIERZ CIOS  •  UPUSZCZANE STATUSY I KRYTYKI",225,549,7.8,"#ff6b84",800,"center");
  button(112,575,226,30,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawUpgradeOverlay(){
- const ink="#18100f";
+ const ink="#07050a";
  drawModalBackdrop();
- drawModalFrame(32,202,386,410,"#ff884d");
+ drawModalFrame(32,202,386,410,"#8f142e");
  inkText("KUŹNIA / ROZWÓJ",225,240,18,"#ffffff",ink,3,"center",DISPLAY_FONT);
  text("STAŁE MODYFIKATORA BOHATERA",225,262,8,"#ffbd8a",800,"center");
  line(58,282,392,282,"#ffffff26",1.2);
@@ -1842,14 +1943,14 @@ function drawUpgradeOverlay(){
  ];
  let y=297;
  for(const item of items){
-  rounded(57,y,336,74,9,"#241918",ink,2);
+  rounded(57,y,336,74,9,"#18101e",ink,2);
   ctx.fillStyle=item.color;ctx.fillRect(59,y+4,4,66);
-  rounded(67,y+12,34,34,7,"#181110",item.color,1.8);
+  rounded(67,y+12,34,34,7,"#100a16",item.color,1.8);
   inkText(item.code,84,y+29,8.5,item.color,ink,1.8,"center",DISPLAY_FONT);
   text(item.title,111,y+18,10,"#ffffff",900);
   text(item.desc,111,y+37,8,"#d4c2ae",700);
   text("POZIOM "+item.rank,111,y+56,7,"#ffd670",800);
-  for(let p=0;p<6;p++){rounded(168+p*14,y+53,10,5,2,p<item.rank?item.color:"#3b2a26",ink,1)}
+  for(let p=0;p<6;p++){rounded(168+p*14,y+53,10,5,2,p<item.rank?item.color:"#251829",ink,1)}
   button(285,y+16,96,42,String(item.cost),"KREDYTÓW",profile.coins>=item.cost,profile.coins>=item.cost?"gold":"dim");
   y+=81;
  }
@@ -1857,20 +1958,20 @@ function drawUpgradeOverlay(){
  button(113,562,224,38,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawLevelChoiceOverlay(){
- const ink="#18100f";
+ const ink="#07050a";
  drawModalBackdrop();
- drawModalFrame(25,170,400,455,"#ffd04d");
- glow(225,205,110,"#ffd254",.18);
- inkText("AWANS BOHATERA",225,206,19.5,"#ffd95e",ink,3.4,"center",DISPLAY_FONT);
+ drawModalFrame(25,170,400,455,"#8f142e");
+ glow(225,205,110,"#8f142e",.24);
+ inkText("AWANS ŁOWCY",225,206,19.5,"#ffd95e",ink,3.4,"center",DISPLAY_FONT);
  const toLvl=Math.max(1,state.runLevel||1),fromLvl=Math.max(1,toLvl-Math.min(toLvl-1,state.pendingLevelUps||1));
  const subHdr=toLvl>fromLvl?("POZIOM "+fromLvl+" → POZIOM "+toLvl+"  •  WYBIERZ 1 Z 3 KART"):"KARTA UMIEJĘTNOŚCI  •  WYBIERZ 1 Z 3";
- text(subHdr,225,232,7.5,"#a8f4ff",800,"center");
+ text(subHdr,225,232,7.5,"#ffd58a",800,"center");
  line(52,250,398,250,"#ffffff26",1.2);
  const cards=state.levelChoices||[];
  for(let i=0;i<cards.length;i++){
   const a=cards[i],y=270+i*108,curLvl=state.runSkills[a.id]||0,nextLvl=curLvl+1;
   const synInfo=synergyForCandidate(a),isHotSyn=synInfo&&synInfo.state==="completes";
-  rounded(49,y,352,94,10,"#261918",isHotSyn?"#9effa8":ink,isHotSyn?2.6:2.2);
+  rounded(49,y,352,94,10,"#18101e",isHotSyn?"#4ade80":ink,isHotSyn?2.6:2.2);
   ctx.fillStyle=a.color;ctx.fillRect(51,y+4,5,86);
   rounded(62,y+12,42,42,8,a.color+"2e",a.color,1.8);
   inkText(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠","✹","◈","↯"][abilityPool.findIndex(v=>v.id===a.id)],83,y+33,20,a.color,ink,2,"center",UI_FONT);
@@ -1881,7 +1982,7 @@ function drawLevelChoiceOverlay(){
   // Level pips
   for(let p=0;p<a.max;p++){
    const px=116+p*14,py=y+74;
-   ctx.fillStyle=p<nextLvl?(p===curLvl?"#ffe46b":a.color):"#3b2a26";
+   ctx.fillStyle=p<nextLvl?(p===curLvl?"#ffe46b":a.color):"#251829";
    ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(px+4,py,4,0,Math.PI*2);ctx.fill();ctx.stroke();
   }
   if(synInfo){
@@ -1895,12 +1996,12 @@ function drawLevelChoiceOverlay(){
  text("XP ZE SKRZYNI I WALK ŁADUJE KOLEJNE KARTY SYNERGII (KLAWISZE 1–3)",225,603,7.3,"#d6c0aa",800,"center");
 }
 function drawOverlay(){
- const ink="#18100f";
+ const ink="#07050a";
  if(state.paused&&state.screen==="game"){
   drawModalBackdrop();
-  drawModalFrame(49,271,352,274,"#6ef2ff");
+  drawModalFrame(49,271,352,274,"#8f142e");
   inkText("PAUZA",225,317,22,"#ffffff",ink,3.4,"center",DISPLAY_FONT);
-  text("WYPRAWA WSTRZYMANA",225,344,9,"#ffe3a8",800,"center");
+  text("WYPRAWA WSTRZYMANA",225,344,9,"#ffd68a",800,"center");
   line(79,360,371,360,"#ffffff26",1.2);
   button(107,370,236,45,"WRÓĆ DO GRY","",true,"teal");
   button(107,428,236,43,"USTAWIENIA","DŹWIĘK I EFEKTY",true,"blue");
@@ -1909,8 +2010,8 @@ function drawOverlay(){
  if(state.levelChoices)drawLevelChoiceOverlay();
  if(state.stageCleared){
   drawModalBackdrop();
-  drawModalFrame(38,270,374,250,"#ffd04d");
-  glow(225,330,108,"#ffd254",.24);
+  drawModalFrame(38,270,374,250,"#cf2742");
+  glow(225,330,108,"#cf2742",.28);
   inkText("ETAP UKOŃCZONY",225,314,20,"#ffe169",ink,3.4,"center",DISPLAY_FONT);
   text(stageDefinition().title.toUpperCase(),225,341,10,"#e8d4b5",800,"center");
   line(74,362,376,362,"#ffffff26",1.2);
@@ -1921,9 +2022,9 @@ function drawOverlay(){
  }
  if(state.over){
   drawModalBackdrop();
-  drawModalFrame(38,272,374,251,"#ff617c");
-  glow(225,330,115,"#ff5978",.24);
-  inkText("KONIEC WYPRAWY",225,320,20,"#ff8ea3",ink,3.4,"center",DISPLAY_FONT);
+  drawModalFrame(38,272,374,251,"#ff2e4c");
+  glow(225,330,115,"#ff2e4c",.3);
+  inkText("POLEGŁEŚ W DZICZY",225,320,20,"#ff8ea3",ink,3.4,"center",DISPLAY_FONT);
   inkText("WYNIK  /  "+state.score,225,368,17,"#ffe375",ink,2.6,"center",DISPLAY_FONT);
   line(83,390,367,390,"#ffffff26",1.2);
   text("POKONANI WROGOWIE  "+state.kills,225,414,9,"#e8d4b5",800,"center");
@@ -1936,7 +2037,7 @@ function draw(){
  if(hintEl&&hintEl.style)hintEl.style.opacity=state.screen==="title"?"0":"1";
  ctx.setTransform(1,0,0,1,0,0);
  ctx.clearRect(0,0,canvas.width,canvas.height);
- const bars=ctx.createLinearGradient(0,0,0,canvas.height);bars.addColorStop(0,"#10152b");bars.addColorStop(.5,"#182042");bars.addColorStop(1,"#0a0d1c");
+ const bars=ctx.createLinearGradient(0,0,0,canvas.height);bars.addColorStop(0,"#050408");bars.addColorStop(.5,"#120916");bars.addColorStop(1,"#050408");
  ctx.fillStyle=bars;ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.setTransform(viewTransform.dpr*viewTransform.scale,0,0,viewTransform.scale*viewTransform.dpr,viewTransform.dpr*viewTransform.offsetX,viewTransform.dpr*viewTransform.offsetY);
  if(state.screen==="title"){
@@ -1958,13 +2059,13 @@ function draw(){
  }
 }
 function spawnEnemy(typeOverride=null){
- const stage=state.stage,types=["slime","bat","goblin","porcupine"],boss=typeOverride==="boss"||(typeOverride===null&&stage%5===0&&!state.bossSpawned);
+ const stage=state.stage,types=["slime","bat","goblin","porcupine","fire_elemental","dragon","golem","hydra"],boss=typeOverride==="boss"||(typeOverride===null&&stage%5===0&&!state.bossSpawned);
  const type=boss?"boss":(typeOverride||pick(stage<=2?["slime","slime","bat"]:types)),scale=Math.max(0,stage-1);
- const stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5};
+ const stats={slime:{hp:10,damage:4},bat:{hp:8,damage:4},goblin:{hp:13,damage:5},porcupine:{hp:16,damage:6},fire_elemental:{hp:20,damage:7},dragon:{hp:38,damage:12},golem:{hp:30,damage:8},hydra:{hp:26,damage:9},boss:{hp:46,damage:15}}[type]||{hp:12,damage:5};
  const max=stats.hp+Math.floor(scale*2.2),x=boss?345:rand(245,405),y=boss?365:rand(360,395);
- const step={slime:28,bat:52,goblin:38,porcupine:20,boss:26}[type]||30;
- const range={slime:122,bat:148,goblin:136,porcupine:116,boss:178}[type]||122;
- const every={slime:2,bat:1,goblin:1,porcupine:2,boss:2}[type]||1;
+ const step={slime:28,bat:52,goblin:38,porcupine:20,fire_elemental:32,dragon:40,golem:22,hydra:30,boss:26}[type]||30;
+ const range={slime:122,bat:148,goblin:136,porcupine:116,fire_elemental:140,dragon:180,golem:130,hydra:150,boss:178}[type]||122;
+ const every={slime:2,bat:1,goblin:1,porcupine:2,fire_elemental:2,dragon:2,golem:3,hydra:2,boss:2}[type]||1;
  state.enemies.push({x,renderX:x,y,baseY:y,type,hp:max,maxHp:max,speed:step,approachStep:step,range,attackEvery:every,nextAttackTurn:state.turnNumber+1,damage:stats.damage+Math.floor(scale/3),guard:0,bleedTurns:0,bleedDamage:0,poisonTurns:0,poisonDamage:0,lastThornsTurn:-1,enraged:false,spinesActive:false,attackCooldown:0,attackWindup:.38,attackInterval:every,windupTimer:0,phase:rand(0,6),hit:0,hitFlash:0,knockX:0,action:"idle",actionTimer:0,actionDuration:.38,dying:false,deathTimer:0,intent:"advance"});
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
@@ -1974,18 +2075,20 @@ function particle(x,y,color,size=3){
 function popText(label,x,y,color="#fff",scale=1){state.floaters.push({label,x,y,vx:rand(-15,15),vy:-34,life:.95,max:.95,color,scale})}
 function spawnImpact(target,kind,damage=0,customColor=null){
  if(!state.effects)return;
- const palette={slime:"#8ce9bd",bat:"#b5a0ff",porcupine:"#f3c27e",goblin:"#ee9470",boss:"#ff7da5",hero:"#ff7b83"};
- const color=customColor||(kind==="arcane"||kind==="heavy"?"#9beeff":kind==="incoming"?"#ff7684":kind==="critical"?"#ffe08a":(palette[target.type]||"#f4d39a"));
+ const palette={slime:"#8f172a",bat:"#99142e",porcupine:"#8a1a14",goblin:"#8a1a1f",fire_elemental:"#ff421c",dragon:"#a61436",golem:"#cf2547",hydra:"#1a7a48",boss:"#a81033",hero:"#ff2e4c"};
+ const color=customColor||(kind==="arcane"||kind==="heavy"?"#9beeff":kind==="incoming"?"#ff3653":kind==="critical"?"#ff1f3a":(palette[target.type]||"#cf2742"));
  const max=kind==="arcane"?.56:kind==="incoming"?.3:.36;
  state.impacts.push({x:target.x,y:target.y,kind,color,life:max,max,radius:target.type==="boss"?47:30});
  state.shake=Math.max(state.shake,kind==="arcane"?6.2:kind==="incoming"?3.2:kind==="critical"?4.4:2.7);
  if(kind==="arcane"||kind==="heavy")impulseChamber(58,225);
  else if(kind==="critical")impulseChamber(30,225);
- const count=kind==="arcane"?24:kind==="incoming"?10:kind==="critical"?18:13;
+ const count=kind==="arcane"?24:kind==="incoming"?12:kind==="critical"?22:15;
  for(let i=0;i<count;i++){
   const angle=(Math.PI*2*i/count)+rand(-.15,.15),speed=rand(kind==="arcane"?65:40,kind==="arcane"?175:115);
   const life=rand(.28,.54);
-  state.particles.push({x:target.x,y:target.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life,max:life,color:i%4===0?"#fff3d6":color,size:rand(1.8,kind==="arcane"?5.2:4.2)});
+  const isGore=i%2===0||kind==="critical";
+  const pColor=isGore?pick(["#8f142e","#cf2742","#540a17","#ff3b56"]):color;
+  state.particles.push({x:target.x,y:target.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed+(isGore?35:0),life,max:life,color:pColor,size:rand(1.8,kind==="arcane"?5.2:4.2)});
  }
 }
 function defeat(e){
@@ -1993,10 +2096,10 @@ function defeat(e){
  const runGain=e.type==="boss"?14:e.type==="porcupine"?6:4;
  gainXp(e.type==="boss"?22:e.type==="porcupine"?7:4);
  gainRunXp(runGain);
- for(let i=0;i<14;i++)particle(e.x,e.y,pick(["#7df6d1","#ffd166","#ff79a8","#a58dff"]),rand(2,5));
- popText(e.type==="boss"?"+250  BOSS!":"+20",e.x,e.y-28,"#ffe18a",e.type==="boss"?1.4:1.15);
+ for(let i=0;i<18;i++)particle(e.x,e.y,pick(["#8f142e","#cf2742","#420612","#ff4762","#1c070d"]),rand(2.2,5.5));
+ popText(e.type==="boss"?"+250  BOSS POKONANY!":"+20",e.x,e.y-28,"#ff3653",e.type==="boss"?1.4:1.15);
  if(state.runHealOnKill)state.hp=Math.min(state.maxHp,state.hp+state.runHealOnKill);
- if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("BOSS POKONANY • +18 HP");playSfx("victory")}
+ if(e.type==="boss"){state.bossSpawned=false;state.hp=Math.min(state.maxHp,state.hp+18);notify("STRAŻNIK POKONANY • +18 HP");playSfx("victory")}
  else playSfx("kill");
 }
 function markDefeatedEnemies(){
@@ -2042,7 +2145,7 @@ function reward(type,prize=null){
  if(state.effects){for(let i=0;i<10;i++)particle(225+rand(-14,14),575+rand(-8,8),pick(["#ffe18a","#84f7e7","#fff4d4"]),rand(1.8,3.6))}
  playSfx("clawGrab");
 }
-function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="porcupine"?"Jeżoryj":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":"Goblin"}
+function enemyName(e){return e?.type==="boss"?"Strażnik":e?.type==="porcupine"?"Jeżoryj":e?.type==="bat"?"Nietoperz":e?.type==="slime"?"Szlam":e?.type==="fire_elemental"?"Ognisty Żywiołak":e?.type==="dragon"?"Młody Smok":e?.type==="golem"?"Kryształowy Golem":e?.type==="hydra"?"Bagienna Hydra":"Goblin"}
 function tacticalMove(dir){
  if(!canHeroAct()||state.heroMovedThisTurn||!dir)return false;
  const cur=nearestTileIndex(state.playerX),maxForward=Math.max(cur,maxHeroTileIndex());
@@ -2291,7 +2394,7 @@ function interact(x,y){
  if(state.paused){if(y>=365&&y<=420){state.paused=false;playSfx("uiClick");return}if(y>=425&&y<=480){state.settingsOpen=true;playSfx("uiClick");return}if(y>=480&&y<=540){state.paused=false;state.started=false;state.over=false;state.screen="title";state.hubTab="battle";state.enemies=[];state.particles=[];state.impacts=[];state.floaters=[];playSfx("uiClick");return}return}
  if(y<60&&x>400){state.paused=true;playSfx("uiClick");return}if(y<60&&x>365){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}playSfx("uiClick");return}
  if(y>=422&&y<=450){if(x>=19&&x<=106){tacticalMove(-1);return}if(x>=107&&x<=196){tacticalMove(1);return}}
- if(y>=451&&y<=495){if(x<146)combatAttack();else if(x<276)combatDefend();else combatSkill();return}
+ if(y>=451&&y<=495){combatAttack();return}
  if(y>=686&&y<=742){if(x<85)moveClaw(-1);else if(x<150)moveClaw(1);else if(x>285)deployClaw();return}
  if(y>=500&&y<684){if(state.turnPhase==="claw"&&state.clawMode==="idle"){state.clawX=clamp(x,54,396);impulseChamber(28,x)}return}
  if(y>=376&&y<=420&&x<=214&&state.turnPhase==="hero"&&!state.heroMovedThisTurn){
@@ -2360,7 +2463,7 @@ window.addEventListener("keydown",e=>{
  if(e.key.toLowerCase()==="q")tacticalMove(-1);
  if(e.key.toLowerCase()==="e")tacticalMove(1);
  if(e.key===" "||e.key.toLowerCase()==="f")deployClaw();
- if(e.key.toLowerCase()==="j")combatAttack();if(e.key.toLowerCase()==="k")combatDefend();if(e.key.toLowerCase()==="l")combatSkill();
+ if(["j","k","l"].includes(e.key.toLowerCase())||(e.key===" "&&state.turnPhase==="hero"))combatAttack();
 });
 function update(dt){
  state.time+=Math.max(0,dt);
@@ -2418,13 +2521,38 @@ function update(dt){
  state.enemies=state.enemies.filter(e=>!e.dying||e.deathTimer>0);
  if(state.turnPhase==="transition"&&state.enemies.length===0)checkEncounterClear();
 }
-function frame(ts){
+ function drawTalentTree(){
+  const ink="#07050a";
+  drawModalBackdrop();
+  drawModalFrame(32,198,386,414,"#8f142e");
+  inkText("DRZEWKO TALENTÓW",225,234,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
+  text("GAŁĘZIE ROZWOJU ŁOWCY BESTII • WYBIERZ TALENT",225,255,7.4,"#ffd58a",800,"center");
+  line(59,272,391,272,"#ffffff26",1.2);
+  const talents=[
+   {id:"warrior",name:"Męstwo Wojownika",desc:"+2 obrażenia ataku na poziom",cost:30,level:profile.talentWarrior||0,color:"#ff4d6d"},
+   {id:"relic",name:"Magia Reliktów",desc:"+4 px tolerancji i złoty chwyt",cost:25,level:profile.talentRelic||0,color:"#ffaa42"},
+   {id:"alchemist",name:"Alchemia Trucizn",desc:"+1 obrażenia statusu trucizny",cost:35,level:profile.talentAlchemist||0,color:"#4ade80"}
+  ];
+  let y=288;
+  for(const t of talents){
+   rounded(45,y,360,82,9,"#18101e",ink,2);
+   ctx.fillStyle=t.color;ctx.fillRect(47,y+4,4,74);
+   inkText(t.name,108,y+18,10.5,"#ffffff",ink,2,"left",DISPLAY_FONT);
+   text(t.desc,108,y+38,7.8,"#d4c2ae",700);
+   text("POZ. "+t.level+"/3 • KOSZT: "+t.cost+"◆",108,y+58,7.4,"#ffd670",800);
+   button(300,y+18,90,38,t.level>=3?"MAKS":"ROZWIŃ",t.level<3?t.cost+"◆":"GOTOWE",t.level<3&&profile.coins>=t.cost,t.level<3&&profile.coins>=t.cost?"gold":"dim");
+   y+=90;
+  }
+  inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,564,9.2,"#ffe075",ink,2,"center",DISPLAY_FONT);
+  button(112,578,226,30,"WRÓĆ DO BAZY","",true,"blue");
+ }
+ function frame(ts){
  const dt=Math.min(.033,(ts-state.last)/1000||0);state.last=ts;
  update(dt);draw();requestAnimationFrame(frame);
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,gainRunXp,getActiveSynergies,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,tacticalMove,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,generateMachinePrizes,machinePrizePosition,render:draw};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,gainRunXp,getActiveSynergies,rollAbilityChoices,chooseAbility,combatAttack,resolveEnemyTurn,reward,tacticalMove,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,generateMachinePrizes,machinePrizePosition,drawTalentTree,render:draw};
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
   const hadController=!!navigator.serviceWorker.controller;

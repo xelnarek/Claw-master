@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v16-weapon-models-targeting";
+const CACHE_NAME = "claw-quest-v17-claw-pit-hidpi-menu";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

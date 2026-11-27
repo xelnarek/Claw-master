@@ -12,8 +12,8 @@ if (scriptStart < 0 || scriptEnd < 0) throw new Error("Inline game script was no
 const gameScript = html.slice(scriptStart + 8, scriptEnd);
 new Function(gameScript);
 
-if (!html.includes("#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh") || !html.includes("canvas{display:block;width:100%;height:100%")) {
-  throw new Error("Mobile layout must fill tall phone viewports without letterboxing.");
+if (!html.includes("#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh") || !html.includes("canvas{display:block;width:100%;height:100%") || !gameScript.includes("viewTransform") || !gameScript.includes("Math.min(cssWidth/W,cssHeight/H)")) {
+  throw new Error("Mobile layout must fill the viewport and preserve the game aspect ratio.");
 }
 
 const requiredFeatures = [
@@ -30,8 +30,8 @@ const requiredFeatures = [
   "e.enraged", "e.spinesActive", "e.guard", 'action==="dive"', 'action==="slam"',
   "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
   "state.skillCooldownTurns", "state.turnPhase", "state.heroActionUsedThisTurn",
-  "state.clawUsedThisTurn", "function beep(", "function spawnImpact(",
-  "function drawCombatImpacts()", "const tx=rx+5", "rounded(-17,-5+step,14,7", "Enemy intent is visible on the floor", "Contact shadow, grounding every creature", "CITADEL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
+  "state.clawUsedThisTurn", "function createFillerBall(", "function machinePrizePosition(", "function drawFillerBall(", "targetBallCount", "state.clawMode=\"grab\"", "viewTransform", "Math.min(cssWidth/W,cssHeight/H)", "clawGripDelay", "function beep(", "function spawnImpact(",
+  "function drawCombatImpacts()", "const tx=rx+5", "rounded(-17,-5+step,14,7", "Enemy intent is visible on the floor", "Contact shadow, grounding every creature", "TACTICAL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
   "function combatAttack()", "function combatDefend()", "function combatSkill()", "function update(dt)"
 ];
 for (const feature of requiredFeatures) if (!gameScript.includes(feature)) throw new Error("Required feature missing: " + feature);

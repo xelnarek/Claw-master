@@ -79,6 +79,17 @@ function completeClaw(type = "coin") {
 }
 
 game.startRun(1);
+assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 12,
+  "the first turn should start with twelve ordinary filler balls");
+const coinsBeforeFillerGrab = game.profile.coins;
+completeClaw("ball");
+assert.equal(game.profile.coins, coinsBeforeFillerGrab,
+  "catching an ordinary ball must not grant coins or bonus rewards");
+assert.equal(game.combatAttack(), true, "a filler-ball catch must still allow one hero action");
+assert.equal(game.state.turnNumber, 2, "the player must complete the normal turn after catching a filler ball");
+assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 15,
+  "the filler-ball target count should rise by three on turn two");
+game.startRun(1);
 const firstEnemy = game.state.enemies[0];
 firstEnemy.x = 360;
 game.planEnemyIntents();

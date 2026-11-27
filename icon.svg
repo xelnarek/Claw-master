@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#294c7c"/><stop offset="1" stop-color="#101a36"/></linearGradient>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5c3621"/><stop offset="1" stop-color="#1c110f"/></linearGradient>
   <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff0a8"/><stop offset="1" stop-color="#f39c3e"/></linearGradient>
   <linearGradient id="gem" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8ffff"/><stop offset=".45" stop-color="#53e1e6"/><stop offset="1" stop-color="#268cae"/></linearGradient>
 </defs>
 <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-<circle cx="120" cy="130" r="64" fill="#57e5e8" opacity=".13"/>
-<circle cx="390" cy="370" r="90" fill="#9d82ff" opacity=".15"/>
-<path d="M112 93h288a34 34 0 0 1 34 34v28H78v-28a34 34 0 0 1 34-34Z" fill="#45658f" stroke="#a8c8ec" stroke-width="12"/>
+<circle cx="120" cy="130" r="64" fill="#ffd166" opacity=".16"/>
+<circle cx="390" cy="370" r="90" fill="#57e5e8" opacity=".14"/>
+<path d="M112 93h288a34 34 0 0 1 34 34v28H78v-28a34 34 0 0 1 34-34Z" fill="#78462a" stroke="#ffd875" stroke-width="12"/>
 <rect x="218" y="142" width="76" height="40" rx="15" fill="url(#gold)" stroke="#fff0ba" stroke-width="8"/>
 <path d="M256 182v102" fill="none" stroke="#dceeff" stroke-width="17" stroke-linecap="round"/>
 <path d="M235 278 178 365q-12 20 6 33 18 12 31-8l42-58 42 58q13 20 31 8 18-13 6-33l-57-87" fill="none" stroke="url(#gold)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>

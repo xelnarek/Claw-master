@@ -1,10 +1,10 @@
-const CACHE_NAME = "claw-quest-v17-claw-pit-hidpi-menu";
+const CACHE_NAME = "claw-quest-v19-heroic-fantasy";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_FILES))
+      .then(cache => cache.addAll(APP_FILES.map(u => new Request(u, { cache: "reload" }))))
       .then(() => self.skipWaiting())
   );
 });
@@ -20,12 +20,18 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).catch(() => {
+    fetch(event.request, { cache: "no-store" })
+      .then(response => {
+        if (response && response.ok && event.request.url.startsWith(self.location.origin)) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request).then(cached => {
+        if (cached) return cached;
         if (event.request.mode === "navigate") return caches.match("./index.html");
         return Response.error();
-      });
-    })
+      }))
   );
 });

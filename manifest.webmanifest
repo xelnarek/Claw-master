@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "Claw Quest — Arcade Roguelite",
+  "name": "Claw Quest — Relic Vault Roguelite",
   "short_name": "Claw Quest",
-  "description": "Turowy roguelite: jeden chwyt, jedna akcja bohatera i ruch przeciwników.",
+  "description": "Heroic fantasy turowy roguelite: chwyt reliktów, taktyczny ruch na polach areny, skille i synergie.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#101b35",
-  "theme_color": "#101b35",
+  "background_color": "#160e12",
+  "theme_color": "#1c120f",
   "categories": ["games", "arcade"],
   "icons": [
     {

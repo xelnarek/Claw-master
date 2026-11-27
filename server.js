@@ -11,12 +11,18 @@ app.use((req, res, next) => {
   if (req.path.endsWith(".webmanifest")) {
     res.type("application/manifest+json");
   }
+  if (req.path === "/" || req.path.endsWith(".html") || req.path === "/sw.js" || req.path.endsWith(".webmanifest")) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
   next();
 });
 
-app.use(express.static(__dirname, { index: "index.html" }));
+app.use(express.static(__dirname, { index: "index.html", etag: false, lastModified: false }));
 
 app.get("*", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.sendFile(path.join(__dirname, "index.html"));
 });
 

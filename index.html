@@ -38,12 +38,16 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 const canvas=document.getElementById("game"),ctx=canvas.getContext("2d");
 const W=450,H=800,toastEl=document.getElementById("toast");
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let viewTransform={dpr:1,scale:1,offsetX:0,offsetY:0};
 function resizeCanvas(){
- const rect=canvas.getBoundingClientRect(),dpr=clamp(Number(window.devicePixelRatio)||1,1,2);
- const width=Math.max(1,Math.round((rect.width||W)*dpr)),height=Math.max(1,Math.round((rect.height||H)*dpr));
+ const rect=canvas.getBoundingClientRect(),dpr=clamp(Number(window.devicePixelRatio)||1,1,2.75);
+ const cssWidth=Math.max(1,rect.width||W),cssHeight=Math.max(1,rect.height||H);
+ const width=Math.max(1,Math.round(cssWidth*dpr)),height=Math.max(1,Math.round(cssHeight*dpr));
  if(canvas.width!==width)canvas.width=width;
  if(canvas.height!==height)canvas.height=height;
- ctx.setTransform(width/W,0,0,height/H,0,0);
+ const scale=Math.min(cssWidth/W,cssHeight/H);
+ viewTransform={dpr,scale,offsetX:(cssWidth-W*scale)/2,offsetY:(cssHeight-H*scale)/2};
+ ctx.setTransform(dpr*scale,0,0,dpr*scale,dpr*viewTransform.offsetX,dpr*viewTransform.offsetY);
 }
 window.addEventListener("resize",resizeCanvas,{passive:true});
 resizeCanvas();
@@ -51,7 +55,7 @@ const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const state={
  started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,
- time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,grabbed:null,heroActionUsedThisTurn:false,
+ time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,clawTimer:0,grabbed:null,heroActionUsedThisTurn:false,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
  playerX:86,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,shotFxTimer:0,shotFxDuration:.32,shotFxWeaponId:"sidearm",
  enemies:[],bullets:[],particles:[],loot:[],impacts:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,runBleed:0,runWard:0,runCounterBonus:0,
@@ -138,7 +142,7 @@ function beginPlayerTurn(){
  if(state.runWard>0){const gain=state.runWard*2;state.shield=Math.min(40,state.shield+gain);popText("TARCZA +"+gain,state.playerX,state.playerY-82,"#9fc9ff")}
  state.turn="player";state.turnPhase="claw";state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;
  state.defending=false;state.clawMode="idle";state.clawY=565;state.grabbed=null;
- state.clawX=clamp(225+rand(-55,55),58,392);state.machinePrizes=generateMachinePrizes();
+ state.clawX=clamp(225+rand(-55,55),58,392);state.machinePrizes=generateMachinePrizes(state.machinePrizes);
  planEnemyIntents();state.skillReady=state.skillCooldownTurns<=0;
  notify("TURA "+state.turnNumber+" • USTAW I UŻYJ CHWYTAKA");
  return true;
@@ -159,14 +163,14 @@ function completeStage(){
 }
 function advanceStage(){
  if(!state.stageCleared)return false;
- state.stage++;state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.enemies=[];
+ state.stage++;state.stageWave=0;state.stageCleared=false;state.stageReward=0;state.stageXp=0;state.enemies=[];state.machinePrizes=[];
  state.selectedEnemy=0;state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.defending=false;
  state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();state.hp=Math.min(state.maxHp,state.hp);spawnStageWave();return true;
 }
 function startRun(stage=profile.unlockedStage){
  state.clawUsedThisTurn=false;state.heroActionUsedThisTurn=false;state.guardTurns=0;
  state.skillCooldownTurns=0;
- state.weaponId="sidearm";state.weaponLevel=1;state.prizeRefreshTimer=0;state.machinePrizes=generateMachinePrizes();
+ state.weaponId="sidearm";state.weaponLevel=1;state.prizeRefreshTimer=0;state.machinePrizes=[];
  state.started=true;state.paused=false;state.over=false;state.screen="game";state.time=0;state.shot=0;state.poisonTurns=0;state.poisonDamage=2;
  state.turn="player";state.turnPhase="claw";state.turnNumber=1;state.defending=false;state.selectedEnemy=0;
  state.playerAction="idle";state.playerActionTimer=0;state.shotFxTimer=0;state.shotFxDuration=.32;state.shotFxWeaponId="sidearm";state.skillReady=true;
@@ -214,18 +218,18 @@ function pill(x,y,w,label,fill="#263a60",color="#fff"){
 }
 function button(x,y,w,h,label,sub,active=false){
  ctx.save();
- const top=active?"#e0bd78":"#46525a",mid=active?"#a77a42":"#29343a",bottom=active?"#60452b":"#11191e";
+ const top=active?"#9cefe2":"#46525a",mid=active?"#347f7c":"#29343a",bottom=active?"#12323a":"#11191e";
  ctx.shadowColor="#000000a8";ctx.shadowBlur=active?12:6;ctx.shadowOffsetY=3;
  const g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,top);g.addColorStop(.13,mid);g.addColorStop(1,bottom);
- rounded(x,y,w,h,6,g,active?"#f0d49a":"#78858a",1);
+ rounded(x,y,w,h,6,g,active?"#b8fff0":"#78858a",1);
  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
  ctx.strokeStyle=active?"#fff0c044":"#ffffff18";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+9,y+3);ctx.lineTo(x+w-9,y+3);ctx.stroke();
- ctx.fillStyle=active?"#f4d69a":"#819095";ctx.globalAlpha=.82;ctx.fillRect(x+6,y+7,2,h-14);ctx.globalAlpha=1;
+ ctx.fillStyle=active?"#a8f4e6":"#819095";ctx.globalAlpha=.82;ctx.fillRect(x+6,y+7,2,h-14);ctx.globalAlpha=1;
  ctx.fillStyle=active?"#24190e":"#aeb9b9";ctx.beginPath();ctx.arc(x+w-9,y+9,1.7,0,Math.PI*2);ctx.fill();
  ctx.strokeStyle=active?"#eac88b77":"#ffffff12";ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x+8,y+h-5);ctx.lineTo(x+w-8,y+h-5);ctx.stroke();
  ctx.save();ctx.shadowColor=active?"#f0c77b66":"#00000099";ctx.shadowBlur=active?7:2;
- text(label,x+w/2,y+h*(sub?.39:.52),Math.min(13,w/Math.max(7,label.length*.62)),active?"#fff1cf":"#d8dfdc",1000,"center");ctx.restore();
- if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#e0c99e":"#8f9b9e",800,"center");
+ text(label,x+w/2,y+h*(sub?.39:.52),Math.min(13,w/Math.max(7,label.length*.62)),active?"#f0fffb":"#d8dfdc",1000,"center");ctx.restore();
+ if(sub)text(sub,x+w/2,y+h*.76,Math.min(8,w/Math.max(7,sub.length*.55)),active?"#b7eee5":"#8f9b9e",800,"center");
  ctx.restore();
 }
 function drawModalFrame(x,y,w,h,accent="#b89560"){
@@ -770,22 +774,50 @@ function drawPrize(type,x,y,scale=1){
  if(type==="weapon"){glow(0,0,28,"#8feaff",.34);rounded(-17,-9,30,17,4,"#5c8492","#dbfbff",1.5);line(-10,-13,15,-13,"#e5faff",2);text("W",0,0,10,"#102f3a",1000,"center")}
  ctx.restore();
 }
-function generateMachinePrizes(){
- const weighted=["coin","coin","coin","xp","xp","gem","ammo","star","heart","bomb","weapon","weapon","skill"];
- const prizes=[],count=6+Math.floor(Math.random()*2),used=[];
+function createFillerBall(existing=state.machinePrizes){
+ const palette=["#e9f0ed","#d7e8ef","#e7e0f2","#d6e9dc","#f0e2cd","#bcdfe3"];
+ const radius=7.5+Math.random()*2.3;
+ let x=225,y=655;
+ for(let attempt=0;attempt<32;attempt++){
+  const candidateX=43+Math.random()*364,candidateY=588+Math.random()*126;
+  if((existing||[]).filter(p=>p.type==="ball").every(p=>Math.hypot(p.x-candidateX,p.y-candidateY)>(p.radius+radius)*.78)){x=candidateX;y=candidateY;break}
+ }
+ return {id:"ball-"+Math.random().toString(36).slice(2),type:"ball",x,y,phase:Math.random()*6.28,radius,color:pick(palette),size:1};
+}
+function generateMachinePrizes(previous=state.machinePrizes){
+ const targetBallCount=Math.min(39,12+Math.max(0,(state.turnNumber||1)-1)*3);
+ const balls=(previous||[]).filter(p=>p.type==="ball").slice(-targetBallCount).map(p=>({
+  ...p,x:clamp(p.x+rand(-2.5,2.5),43,407),y:clamp(p.y+rand(-2,2),588,714),phase:p.phase||Math.random()*6.28
+ }));
+ while(balls.length<targetBallCount)balls.push(createFillerBall(balls));
+ const weighted=["coin","coin","xp","xp","gem","ammo","star","heart","bomb","weapon","weapon","skill"];
+ const loot=[],count=5+Math.floor(Math.random()*2);
  for(let i=0;i<count;i++){
   const type=pick(weighted),radius=13+Math.random()*5;
-  let x=225;
-  for(let attempt=0;attempt<24;attempt++){
-   const candidate=48+Math.random()*354;
-   if(used.every(v=>Math.abs(v-candidate)>34)){x=candidate;break}
+  let x=225,y=650;
+  for(let attempt=0;attempt<28;attempt++){
+   const cx=47+Math.random()*356,cy=590+Math.random()*115;
+   if(loot.every(p=>Math.hypot(p.x-cx,p.y-cy)>43)){x=cx;y=cy;break}
   }
-  used.push(x);
-  prizes.push({id:"p"+Math.random().toString(36).slice(2),type,x,y:612+Math.random()*42,phase:Math.random()*6.28,radius,size:.82+Math.random()*.24});
+  loot.push({id:"loot-"+Math.random().toString(36).slice(2),type,x,y,phase:Math.random()*6.28,radius,size:.82+Math.random()*.24});
  }
- if(!prizes.some(p=>p.type==="coin"))prizes[0].type="coin";
- if(!prizes.some(p=>p.type==="heart")&&state.hp<state.maxHp*.55)prizes[prizes.length-1].type="heart";
- return prizes;
+ if(!loot.some(p=>p.type==="coin"))loot[0].type="coin";
+ if(!loot.some(p=>p.type==="heart")&&state.hp<state.maxHp*.55)loot[loot.length-1].type="heart";
+ return balls.concat(loot).sort((a,b)=>a.y-b.y);
+}
+function machinePrizePosition(p){
+ const wobble=p.type==="ball"?1.5:2.2;
+ return {x:p.x+Math.sin(state.time*.72+p.phase)*.8,y:p.y+Math.sin(state.time*2.5+p.phase)*wobble};
+}
+function drawFillerBall(p,x,y,r){
+ const color=p.color||"#e8efeb";
+ glow(x,y,r*2.4,color,.13);
+ const sphere=ctx.createRadialGradient(x-r*.38,y-r*.48,1,x,y,r*1.35);
+ sphere.addColorStop(0,"#ffffff");sphere.addColorStop(.19,color);sphere.addColorStop(.66,color);sphere.addColorStop(1,"#60727b");
+ ctx.fillStyle=sphere;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#ffffffb8";ctx.lineWidth=1;ctx.stroke();
+ ctx.save();ctx.globalAlpha=.72;ctx.fillStyle="#ffffff";ctx.beginPath();ctx.ellipse(x-r*.28,y-r*.34,r*.25,r*.14,-.55,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.34;ctx.strokeStyle="#ffffff";ctx.lineWidth=.7;ctx.beginPath();ctx.arc(x,y,r*.72,.18,1.18);ctx.stroke();ctx.restore();
 }
 function drawClawMachine(){
  // Forged cabinet shell, layered bevels and corner hardware.
@@ -829,29 +861,37 @@ function drawClawMachine(){
  rounded(state.clawX-9,state.clawY-23,18,7,2,"#111b20","#8ea09a",.8);
  glow(state.clawX,state.clawY-17,14,state.clawMode==="down"?"#e8b65e":"#8dc8bf",.15);
  ctx.strokeStyle="#c9b88e";ctx.lineWidth=4;ctx.lineCap="round";
- const spread=state.clawMode==="down"?22:state.clawMode==="return"?7:19;
+ const spread=state.clawMode==="down"?22:state.clawMode==="grab"?3:state.clawMode==="return"?7:19;
  ctx.beginPath();ctx.moveTo(state.clawX-7,state.clawY-11);ctx.quadraticCurveTo(state.clawX-spread*.65,state.clawY+1,state.clawX-spread,state.clawY+10);ctx.stroke();
  ctx.beginPath();ctx.moveTo(state.clawX+7,state.clawY-11);ctx.quadraticCurveTo(state.clawX+spread*.65,state.clawY+1,state.clawX+spread,state.clawY+10);ctx.stroke();
  line(state.clawX-spread,state.clawY+10,state.clawX-spread+2,state.clawY+5,"#f3dfb7",1.5);line(state.clawX+spread,state.clawY+10,state.clawX+spread-2,state.clawY+5,"#f3dfb7",1.5);
  // Capsules cast a soft contact shadow and carry a type-coloured rim.
  const edges={coin:"#eac46b",gem:"#6bdfe6",heart:"#ed7590",star:"#eccb72",bomb:"#f28f71",xp:"#74cfff",ammo:"#8be0b2",weapon:"#96dce9",skill:"#b8a2ff"};
- for(const p of state.machinePrizes||[]){
+ for(const p of (state.machinePrizes||[]).slice().sort((a,b)=>a.y-b.y)){
   const caught=state.grabbed&&state.grabbed.id===p.id;if(caught)continue;
-  const y=p.y+Math.sin(state.time*2.5+p.phase)*2.2,r=p.radius||15,edge=edges[p.type]||"#b9c4c4";
-  ctx.save();ctx.globalAlpha=.38;ctx.fillStyle="#030608";ctx.beginPath();ctx.ellipse(p.x,y+r*.78,r*.92,r*.23,0,0,Math.PI*2);ctx.fill();ctx.restore();
-  glow(p.x,y,r*2.2,edge,.2);
-  const shell=ctx.createRadialGradient(p.x-r*.38,y-r*.48,1,p.x,y,r*1.5);
-  shell.addColorStop(0,"#ffffffd0");shell.addColorStop(.2,"#e6e8dd");shell.addColorStop(.52,"#87938e");shell.addColorStop(.82,"#4c5a5b");shell.addColorStop(1,"#18252b");
-  ctx.fillStyle=shell;ctx.beginPath();ctx.arc(p.x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle=edge;ctx.lineWidth=1.7;ctx.stroke();
-  ctx.save();ctx.beginPath();ctx.arc(p.x,y,r-2,0,Math.PI*2);ctx.clip();drawPrize(p.type,p.x,y,.64*(p.size||1));ctx.restore();
-  ctx.save();ctx.globalAlpha=.38;ctx.strokeStyle="#fff";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(p.x,y,r-4,-2.45,-.66);ctx.stroke();ctx.restore();
+  const pos=machinePrizePosition(p),x=pos.x,y=pos.y,r=p.radius||15;
+  ctx.save();ctx.globalAlpha=.38;ctx.fillStyle="#030608";ctx.beginPath();ctx.ellipse(x,y+r*.78,r*.92,r*.23,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  if(p.type==="ball"){drawFillerBall(p,x,y,r);continue}
+  const edge=edges[p.type]||"#b9c4c4";
+  glow(x,y,r*2.2,edge,.2);
+  const capsule=ctx.createRadialGradient(x-r*.38,y-r*.48,1,x,y,r*1.5);
+  capsule.addColorStop(0,"#ffffffd0");capsule.addColorStop(.2,"#e6e8dd");capsule.addColorStop(.52,"#87938e");capsule.addColorStop(.82,"#4c5a5b");capsule.addColorStop(1,"#18252b");
+  ctx.fillStyle=capsule;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle=edge;ctx.lineWidth=1.7;ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.arc(x,y,r-2,0,Math.PI*2);ctx.clip();drawPrize(p.type,x,y,.64*(p.size||1));ctx.restore();
+  ctx.save();ctx.globalAlpha=.38;ctx.strokeStyle="#fff";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(x,y,r-4,-2.45,-.66);ctx.stroke();ctx.restore();
  }
- if(state.grabbed&&state.clawMode==="return"){glow(state.clawX,state.clawY+15,31,edges[state.grabbed.type]||"#fff",.28);drawPrize(state.grabbed.type,state.clawX,state.clawY+15,.72)}
+ if(state.grabbed&&(state.clawMode==="grab"||state.clawMode==="return")){
+  const heldY=state.clawY+15,heldRadius=state.grabbed.radius||15;
+  glow(state.clawX,heldY,31,edges[state.grabbed.type]||state.grabbed.color||"#fff",.28);
+  if(state.grabbed.type==="ball")drawFillerBall(state.grabbed,state.clawX,heldY,heldRadius);
+  else drawPrize(state.grabbed.type,state.clawX,heldY,.72);
+ }
  // Lower faceplate and engraved status rail.
  rounded(27,735,396,15,3,"#080e11","#9e8357",1);
  rounded(31,753,388,26,4,"#10191d","#8f7955",1);
  line(40,756,410,756,"#e6c98e33",1);
- text("JEDEN CHWYT W TURZE  •  POŁÓW ZMIENIA SIĘ CO RUNDĘ",225,766,7.4,"#d8c7a7",900,"center");
+ text("KULKI "+(state.machinePrizes||[]).filter(p=>p.type==="ball").length+"  •  ŁUPY ZMIENIAJĄ POŁOŻENIE CO TURĘ",225,766,7.2,"#c6e4e3",900,"center");
+ pill(31,552,94,"KULKI / "+(state.machinePrizes||[]).filter(p=>p.type==="ball").length,"#21434a","#d0f3ed");
  const clawReady=state.turnPhase==="claw"&&state.clawMode==="idle"&&!state.clawUsedThisTurn;
  button(34,680,47,43,"◀","PAZUR",clawReady);button(91,680,47,43,"▶","PAZUR",clawReady);
  const clawLabel=state.clawMode==="down"?"CHWYT...":state.clawMode==="return"?"POWRÓT":clawReady?"ZŁAP ŁUP":"ZUŻYTO";
@@ -880,7 +920,7 @@ function drawMenuScene(){
   glow(x,256,31,"#d38d50",.12);ctx.fillStyle="#d29c60";ctx.beginPath();ctx.arc(x,252+Math.sin(state.time*2+side)*2,3.2,0,Math.PI*2);ctx.fill();
  }
  // The relic gate is layered, animated, and brighter than the menu panels.
- glow(225,366,186,"#bd7847",.15);glow(225,385,104,"#d0a16a",.13);
+ glow(225,366,186,"#36c4d5",.2);glow(225,385,104,"#9f7cff",.16);glow(225,370,66,"#e1b56d",.12);
  ctx.save();ctx.translate(225,386);
  for(let ring=0;ring<4;ring++){
   ctx.globalAlpha=.5-ring*.09;ctx.strokeStyle=ring%2?"#d9c08b":"#946d48";ctx.lineWidth=ring===0?3:1.2;
@@ -902,7 +942,33 @@ function drawMenuScene(){
  ctx.fillStyle=plinth;ctx.beginPath();ctx.ellipse(225,489,147,30,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#c8a66d";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(225,486,143,27,0,0,Math.PI*2);ctx.stroke();
  ctx.save();ctx.translate(225,486);ctx.rotate(state.time*.08);ctx.strokeStyle="#d6b77d";ctx.globalAlpha=.55;ctx.lineWidth=1.2;
  for(let i=0;i<12;i++){const a=i*Math.PI/6;ctx.beginPath();ctx.moveTo(Math.cos(a)*103,Math.sin(a)*18);ctx.lineTo(Math.cos(a)*127,Math.sin(a)*23);ctx.stroke()}ctx.restore();
- // Hero is framed by the portal; the scale remains fixed for the 450x800 canvas.
+ // A glass-fronted prize chamber turns the menu into a preview of the core mechanic.
+ ctx.save();
+ rounded(74,148,302,318,13,"#06131dcc","#71d9d7aa",2);
+ rounded(81,155,288,305,9,"#0b1b2bb8","#ffffff25",1);
+ const chamber=ctx.createLinearGradient(0,160,0,455);chamber.addColorStop(0,"#1b3a48aa");chamber.addColorStop(.52,"#10273599");chamber.addColorStop(1,"#07141ddd");
+ rounded(86,160,278,294,7,chamber,"#8fe4df66",1);
+ ctx.save();ctx.globalAlpha=.17;ctx.strokeStyle="#d6ffff";ctx.lineWidth=1;
+ for(let i=0;i<6;i++){const x=99+i*49;ctx.beginPath();ctx.moveTo(x,171);ctx.lineTo(x+22,445);ctx.stroke()}ctx.restore();
+ rounded(133,159,184,21,4,"#0a1823","#78c7c6",.9);
+ text("RELIC PICKUP  /  SYSTEM ONLINE",225,170,7,"#bcebe4",1000,"center");
+ const demoColors=["#e9f0ed","#d7e8ef","#e7e0f2","#d6e9dc","#f0e2cd","#bcdfe3"];
+ for(let i=0;i<20;i++){
+  const col=i%5,row=Math.floor(i/5),x=105+col*59+(row%2)*16+Math.sin(state.time*.7+i)*2.1;
+  const y=384+row*15+Math.cos(state.time*1.1+i)*2;
+  drawFillerBall({color:demoColors[(i+row)%demoColors.length],phase:i*.83},x,y,7.2+(i%3)*.65);
+ }
+ const demoClawX=225+Math.sin(state.time*.58)*55,clawPulse=1+Math.sin(state.time*2.1)*.035;
+ line(demoClawX,180,demoClawX,292,"#c5e9e2",3);line(demoClawX-1,180,demoClawX-1,292,"#ffffff88",.9);
+ ctx.save();ctx.translate(demoClawX,298);ctx.scale(clawPulse,clawPulse);
+ rounded(-15,-9,30,20,5,"#516d73","#bce9df",1.3);rounded(-8,-5,16,6,2,"#10232b","#7ee1d2",.8);
+ ctx.strokeStyle="#d1eee4";ctx.lineWidth=3;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(-8,7);ctx.quadraticCurveTo(-17,19,-20,29);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(8,7);ctx.quadraticCurveTo(17,19,20,29);ctx.stroke();
+ ctx.restore();
+ ctx.save();ctx.globalAlpha=.32;ctx.strokeStyle="#9ef4e7";ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(225,438,128,9,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ ctx.restore();
+ // Hero is foregrounded over the chamber; proportions stay crisp on high-density phones.
  ctx.save();ctx.translate(225,414);ctx.scale(1.28,1.28);drawHero(0,0);ctx.restore();
  drawPrize("gem",112,405,.62);drawPrize("coin",342,370,.58);
  // Floating embers animate slowly behind the menu, not over the text.
@@ -922,9 +988,9 @@ function drawTitle(){
  rounded(17,16,416,116,8,"#080c11eF","#c09a60",1.4);
  rounded(22,21,406,106,6,"#111820b8","#ffffff20",.8);
  ctx.fillStyle="#c7a36a";ctx.fillRect(17,16,4,116);ctx.fillRect(429,16,4,116);
- text("CITADEL ARCADE  /  ROGUELITE",39,35,7.5,"#c4a575",1000);
- text("CLAW",39,68,35,"#f3eee2",1000);text("QUEST",151,68,35,"#d5b47c",1000);
- text("THE RELIC VAULT",42,102,8,"#9ba9a7",900);
+ text("TACTICAL ARCADE  /  ROGUELITE",39,35,7.5,"#78d8d1",1000);
+ text("CLAW",39,68,35,"#f3eee2",1000);text("QUEST",151,68,35,"#76e8dd",1000);
+ text("THE RELIC VAULT  /  PRECISION ROGUELITE",42,102,7.2,"#a8dad6",900);
  line(265,34,265,111,"#c5a87855",1);
  text("AKTYWNA KAMPANIA",286,42,7.5,"#b99a69",900);
  text("ROZDZIAŁ  /  "+String(stage).padStart(2,"0"),286,62,10,"#ead7b3",1000);
@@ -1087,7 +1153,11 @@ function drawOverlay(){
  if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();
 }
 function draw(){
- ctx.clearRect(0,0,W,H);
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ const bars=ctx.createLinearGradient(0,0,0,canvas.height);bars.addColorStop(0,"#081322");bars.addColorStop(.5,"#0b1828");bars.addColorStop(1,"#070d18");
+ ctx.fillStyle=bars;ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.setTransform(viewTransform.dpr*viewTransform.scale,0,0,viewTransform.scale*viewTransform.dpr,viewTransform.dpr*viewTransform.offsetX,viewTransform.dpr*viewTransform.offsetY);
  if(state.screen==="title"){drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();return}
  ctx.save();
  if(state.effects&&state.shake>0)ctx.translate(Math.sin(state.time*78)*state.shake,Math.cos(state.time*63)*state.shake*.62);
@@ -1137,6 +1207,7 @@ function markDefeatedEnemies(){
  }
 }
 function reward(type){
+ if(type==="ball"){popText("ZWYKŁA KULKA • BRAK BONUSU",225,633,"#d7e8ef");beep(245,.08,"sine",.022);return}
  if(type==="xp"){gainXp(12);state.score+=25;popText("+12 XP",225,633,"#a8e9ff")}
  if(type==="ammo"){state.runDamageBonus++;state.damage=effectiveDamage();state.score+=35;popText("AMUNICJA +1 ATK",225,633,"#9fffe5")}
  if(type==="weapon"){
@@ -1325,12 +1396,14 @@ function interact(x,y){
 
 let pointerStart=null;
 canvas.addEventListener("pointerdown",e=>{
- const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;
+ const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left-viewTransform.offsetX)/viewTransform.scale,y=(e.clientY-r.top-viewTransform.offsetY)/viewTransform.scale;
+ if(x<0||x>W||y<0||y>H)return;
  pointerStart={x,y,id:e.pointerId};canvas.setPointerCapture(e.pointerId);interact(x,y);
 });
 canvas.addEventListener("pointermove",e=>{
  if(!pointerStart)return;
- const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;
+ const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left-viewTransform.offsetX)/viewTransform.scale;
+ if(x<0||x>W)return;
  if(pointerStart.y>500&&pointerStart.y<675&&state.turnPhase==="claw"&&!state.clawUsedThisTurn&&state.clawMode==="idle")state.clawX=clamp(x,54,396);
 });
 const clearPointer=()=>{pointerStart=null};
@@ -1372,18 +1445,21 @@ function update(dt){
  if(state.clawMode==="down"){
   state.clawY=Math.min(676,state.clawY+430*dt);
   if(state.clawY>=676){
-   const nearest=state.machinePrizes.reduce((best,p)=>{
-    if(!best)return p;const d=Math.hypot(p.x-state.clawX,p.y-660),bd=Math.hypot(best.x-state.clawX,best.y-660);return d<bd?p:best;
-   },null);
-   const tolerance=nearest?(nearest.radius||15)+34+profile.clawRank*2+state.runClawBonus:0;
-   if(nearest&&Math.hypot(nearest.x-state.clawX,nearest.y-660)<=tolerance){
+   const candidates=(state.machinePrizes||[]).map(p=>({p,pos:machinePrizePosition(p)}))
+    .filter(item=>item.pos.y>=575&&item.pos.y<=725&&Math.abs(item.pos.x-state.clawX)<=((item.p.radius||10)+13+profile.clawRank*2+state.runClawBonus*.55))
+    .sort((a,b)=>a.pos.y-b.pos.y);
+   const nearest=candidates.length?candidates[0].p:null;
+   if(nearest){
     state.grabbed=nearest;state.machinePrizes=state.machinePrizes.filter(p=>p.id!==nearest.id);
-    notify("ZŁAPANO KULĘ • "+nearest.type.toUpperCase());beep(760,.12,"triangle");
+    notify(nearest.type==="ball"?"ZŁAPANO ZWYKŁĄ KULKĘ • BEZ BONUSU":"ZŁAPANO ŁUP • "+nearest.type.toUpperCase());beep(nearest.type==="ball"?360:760,.12,"triangle");
    }else{state.grabbed=null;notify("PUSTY CHWYT • CELOWANIE MA ZNACZENIE");beep(180,.12,"triangle")}
-   state.clawMode="return";
+   state.clawMode="grab";state.clawTimer=.17;
   }
+ }else if(state.clawMode==="grab"){
+  state.clawTimer=Math.max(0,state.clawTimer-dt);
+  if(state.clawTimer<=0)state.clawMode="return";
  }else if(state.clawMode==="return"){
-  state.clawY=Math.max(565,state.clawY-520*dt);
+  state.clawY=Math.max(565,state.clawY-620*dt);
   if(state.clawY<=565){
    state.clawMode="idle";if(state.grabbed)reward(state.grabbed.type);state.grabbed=null;
    state.turnPhase="hero";state.turn="player";notify("FAZA 2/2 • WYKONAJ JEDNĄ AKCJĘ");
@@ -1399,7 +1475,7 @@ function frame(ts){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,render:draw};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,rollAbilityChoices,chooseAbility,combatAttack,combatDefend,combatSkill,resolveEnemyTurn,reward,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,generateMachinePrizes,machinePrizePosition,render:draw};
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 draw();requestAnimationFrame(frame);
 })();

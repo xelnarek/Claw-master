@@ -3,27 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#09090d">
+<meta name="theme-color" content="#d8f1f8">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Claw Quest — turowy roguelite heroic fantasy: chwyt reliktów, taktyczny ruch na polach areny, karty skilli i synergie.">
-<title>Claw Quest — Relic Vault Roguelite</title>
+<meta name="description" content="Claw Quest — kolorowy turowy roguelite arcade: precyzyjny chwyt kapsuł, taktyczna walka, relikty, synergie, bestiariusz i rozwój bohatera.">
+<title>Claw Quest — Arcade Roguelite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark;--ink:#fff7eb;--muted:#bfa895;--panel:#1c1319;--line:rgba(217,56,86,.38);--gold:#d9a84e;--crimson:#8f142e;--iron:#242933;--obsidian:#0b0c10}
+:root{color-scheme:light;--ink:#2c4d69;--muted:#6c8698;--panel:#edf8fb;--line:rgba(74,146,180,.32);--gold:#e6b75d;--crimson:#e77d72;--iron:#527b96;--obsidian:#e4f3f7}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09090d;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-body{display:block;background:radial-gradient(circle at 50% 20%,#240e16 0%,#09090d 78%)}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dceff5;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body{display:block;background:radial-gradient(circle at 50% 20%,#f2fcff 0%,#dceff5 78%)}
 /* Pełnoekranowy układ mobilny: żadnych pustych pasów nad/pod grą na ekranach 19.5:9–21:9. */
-#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden;border-radius:0;background:#09090d;box-shadow:none;isolation:isolate}
+#game-wrap{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:hidden;border-radius:0;background:#e8f7fb;box-shadow:none;isolation:isolate}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 @supports(height:100svh){#game-wrap{height:100svh}}
-@media(min-width:700px) and (min-height:900px){#game-wrap{width:min(100vw,62.5dvh);height:min(100dvh,160vw);left:50%;top:50%;transform:translate(-50%,-50%);border-radius:20px;box-shadow:0 28px 96px #000000f0,0 0 0 2px rgba(184,32,58,.55)}}
-#toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.94);opacity:0;pointer-events:none;padding:10px 18px;border:2.5px solid #d93856;border-radius:8px;background:linear-gradient(180deg,#3b1019,#14070b);color:#fff7eb;font-family:"Cinzel","Plus Jakarta Sans",serif;font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap;box-shadow:0 12px 34px rgba(0,0,0,.88),0 0 16px rgba(217,56,86,.45),inset 0 1px 0 rgba(255,200,210,.3);transition:.18s}
+@media(min-width:700px) and (min-height:900px){#game-wrap{width:min(100vw,62.5dvh);height:min(100dvh,160vw);left:50%;top:50%;transform:translate(-50%,-50%);border-radius:20px;box-shadow:0 28px 96px #477b9540,0 0 0 2px rgba(88,168,190,.55)}}
+#toast{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%) scale(.94);opacity:0;pointer-events:none;padding:10px 18px;border:2px solid #6ba9c0;border-radius:12px;background:linear-gradient(180deg,#f8feff,#d6edf5);color:#315674;font-family:"Cinzel","Plus Jakarta Sans",serif;font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap;box-shadow:0 12px 28px rgba(52,104,133,.25),0 0 16px rgba(89,185,208,.25),inset 0 1px 0 rgba(255,255,255,.9);transition:.18s}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #hint{display:none}
 </style>

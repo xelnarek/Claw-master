@@ -60,7 +60,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const CHAMBER_BONUS_LIMIT=40;
 const ARENA_TILES=[62,124,186,248,310,372];
  const state={
- started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,
+ started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,talentTreeOpen:false,
  time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,clawGripDelay:0,grabbed:null,heroActionUsedThisTurn:false,heroMovedThisTurn:false,heroVanguard:0,clawCombo:0,clawEmpowered:0,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
  playerX:124,heroRenderX:124,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,shotFxTimer:0,shotFxDuration:.32,shotFxWeaponId:"sidearm",heroLunge:0,screenFlash:0,screenFlashColor:"#ffd166",camKickX:0,camKickY:0,camPanX:0,camPanY:0,renderShakeX:0,renderShakeY:0,
@@ -86,7 +86,7 @@ const stageCatalog=[
  {title:"Ruiny Strażników",biome:"ruins",objective:"Czytaj czerwone pola zagrożenia i przełamuj pancerz goblinów.",waves:[["goblin","goblin","bat"],["porcupine","goblin","slime"]],coins:50,xp:42},
  {title:"Leśny Strażnik",biome:"boss",objective:"Strażnik w szale bije z daleka — łącz uniki z kontratakiem.",waves:[["boss","porcupine"]],coins:85,xp:70}
 ];
-const starterProfile=()=>({coins:0,xp:0,level:1,attackRank:0,vitalityRank:0,clawRank:0,unlockedStage:1,bestStage:1,bestScore:0});
+const starterProfile=()=>({coins:0,xp:0,level:1,attackRank:0,vitalityRank:0,clawRank:0,talentWarrior:0,talentRelic:0,talentAlchemist:0,unlockedStage:1,bestStage:1,bestScore:0});
 function loadProfile(){try{const raw=localStorage.getItem(PROFILE_KEY);if(!raw)return starterProfile();const data=JSON.parse(raw),base=starterProfile();for(const key of Object.keys(base)){const value=Number(data?.[key]);base[key]=Number.isFinite(value)?Math.max(0,Math.floor(value)):base[key]}base.level=Math.max(1,base.level);base.unlockedStage=Math.max(1,Math.min(99,base.unlockedStage));return base}catch(e){return starterProfile()}}
 let profile=loadProfile();
 state.hubStage=profile.unlockedStage;
@@ -182,7 +182,7 @@ function gainXp(amount){
  if(levels){state.pendingLevelUps+=levels;if(!state.levelChoices)rollAbilityChoices()}
  saveProfile();return levels;
 }
-function effectiveDamage(){return 4+profile.attackRank+state.runDamageBonus}
+function effectiveDamage(){return 4+profile.attackRank+(profile.talentWarrior||0)*2+state.runDamageBonus}
 function effectiveMaxHp(){return 100+profile.vitalityRank*15}
 function nearestTileIndex(x){
  let best=0,dist=1e9;
@@ -198,6 +198,20 @@ function getHeroStance(){
  return {id:"balanced",label:"RÓWNOWAGA",color:"#9effb8"};
 }
 function purchaseUpgrade(kind){const cfg={attack:{rank:"attackRank",base:30,step:20},vitality:{rank:"vitalityRank",base:35,step:20},claw:{rank:"clawRank",base:25,step:18}}[kind];if(!cfg)return false;const rank=profile[cfg.rank],cost=cfg.base+rank*cfg.step;if(profile.coins<cost)return false;profile.coins-=cost;profile[cfg.rank]++;state.coins=profile.coins;const oldMax=state.maxHp;state.damage=effectiveDamage();state.maxHp=effectiveMaxHp();if(kind==="vitality"&&state.started)state.hp=Math.min(state.maxHp,state.hp+state.maxHp-oldMax);saveProfile();playSfx("upgrade");return true}
+function purchaseTalent(kind){
+ const cfg={
+  warrior:{key:"talentWarrior",cost:30,max:3,label:"MĘSTWO WOJOWNIKA"},
+  relic:{key:"talentRelic",cost:25,max:3,label:"MAGIA RELIKTÓW"},
+  alchemist:{key:"talentAlchemist",cost:35,max:3,label:"ALCHEMIA TRUCIZN"}
+ }[kind];
+ if(!cfg)return false;
+ const level=profile[cfg.key]||0;
+ if(level>=cfg.max){notify("TALENT OSIĄGNĄŁ MAKSIMUM");return false}
+ if(profile.coins<cfg.cost){notify("ZA MAŁO KREDYTÓW");return false}
+ profile.coins-=cfg.cost;profile[cfg.key]=level+1;state.coins=profile.coins;
+ state.damage=effectiveDamage();
+ saveProfile();playSfx("upgrade");notify(cfg.label+" • POZ. "+profile[cfg.key]);return true;
+}
 function enemyAttackRange(e){
  return (e&&e.range)||(e?.type==="boss"?178:e?.type==="bat"?148:e?.type==="goblin"?136:e?.type==="porcupine"?116:122);
 }
@@ -265,7 +279,7 @@ function startRun(stage=state.hubStage||profile.unlockedStage){
  state.maxHp=effectiveMaxHp();state.hp=state.maxHp;state.damage=effectiveDamage();state.shield=0;state.playerX=124;state.heroRenderX=124;
  state.enemies=[];state.bullets=[];state.particles=[];state.impacts=[];state.pressFx=[];state.xpFlyOrbs=[];state.attackFx=null;state.shake=0;state.camKickX=0;state.camKickY=0;state.camPanX=0;state.camPanY=0;state.renderShakeX=0;state.renderShakeY=0;state.floaters=[];
  state.clawMode="idle";state.clawX=225;state.clawY=560;state.grabbed=null;state.playerY=408;state.bossSpawned=false;
- state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;state.hubTab="battle";spawnStageWave();notify("WYPRAWA ROZPOCZĘTA • TRYB TUROWY");return true;
+ state.settingsOpen=false;state.helpOpen=false;state.upgradesOpen=false;state.talentTreeOpen=false;state.hubTab="battle";spawnStageWave();notify("WYPRAWA ROZPOCZĘTA • TRYB TUROWY");return true;
 }
 let audio=null;
 try{state.coins=profile.coins;state.bestScore=Math.max(profile.bestScore,Number(localStorage.getItem("clawQuestBest")||0)||0);state.sound=localStorage.getItem("clawQuestSound")!=="false";state.effects=localStorage.getItem("clawQuestEffects")!=="false"}catch(e){}
@@ -1492,7 +1506,7 @@ function prizeLabel(type){
 }
 function getClawTargetCandidate(){
  const candidates=(state.machinePrizes||[]).map(p=>({p,pos:machinePrizePosition(p)}))
-  .filter(item=>item.pos.y>=548&&item.pos.y<=725&&Math.abs(item.pos.x-state.clawX)<=((item.p.radius||10)+13+profile.clawRank*2+state.runClawBonus*.55))
+  .filter(item=>item.pos.y>=548&&item.pos.y<=725&&Math.abs(item.pos.x-state.clawX)<=((item.p.radius||10)+13+profile.clawRank*2+(profile.talentRelic||0)*4+state.runClawBonus*.55))
   .sort((a,b)=>a.pos.y-b.pos.y);
  return candidates.length?candidates[0]:null;
 }
@@ -1770,7 +1784,7 @@ function drawHubTabBar(){
   {id:"codex",x:332,w:98,icon:"◈",label:"KODEKS",tone:"#a872ff"}
  ];
  for(const t of tabs){
-  const active=(t.id==="forge"&&state.upgradesOpen)||(t.id==="codex"&&state.helpOpen)||(!state.upgradesOpen&&!state.helpOpen&&state.hubTab===t.id);
+  const active=(t.id==="forge"&&(state.upgradesOpen||state.talentTreeOpen))||(t.id==="codex"&&state.helpOpen)||(!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&state.hubTab===t.id);
   const topY=active?721:725,h=active?55:50;
   rounded(t.x,topY+2,t.w,h,10,ink);
   rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#211728",ink,2.2);
@@ -1955,7 +1969,8 @@ function drawUpgradeOverlay(){
   y+=81;
  }
  inkText("DOSTĘPNE KREDYTY  /  ◆ "+profile.coins,225,547,9.5,"#ffe075",ink,2,"center",DISPLAY_FONT);
- button(113,562,224,38,"WRÓĆ DO BAZY","",true,"blue");
+ button(48,562,205,38,"DRZEWKO TALENTÓW","ROZWIJAJ TALENTY",true,"gold");
+ button(263,562,138,38,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawLevelChoiceOverlay(){
  const ink="#07050a";
@@ -2041,7 +2056,7 @@ function draw(){
  ctx.fillStyle=bars;ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.setTransform(viewTransform.dpr*viewTransform.scale,0,0,viewTransform.scale*viewTransform.dpr,viewTransform.dpr*viewTransform.offsetX,viewTransform.dpr*viewTransform.offsetY);
  if(state.screen==="title"){
-  drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.upgradesOpen)drawUpgradeOverlay();
+  drawTitle();if(state.settingsOpen)drawSettingsOverlay();if(state.helpOpen)drawHelpOverlay();if(state.talentTreeOpen)drawTalentTree();else if(state.upgradesOpen)drawUpgradeOverlay();
  }else{
   ctx.save();
   const sx=state.effects&&state.shake>0?Math.sin(state.time*78)*state.shake:0;
@@ -2122,7 +2137,7 @@ function reward(type,prize=null){
   gainCoins(2);state.score+=10;
   popText("PREMIA PROGU +2◆",225,606,"#98f3de");
  }
- const goldGrip=((state.runSkills.fortune||0)>0&&(state.runSkills.claw||0)>0);
+ const goldGrip=((state.runSkills.fortune||0)>0&&(state.runSkills.claw||0)>0)||(profile.talentRelic||0)>0;
  if(goldGrip){gainCoins(2);gainRunXp(4);popText("ZŁOTY CHWYT +4 XP",225,554,"#ffe485")}
  if(type==="xp"){
   const runXpGain=(prize&&prize.xpValue)||10;
@@ -2193,7 +2208,7 @@ function applyWeaponDamage(target,damage,weapon,critical=false){
  const finalDamage=Math.max(1,Math.ceil(damage*(critical?1.7:1)));
  const hadGuard=target.guard>0;
  let remaining=finalDamage;if(target.guard>0){const absorbed=Math.min(target.guard,remaining);target.guard-=absorbed;remaining-=absorbed;if(absorbed)popText("PANCERZ -"+absorbed,target.x,target.y-55,"#9cddff")}if(remaining>0)target.hp-=remaining;target.hit=.28;target.hitFlash=.14;target.knockX=critical?9:5;state.score+=1;if(hadGuard&&target.guard<=0){popText("PRZEŁAMANIE!",target.x,target.y-72,"#ffe48f");spawnImpact(target,"critical",0,"#ffe48f")}if(remaining>0&&state.runBleed>0){target.bleedTurns=Math.max(target.bleedTurns||0,2);target.bleedDamage=Math.max(target.bleedDamage||0,state.runBleed)}
- if(remaining>0&&state.runVenom>0){target.poisonTurns=Math.max(target.poisonTurns||0,2);target.poisonDamage=Math.max(target.poisonDamage||0,state.runVenom)}if(target.type==="porcupine"&&target.spinesActive&&target.lastThornsTurn!==state.turnNumber){target.lastThornsTurn=state.turnNumber;state.hp=Math.max(0,state.hp-2);popText("KOLCE -2",state.playerX,state.playerY-67,"#ffbd82");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",2)}
+ if(remaining>0&&state.runVenom>0){target.poisonTurns=Math.max(target.poisonTurns||0,2);target.poisonDamage=Math.max(target.poisonDamage||0,state.runVenom+(profile.talentAlchemist||0))}if(target.type==="porcupine"&&target.spinesActive&&target.lastThornsTurn!==state.turnNumber){target.lastThornsTurn=state.turnNumber;state.hp=Math.max(0,state.hp-2);popText("KOLCE -2",state.playerX,state.playerY-67,"#ffbd82");spawnImpact({x:state.playerX,y:state.playerY-25,type:"hero"},"incoming",2)}
  const kind=critical?"critical":weapon.id==="cannon"?"heavy":weapon.id==="laser"?"pierce":weapon.id==="scatter"?"pellet":weapon.id==="repeater"?"pulse":"bullet";
  spawnImpact(target,kind,finalDamage,weapon.color);
  if(critical){state.screenFlash=.14;state.screenFlashColor="#ffd166";state.camKickX=Math.max(state.camKickX||0,6);playSfx("critical")}
@@ -2365,7 +2380,18 @@ function interact(x,y){
  addPressRipple(x,y,"#9ceeff");
  if(state.levelChoices){if(y>=270&&y<=600){const index=clamp(Math.floor((y-270)/108),0,2);if(chooseAbility(index))playSfx("upgrade")}return}
  if(state.settingsOpen){if(y>=335&&y<=390&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}playSfx("uiClick");return}if(y>=416&&y<=472&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}playSfx("uiClick");return}if(y>=514&&y<=568){state.settingsOpen=false;playSfx("uiClick");return}return}
- if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){state.upgradesOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");return}return}
+ if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){
+  if(x<257){state.talentTreeOpen=true;playSfx("uiClick");}
+  else{state.upgradesOpen=false;state.talentTreeOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");}
+  return
+ }return}
+ if(state.talentTreeOpen){
+  if(y>=288&&y<378&&x>=292){purchaseTalent("warrior");return}
+  if(y>=378&&y<468&&x>=292){purchaseTalent("relic");return}
+  if(y>=468&&y<558&&x>=292){purchaseTalent("alchemist");return}
+  if(y>=578&&y<=612){state.talentTreeOpen=false;playSfx("uiClick");return}
+  return
+ }
  if(state.helpOpen){if(y>=574&&y<=610){state.helpOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");return}return}
  if(state.screen==="title"){
   if(x>=382&&x<=428&&y>=22&&y<=66){state.settingsOpen=true;playSfx("uiClick");return}
@@ -2428,6 +2454,7 @@ window.addEventListener("keydown",e=>{
  if(e.key==="Escape"){
   if(state.settingsOpen){state.settingsOpen=false;return}
   if(state.helpOpen){state.helpOpen=false;if(state.screen==="title")state.hubTab="battle";return}
+  if(state.talentTreeOpen){state.talentTreeOpen=false;return}
   if(state.upgradesOpen){state.upgradesOpen=false;if(state.screen==="title")state.hubTab="battle";return}
   if(state.screen==="game"&&!state.over)state.paused=!state.paused;
   return;
@@ -2544,7 +2571,7 @@ function update(dt){
    y+=90;
   }
   inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,564,9.2,"#ffe075",ink,2,"center",DISPLAY_FONT);
-  button(112,578,226,30,"WRÓĆ DO BAZY","",true,"blue");
+  button(112,578,226,30,"WRÓĆ DO KUŹNI","",true,"blue");
  }
  function frame(ts){
  const dt=Math.min(.033,(ts-state.last)/1000||0);state.last=ts;
@@ -2552,7 +2579,7 @@ function update(dt){
 }
 for(let i=0;i<30;i++)state.stars.push({x:rand(5,W-5),y:rand(90,490),r:rand(.6,1.8),a:rand(.15,.55),v:rand(4,16)});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state.screen==="game")state.paused=true});
-if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,gainRunXp,getActiveSynergies,rollAbilityChoices,chooseAbility,combatAttack,resolveEnemyTurn,reward,tacticalMove,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,generateMachinePrizes,machinePrizePosition,drawTalentTree,render:draw};
+if(window.location?.search?.includes("test=1"))window.__CLAW_TEST_API__={state,profile,stageCatalog,abilityPool,weaponCatalog,weaponForRun,currentWeaponDamage,startRun,reset,spawnEnemy,spawnStageWave,completeStage,advanceStage,purchaseUpgrade,saveProfile,loadProfile,gainCoins,gainXp,gainRunXp,getActiveSynergies,rollAbilityChoices,chooseAbility,combatAttack,resolveEnemyTurn,reward,tacticalMove,moveHero,moveHeroTo,fireWeapon,findCombatTarget,applyEnemyHit,moveClaw,deployClaw,interact,update,stageDefinition,beginPlayerTurn,planEnemyIntents,markDefeatedEnemies,checkEncounterClear,canHeroAct,generateMachinePrizes,machinePrizePosition,drawTalentTree,purchaseTalent,applyWeaponDamage,getClawTargetCandidate,render:draw};
 if("serviceWorker" in navigator){
  window.addEventListener("load",()=>{
   const hadController=!!navigator.serviceWorker.controller;

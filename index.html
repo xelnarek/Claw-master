@@ -61,7 +61,7 @@ const CHAMBER_BONUS_LIMIT=40;
 const ARENA_TILES=[62,124,186,248,310,372];
  const state={
  started:false,paused:false,over:false,sound:false,clawUsedThisTurn:false,machinePrizes:[],poisonTurns:0,poisonDamage:2,talentTreeOpen:false,
- time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,clawGripDelay:0,grabbed:null,grabQuality:"normal",lastGrabQuality:"normal",perfectStreak:0,heroActionUsedThisTurn:false,heroMovedThisTurn:false,heroVanguard:0,clawCombo:0,clawEmpowered:0,
+ time:0,last:0,shot:0,turn:"player",turnPhase:"claw",turnNumber:1,defending:false,selectedEnemy:0,clawMode:"idle",clawY:565,clawX:225,clawGripDelay:0,grabbed:null,grabQuality:"normal",lastGrabQuality:"normal",grabTargetId:null,perfectStreak:0,heroActionUsedThisTurn:false,heroMovedThisTurn:false,heroVanguard:0,clawCombo:0,clawEmpowered:0,
  wave:1,kills:0,score:0,coins:0,hp:100,maxHp:100,damage:1,shield:0,weaponId:"sidearm",weaponLevel:1,guardTurns:0,skillCooldownTurns:0,prizeRefreshTimer:0,
  playerX:124,heroRenderX:124,playerY:408,playerHit:0,flash:0,playerAction:"idle",playerActionTimer:0,playerActionDuration:.42,shotFxTimer:0,shotFxDuration:.32,shotFxWeaponId:"sidearm",heroLunge:0,screenFlash:0,screenFlashColor:"#ffd166",camKickX:0,camKickY:0,camPanX:0,camPanY:0,renderShakeX:0,renderShakeY:0,
  enemies:[],bullets:[],particles:[],loot:[],impacts:[],pressFx:[],xpFlyOrbs:[],attackFx:null,shake:0,stars:[],floaters:[],skillReady:true,levelChoices:null,pendingLevelUps:0,runSkills:{},runLevel:1,runXp:0,runXpNeed:15,runCrit:0,runClawBonus:0,runSkillBonus:0,runHealOnKill:0,runLootBonus:0,runVenom:0,runBleed:0,runWard:0,runCounterBonus:0,
@@ -2002,7 +2002,10 @@ function updateCharacterAnimations(dt){
 }
 function deployClaw(){
  if(!state.started||state.over||state.paused||state.turnPhase!=="claw"||state.clawUsedThisTurn||state.clawMode!=="idle")return false;
- state.clawUsedThisTurn=true;state.clawMode="down";state.grabbed=null;state.grabQuality="normal";playSfx("clawDrop");return true;
+ const aligned=getClawTargetCandidate();
+ state.clawUsedThisTurn=true;state.clawMode="down";state.grabbed=null;
+ state.grabTargetId=aligned?.p?.id||null;state.grabQuality=aligned?.quality||"normal";
+ playSfx("clawDrop");return true;
 }
 function moveClaw(dir){
  if(state.turnPhase==="claw"&&!state.clawUsedThisTurn&&state.clawMode==="idle"){
@@ -2163,11 +2166,11 @@ function update(dt){
    const hit=getClawTargetCandidate();
    const nearest=hit?hit.p:null;
    if(nearest){
-    state.grabbed=nearest;state.grabQuality=hit.quality||"normal";state.machinePrizes=state.machinePrizes.filter(p=>p.id!==nearest.id);
+    state.grabbed=nearest;state.grabQuality=state.grabTargetId===nearest.id?state.grabQuality:(hit.quality||"normal");state.machinePrizes=state.machinePrizes.filter(p=>p.id!==nearest.id);
     impulseChamber(44,state.clawX);
     if(state.effects&&nearest.type!=="ball"){for(let i=0;i<8;i++)particle(state.clawX+rand(-8,8),656+rand(-8,8),pick(["#7ef8ea","#ffd36d","#ffffff"]),rand(1.6,3.1))}
     notify(nearest.type==="ball"?"ZŁAPANO ZWYKŁĄ KULKĘ • BEZ BONUSU":"ZŁAPANO ŁUP • "+prizeLabel(nearest.type));beep(nearest.type==="ball"?360:760,.12,"triangle");
-   }else{state.grabbed=null;state.grabQuality="normal";state.clawCombo=0;state.clawEmpowered=0;state.perfectStreak=0;impulseChamber(30,state.clawX);notify("PUSTY CHWYT • CELOWANIE MA ZNACZENIE");playSfx("clawMiss")}
+   }else{state.grabbed=null;state.grabTargetId=null;state.grabQuality="normal";state.clawCombo=0;state.clawEmpowered=0;state.perfectStreak=0;impulseChamber(30,state.clawX);notify("PUSTY CHWYT • CELOWANIE MA ZNACZENIE");playSfx("clawMiss")}
    state.clawMode="grab";state.clawGripDelay=.17;
   }
  }else if(state.clawMode==="grab"){

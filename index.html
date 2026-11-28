@@ -78,7 +78,7 @@ const weaponCatalog=[
  {id:"laser",name:"Lanca Słoneczna",rate:.66,damage:7,speed:780,color:"#b6faff",pellets:1,spread:0,radius:3.5,pierce:1,role:"Przebija promieniem kolejnego wroga"}
 ];
 const weaponForRun=()=>weaponCatalog.find(w=>w.id===state.weaponId)||weaponCatalog[0];
-const currentWeaponDamage=()=>Math.ceil((weaponForRun().damage+profile.attackRank+state.runDamageBonus+(state.clawEmpowered||0)+(state.heroVanguard||0))*(1+(state.weaponLevel-1)*.18));
+const currentWeaponDamage=()=>Math.ceil((weaponForRun().damage+profile.attackRank+(profile.talentWarrior||0)*2+state.runDamageBonus+(state.clawEmpowered||0)+(state.heroVanguard||0))*(1+(state.weaponLevel-1)*.18));
 const stageCatalog=[
  {title:"Polana Początku",biome:"meadow",objective:"Złap łup ze skrzyni, ustaw pozycję na polach i pokonaj wrogów.",waves:[["slime"],["slime","slime"]],coins:20,xp:18},
  {title:"Zarośnięta Ścieżka",biome:"forest",objective:"Użyj kroku taktycznego, aby wyjść z zasięgu ciosu wroga.",waves:[["slime","slime"],["slime","bat"]],coins:28,xp:26},

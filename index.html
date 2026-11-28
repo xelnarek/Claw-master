@@ -2036,6 +2036,7 @@ function interact(x,y){
    if(x<330){state.hubTab="arsenal";playSfx("uiClick");return}
    state.helpOpen=false;state.hubTab="codex";playSfx("uiClick");return
   }
+  if(state.hubTab==="codex"&&y>=665&&y<=706){state.hubTab="battle";playSfx("uiClick");return}
   if(state.hubTab==="arsenal"&&y>=302&&y<=334){
    const idx=clamp(Math.floor((x-42)/74),0,weaponCatalog.length-1);
    state.arsenalWeapon=weaponCatalog[idx].id;playSfx("uiClick");return

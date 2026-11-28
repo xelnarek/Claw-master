@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v19-heroic-fantasy";
+const CACHE_NAME = "claw-quest-v20-aisync";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

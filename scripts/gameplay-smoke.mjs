@@ -102,6 +102,9 @@ for (let i = 0; i < 5; i++) game.reward("relic");
 assert.equal(game.profile.relicFragments, 0, "five relic fragments should be consumed when the set is restored");
 assert.equal(game.profile.attackRank, attackRankBeforeRelic + 1, "a complete relic should grant one permanent attack rank");
 assert.equal(game.loadProfile().attackRank, attackRankBeforeRelic + 1, "relic restoration should persist across sessions");
+// Keep the remaining regression cases on the baseline profile so their fixed damage expectations stay deterministic.
+game.profile.attackRank = attackRankBeforeRelic;
+game.saveProfile();
 
 // First defeat of a new species registers it in the permanent bestiary.
 game.startRun(1);

@@ -2380,11 +2380,6 @@ function interact(x,y){
  addPressRipple(x,y,"#9ceeff");
  if(state.levelChoices){if(y>=270&&y<=600){const index=clamp(Math.floor((y-270)/108),0,2);if(chooseAbility(index))playSfx("upgrade")}return}
  if(state.settingsOpen){if(y>=335&&y<=390&&x>=270){state.sound=!state.sound;try{localStorage.setItem("clawQuestSound",String(state.sound))}catch(e){}playSfx("uiClick");return}if(y>=416&&y<=472&&x>=270){state.effects=!state.effects;try{localStorage.setItem("clawQuestEffects",String(state.effects))}catch(e){}playSfx("uiClick");return}if(y>=514&&y<=568){state.settingsOpen=false;playSfx("uiClick");return}return}
- if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){
-  if(x<257){state.talentTreeOpen=true;playSfx("uiClick");}
-  else{state.upgradesOpen=false;state.talentTreeOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");}
-  return
- }return}
  if(state.talentTreeOpen){
   if(y>=288&&y<378&&x>=292){purchaseTalent("warrior");return}
   if(y>=378&&y<468&&x>=292){purchaseTalent("relic");return}
@@ -2392,6 +2387,11 @@ function interact(x,y){
   if(y>=578&&y<=612){state.talentTreeOpen=false;playSfx("uiClick");return}
   return
  }
+ if(state.upgradesOpen){if(y>=309&&y<=365&&x>=270){purchaseUpgrade("attack");return}if(y>=391&&y<=447&&x>=270){purchaseUpgrade("vitality");return}if(y>=473&&y<=529&&x>=270){purchaseUpgrade("claw");return}if(y>=555&&y<=605){
+  if(x<257){state.talentTreeOpen=true;playSfx("uiClick");}
+  else{state.upgradesOpen=false;state.talentTreeOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");}
+  return
+ }return}
  if(state.helpOpen){if(y>=574&&y<=610){state.helpOpen=false;if(state.screen==="title")state.hubTab="battle";playSfx("uiClick");return}return}
  if(state.screen==="title"){
   if(x>=382&&x<=428&&y>=22&&y<=66){state.settingsOpen=true;playSfx("uiClick");return}

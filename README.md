@@ -1,30 +1,40 @@
-# Claw Quest — Relic Vault Roguelite
+# Claw Quest — Arcade Roguelite
 
-A mobile-first 2D heroic-fantasy roguelite built with Canvas 2D and vanilla JavaScript. The game combines a physical claw-machine prize chamber with tactical, turn-based arena combat.
+A mobile-first 2D arcade roguelite built with Canvas 2D and vanilla JavaScript. Claw Quest combines a physical capsule machine with one-action-per-turn arena combat. The presentation uses bright, readable fantasy characters, colorful prize capsules, a glass-fronted claw cabinet and a compact mobile HUD.
 
-## Turn loop
+## Core turn loop
 
 1. **Claw phase:** aim the carriage and make exactly one grab attempt.
 2. **Tactical reposition:** in the hero phase, move one arena tile once per turn. Advancing grants a short attack bonus; retreating grants shield. This movement does not consume the attack.
-3. **Hero attack:** commit one weapon attack. Weapon archetypes determine the shot pattern, target coverage, damage and impact effects.
-4. **Enemy phase:** living enemies resolve their planned move, attack or guarded stance. The next turn starts with a new prize layout.
+3. **Hero action:** commit one weapon attack or special action.
+4. **Enemy phase:** living enemies resolve their planned move, attack or guarded stance. The next turn begins with a fresh prize layout.
 
-There is no real-time auto-fire or continuous enemy movement. Animation presents actions that have already been resolved by the turn state machine.
+There is no real-time auto-fire or continuous enemy movement. Animation presents actions already resolved by the turn state machine.
 
-## Claw-machine physics
+## Claw cabinet and precision rewards
 
-- The chamber begins with **24 ordinary filler balls**. Its target fill increases by **5 balls each turn**, up to **72**.
+- The chamber begins with **24 ordinary filler balls**. Its target fill rises by **5 balls per turn**, up to **72**.
 - Ordinary balls are not rewards. Catching one consumes the only grab attempt without granting loot.
-- The claw catches the first object in its vertical capture corridor. Filler balls can obstruct and shield valuable prize capsules.
-- Balls have mass, velocity, restitution and angular velocity. Gravity, sphere-to-sphere collisions, chamber boundaries and claw impacts create stacking, rolling and displacement.
-- Good prizes can be repositioned by the claw and its magnet effect. Prize capsules are refreshed and rearranged between turns.
-- When the filler count is at or below the chamber threshold, a successful prize grab can trigger the chamber-clear bonus.
+- Filler balls physically obstruct valuable prize capsules. They have mass, velocity, restitution and angular velocity; gravity, claw impulses, chamber boundaries and ball-to-ball collisions produce stacking and rolling.
+- Capsule positions are refreshed between turns. The claw catches the first object in its capture corridor.
+- The precision grade is calculated when the player starts the grab, before the claw or chamber physics can shift the capsule:
+  - **Perfect:** centered alignment; grants bonus credits, expedition XP and attack empowerment.
+  - **Good:** close alignment; grants a small XP bonus.
+  - **Normal:** a successful grab without an accuracy bonus.
+- Consecutive perfect grabs build a short streak. A three-perfect streak grants a larger reward.
+- The chamber threshold bonus still rewards clearing excess filler balls.
 
-Prize types include coins, expedition XP, weapons, damage shards, healing, shields, bombs and skill charges. Each retains its own reward and visual treatment.
+Prize capsules include coins, XP crystals, weapon drops, attack shards, healing, shields, bombs, skill charges and a rare **Relic Fragment**.
+
+## Relic collection and bestiary
+
+Five Relic Fragments restore a permanent relic and grant **+1 permanent attack rank**. Collection progress is saved in the local profile and shown in the Codex.
+
+Defeating an enemy records its species in the permanent bestiary. Discovering a species for the first time awards a small credit bonus. The Codex tracks all nine current archetypes, defeat counts, relic progress and perfect-catch records.
 
 ## Combat, weapons and builds
 
-**Five weapon archetypes** — service sidearm, impulse repeater, scatter gun, siege cannon and photon lance — have distinct models, shot trails, recoil, muzzle flashes, target coverage and impact effects. Repeater bursts, scatter pellets and cannon splash are still one committed attack.
+**Five weapon archetypes** — service sidearm, impulse repeater, scatter gun, siege cannon and photon lance — have distinct models, shot trails, recoil, muzzle flashes, target coverage and impact effects. Repeater bursts, scatter pellets and cannon splash are still one committed action.
 
 Run XP drives three-choice skill drafts. The game has twelve skill cards and four build synergies:
 
@@ -33,7 +43,7 @@ Run XP drives three-choice skill drafts. The game has twelve skill cards and fou
 - **FURIA ETERU:** critical-focused builds — critical hits restore shield and shorten skill recovery.
 - **ZŁOTY CHWYT:** Treasure Magnet + Golden Instinct — successful prize grabs grant extra expedition XP and credits.
 
-The Arsenal hub tab previews weapon archetypes, skill cards and synergy recipes. Active build effects are also shown in the gameplay HUD.
+The Arsenal previews weapon archetypes, skill cards and synergy recipes. Active build effects remain visible in the gameplay HUD.
 
 ## Permanent talent tree
 
@@ -43,19 +53,19 @@ Open **KUŹNIA → DRZEWKO TALENTÓW** to spend persistent credits on three perm
 - **Magia Reliktów:** +4 px claw capture tolerance per rank and the Golden Grip reward bonus.
 - **Alchemia Trucizn:** +1 poison damage per rank when poison is applied.
 
-Each talent has three ranks. Talent levels, credits, hero upgrades, campaign unlocks and records are saved in the local profile.
+Each talent has three ranks. Talent levels, credits, relic fragments, bestiary discoveries, hero upgrades, campaign unlocks and records are saved in the local profile.
 
 ## Enemies and campaign
 
-The original enemy roster is joined by four new archetypes: **Fire Elemental, Dragon, Crystal Golem and Swamp Hydra**. Each has its own model, palette, stats and attack cadence. Enemy intent indicators, armor, status effects, attack wind-ups, hit reactions and death animations remain visible during combat.
+The roster includes Slime, Bat, Porcupine, Goblin, Fire Elemental, Dragon, Crystal Golem, Swamp Hydra and the stage Guardian boss. Each has a distinct procedural silhouette, palette, stats and attack cadence. Enemy intent rings, armor, status marks, hit reactions, wind-ups and death animations remain visible during combat.
 
 The opening campaign includes Polana Początku, Zarośnięta Ścieżka, Nora Zmierzchu, Ruiny Strażników and Leśny Strażnik, followed by scalable expeditions and boss encounters.
 
-## Hub, visuals and mobile support
+## Visuals and mobile support
 
-The main hub has four distinct tabs: **Kuźnia**, **Bitwa**, **Arsenał** and **Kodeks**. The visual direction is dark heroic fantasy with obsidian, iron and blood-ruby accents, Cinzel / Plus Jakarta Sans typography, detailed enemy art, cinematic parallax environments, animated UI feedback and a glass-fronted claw cabinet.
+The hub has four distinct tabs: **Kuźnia**, **Bitwa**, **Arsenał** and **Kodeks**. Combat uses a bright illustrated biome backdrop, a readable hero/enemy lineup, highlighted tactical tiles and a colorful acrylic claw cabinet. Shared glass-panel framing, rounded arcade controls, color-coded prize capsules and a clear phase/health HUD tie the screens together.
 
-The game uses a 450×800 logical playfield with aspect-safe scaling, a device-pixel-ratio canvas buffer (capped at 2.75) and matching touch-coordinate transforms. Portrait phone layouts, pointer capture/cancellation, keyboard input and PWA installation are supported.
+The game uses a 450×800 logical playfield with aspect-safe scaling, a device-pixel-ratio canvas buffer capped at **2.25**, and matching touch-coordinate transforms. Portrait phone layouts, pointer capture/cancellation, keyboard input and PWA installation are supported.
 
 ## Controls
 
@@ -67,9 +77,9 @@ The game uses a 450×800 logical playfield with aspect-safe scaling, a device-pi
 - **Tap an enemy** to select it; **Tab** cycles targets and **1–4** selects a target by order.
 - **Escape** pauses the expedition.
 
-## Technical direction and checks
+## Performance and automated checks
 
-The game uses Canvas 2D, procedural character drawings, deterministic turn resolution, a custom sphere-chamber physics solver and synthesized Web Audio. It does not use another game's sprites, source code, branding or audio.
+The prize chamber uses a **48 px spatial hash** for broad-phase sphere collision filtering. Only objects in adjacent buckets are tested as collision candidates; the detailed overlap solver, bounce response, mass distribution and floor/wall constraints remain in place. The frame update uses two physics substeps, while particles, floating combat labels and impact effects have bounded pools. Canvas rendering is capped at DPR 2.25 to reduce fill-rate cost on mobile devices.
 
 Run locally with Node.js 22:
 
@@ -78,10 +88,10 @@ npm install
 npm run dev
 ```
 
-Run the automated checks with:
+Run automated checks with:
 
 ```sh
 npm run build
 ```
 
-The GitHub Actions validation workflow runs the JavaScript/PWA checks and gameplay smoke tests on pushes to `main` and pull requests. GitHub Pages deployment is handled by the repository's Pages workflow.
+GitHub Actions runs JavaScript/PWA validation and gameplay smoke tests on pushes to `main` and pull requests. GitHub Pages deployment is handled by the repository's Pages workflow.

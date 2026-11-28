@@ -62,14 +62,16 @@ assert.equal(game.state.turnNumber, 1, "new run must begin on turn one");
 assert.ok(game.state.enemies.length > 0, "starting a run should spawn the first encounter");
 assert.equal(game.weaponCatalog.length, 5, "five differentiated weapons should be available");
 
-function placeCertainPrize(type = "coin") {
+function placeCertainPrize(type = "coin", quality = "normal") {
+  const offset = quality === "perfect" ? 0 : quality === "good" ? 8 : (game.state.clawX > 365 ? -14 : 14);
   game.state.machinePrizes = [{
     id: "smoke-prize-" + Math.random(), type,
-    x: game.state.clawX, y: 646, radius: 19, size: 1, phase: 0
+    x: game.state.clawX + offset, y: 646, radius: 19, size: 1, phase: 0,
+    ox: 0, oy: 0, vx: 0, vy: 0, mass: 361, angVel: 0, restitution: .3
   }];
 }
-function completeClaw(type = "coin") {
-  placeCertainPrize(type);
+function completeClaw(type = "coin", quality = "normal") {
+  placeCertainPrize(type, quality);
   assert.equal(game.deployClaw(), true, "one claw attempt should be available in the claw phase");
   assert.equal(game.deployClaw(), false, "a second claw attempt must be rejected in the same turn");
   for (let i = 0; i < 12; i++) game.update(0.1);
@@ -77,6 +79,43 @@ function completeClaw(type = "coin") {
   assert.equal(game.state.turnPhase, "hero", "completed claw phase must unlock exactly one hero action");
   assert.equal(game.state.clawUsedThisTurn, true, "claw usage must stay consumed until the next turn");
 }
+
+// Precision is based on actual claw alignment: clean center catches are better than a scrape.
+game.startRun(1);
+const perfectCountBefore = game.profile.perfectCatches || 0;
+const perfectCoinsBefore = game.profile.coins;
+completeClaw("coin", "perfect");
+assert.equal(game.state.lastGrabQuality, "perfect", "centered capsule should register a perfect grab");
+assert.equal(game.profile.perfectCatches, perfectCountBefore + 1, "perfect catches should be counted in the persistent profile");
+assert.ok(game.profile.coins >= perfectCoinsBefore + 4, "perfect catch should add its precision bonus plus the chamber threshold bonus");
+assert.ok(game.state.clawEmpowered >= 2, "perfect catch should empower the next hero attack");
+
+game.startRun(1);
+completeClaw("coin", "good");
+assert.equal(game.state.lastGrabQuality, "good", "small claw offset should register a good grab");
+assert.equal(game.state.perfectStreak, 0, "a non-perfect grab should break a perfect streak");
+
+// Five rare relic pieces rebuild one permanent attack rank.
+game.startRun(1);
+const attackRankBeforeRelic = game.profile.attackRank;
+for (let i = 0; i < 5; i++) game.reward("relic");
+assert.equal(game.profile.relicFragments, 0, "five relic fragments should be consumed when the set is restored");
+assert.equal(game.profile.attackRank, attackRankBeforeRelic + 1, "a complete relic should grant one permanent attack rank");
+assert.equal(game.loadProfile().attackRank, attackRankBeforeRelic + 1, "relic restoration should persist across sessions");
+
+// First defeat of a new species registers it in the permanent bestiary.
+game.startRun(1);
+const dragonEntriesBefore = game.profile.bestiaryDragon || 0;
+game.spawnEnemy("dragon");
+const codexDragon = game.state.enemies.at(-1);
+codexDragon.hp = 0;
+game.markDefeatedEnemies();
+assert.equal(game.profile.bestiaryDragon, dragonEntriesBefore + 1, "defeating a dragon should update the bestiary");
+
+// Restore the default title state for the subsequent existing test sequence.
+game.state.screen = "title";
+game.state.over = false;
+game.state.paused = false;
 
 game.startRun(1);
 assert.equal(game.state.machinePrizes.filter(prize => prize.type === "ball").length, 24,
@@ -412,7 +451,14 @@ assert.equal(game.state.stage, 2, "next-stage action should load stage two");
 
 game.state.screen = "title";
 game.interact(350, 735);
-assert.equal(game.state.helpOpen, true, "documentation button should open help");
+assert.equal(game.state.hubTab, "codex", "Kodeks tab should open the bestiary and collection page");
+assert.equal(game.state.helpOpen, false, "Kodeks should be a proper hub page, not the help overlay");
+game.render();
+game.interact(225, 683);
+assert.equal(game.state.hubTab, "battle", "Kodeks return action should return to the campaign board");
+game.interact(350, 735);
+game.state.helpOpen = true;
+game.render();
 game.interact(225, 558);
 assert.equal(game.state.helpOpen, true, "help instructions must not overlap the close button");
 game.interact(225, 590);

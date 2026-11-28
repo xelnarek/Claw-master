@@ -495,6 +495,8 @@ game.state.time = 0;
 game.state.machinePrizes = [{ id: "relic-capture", type: "coin", x: 245, y: 620, radius: 10, phase: 0 }];
 const relicLevel = game.profile.talentRelic;
 game.profile.talentRelic = 0;
+game.profile.clawRank = 0;
+game.state.runClawBonus = 0;
 assert.equal(game.getClawTargetCandidate(), null, "capture corridor should reject a target outside base tolerance");
 game.profile.talentRelic = relicLevel;
 assert.equal(game.getClawTargetCandidate()?.p?.id, "relic-capture", "Relic talent should widen the real capture corridor");

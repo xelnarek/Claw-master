@@ -20,7 +20,7 @@ const requiredFeatures = [
   "function drawTitle()", "function drawMenuScene()", "function drawBackground()", "function drawModalFrame(", "function drawModalBackdrop()", "function drawSettingsOverlay()",
   "function drawHelpOverlay()", "function drawHealth()", "function drawUpgradeOverlay()", "function drawTalentTree()",
   "function spawnStageWave()", "function completeStage()", "function advanceStage()",
-  "function purchaseUpgrade(kind)", "function beginPlayerTurn()", "function planEnemyIntents()",
+  "function purchaseUpgrade(kind)", "function purchaseTalent(kind)", "function getActiveSynergies()", "function tacticalMove(dir)", "function stepChamberPhysics(", "function updateChamberPhysics(", "function gainRunXp(", "function beginPlayerTurn()", "function planEnemyIntents()",
   "function resolveEnemyTurn()", "function checkEncounterClear()", "function generateMachinePrizes()",
   "function drawClawMachine()", "function drawAttackFx()", "function drawBuildStrip()", "function drawHeader()", "function drawCombatImpacts()", "function markDefeatedEnemies()",
   "function applyEnemyHit(", "const wid=activeWeapon.id", 'wid==="sidearm"', 'wid==="repeater"', 'wid==="scatter"', 'wid==="cannon"', 'wid==="laser"', "Contact shadow, grounding every creature", "Enemy intent is visible on the floor", "for(let i=0;i<13;i++)", "for(let i=0;i<6;i++)", "const stageCatalog=", "const abilityPool=",
@@ -29,7 +29,7 @@ const requiredFeatures = [
   "target.poisonTurns", "target.poisonDamage", "e.poisonTurns", "e.poisonDamage", "TRUCIZNA", "KOROZJA",
   "e.enraged", "e.spinesActive", "e.guard", 'action==="dive"', 'action==="slam"',
   "Material pass: bone ridges", "reactor seam", "#a8fff6", "KOLCE", "PANCERZ", "NURKOWANIE", "GNIEW",
-  "fire_elemental", "dragon", "golem", "hydra", "state.turnPhase", "state.heroActionUsedThisTurn",
+  "fire_elemental", "dragon", "golem", "hydra", "state.turnPhase", "state.heroActionUsedThisTurn", "state.heroMovedThisTurn", "state.talentTreeOpen", "profile.talentWarrior", "profile.talentRelic", "profile.talentAlchemist", "(profile.talentWarrior||0)*2",
   "state.clawUsedThisTurn", "function createFillerBall(", "function machinePrizePosition(", "function drawFillerBall(", "targetBallCount", "state.clawMode=\"grab\"", "viewTransform", "Math.min(cssWidth/W,cssHeight/H)", "clawGripDelay", "function beep(", "function spawnImpact(",
   "function drawCombatImpacts()", "const tx=rx+5", "rounded(-17,-5+step,14,7", "Enemy intent is visible on the floor", "Contact shadow, grounding every creature", "TACTICAL ARCADE  /  ROGUELITE", "THE RELIC VAULT", "meadow:{sky:[", "forest:{sky:[", "cave:{sky:[", "ruins:{sky:[", "boss:{sky:[", "shotFxTimer", "shotFxWeaponId", "caseAlpha", "const weaponCatalog=", "function fireWeapon(",
   "function combatAttack()", "function update(dt)"
@@ -79,6 +79,22 @@ for (const icon of manifest.icons ?? []) {
 }
 if (!html.includes('rel="manifest"') || !html.includes('serviceWorker.register("./sw.js")')) throw new Error("PWA manifest or service-worker registration is missing.");
 new Function(read("sw.js"));
+
+const smoke = read("scripts/gameplay-smoke.mjs");
+const requiredSmokeFeatures = [
+  "game.state.talentTreeOpen, true",
+  "game.currentWeaponDamage()",
+  "game.getClawTargetCandidate()",
+  "game.getActiveSynergies()",
+  "game.tacticalMove(-1)",
+  "game.stepChamberPhysics(",
+  "blocked-gem",
+  "fire_elemental", "dragon", "golem", "hydra"
+];
+for (const feature of requiredSmokeFeatures) {
+  if (!smoke.includes(feature)) throw new Error("Gameplay smoke coverage missing: " + feature);
+}
+if (!read("sw.js").includes("claw-quest-v20-aisync")) throw new Error("PWA cache version has not been advanced for the AI Studio sync.");
 
 console.log("PASS: JavaScript syntax and responsive mobile layout");
 console.log("PASS: turn state machine — claw, one hero action, enemy phase");

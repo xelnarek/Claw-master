@@ -418,9 +418,96 @@ assert.equal(game.state.helpOpen, true, "help instructions must not overlap the 
 game.interact(225, 590);
 assert.equal(game.state.helpOpen, false, "help close button should close the overlay");
 game.interact(90, 735);
-assert.equal(game.state.upgradesOpen, true, "arsenal button should open upgrades");
+assert.equal(game.state.upgradesOpen, true, "forge tab should open permanent upgrades");
+
+// The talent tree must be a working menu, not a decorative drawing.
+game.profile.coins = 400;
+game.state.coins = 400;
+game.saveProfile();
+game.interact(150, 580);
+assert.equal(game.state.talentTreeOpen, true, "forge should open the talent tree");
+game.render();
+game.state.weaponId = "sidearm";
+game.state.runDamageBonus = 0;
+const weaponDamageBeforeTalent = game.currentWeaponDamage();
+const warriorCoinsBefore = game.profile.coins;
+game.interact(345, 325);
+assert.equal(game.profile.talentWarrior, 1, "Warrior talent should be purchasable");
+assert.equal(game.profile.coins, warriorCoinsBefore - 30, "Warrior talent should deduct its cost");
+assert.equal(game.currentWeaponDamage(), weaponDamageBeforeTalent + 2, "Warrior talent should improve actual weapon damage");
+assert.equal(game.loadProfile().talentWarrior, 1, "Warrior talent level should persist in the local profile");
+
+const relicCoinsBefore = game.profile.coins;
+game.interact(345, 415);
+assert.equal(game.profile.talentRelic, 1, "Relic talent should be purchasable");
+assert.equal(game.profile.coins, relicCoinsBefore - 25, "Relic talent should deduct its cost");
+game.state.clawX = 220;
+game.state.time = 0;
+game.state.machinePrizes = [{ id: "relic-capture", type: "coin", x: 245, y: 620, radius: 10, phase: 0 }];
+const relicLevel = game.profile.talentRelic;
+game.profile.talentRelic = 0;
+assert.equal(game.getClawTargetCandidate(), null, "capture corridor should reject a target outside base tolerance");
+game.profile.talentRelic = relicLevel;
+assert.equal(game.getClawTargetCandidate()?.p?.id, "relic-capture", "Relic talent should widen the real capture corridor");
+
+game.interact(345, 505);
+assert.equal(game.profile.talentAlchemist, 1, "Alchemist talent should be purchasable");
+assert.equal(game.loadProfile().talentRelic, 1, "Relic talent should persist");
+assert.equal(game.loadProfile().talentAlchemist, 1, "Alchemist talent should persist");
+game.state.runVenom = 1;
+const talentPoisonTarget = { x: 300, y: 380, type: "goblin", hp: 100, maxHp: 100, guard: 0, dying: false, hit: 0, bleedTurns: 0, bleedDamage: 0, poisonTurns: 0, poisonDamage: 0, spinesActive: false, lastThornsTurn: -1 };
+game.applyWeaponDamage(talentPoisonTarget, 2, game.weaponCatalog[0]);
+assert.equal(talentPoisonTarget.poisonDamage, 2, "Alchemist talent should improve actual poison damage");
+game.interact(220, 590);
+assert.equal(game.state.talentTreeOpen, false, "talent-tree close button should return to the forge");
+assert.equal(game.state.upgradesOpen, true, "closing the talent tree should preserve the forge screen");
 listeners.get("window:keydown")({ key: "Escape", preventDefault() {} });
-assert.equal(game.state.upgradesOpen, false, "Escape should close the upgrades overlay");
+assert.equal(game.state.upgradesOpen, false, "Escape should close the forge overlay");
+
+// Every run should expose four genuine, selectable build synergies.
+const skillPairs = [
+  ["korozja", ["venom", "bleed"]],
+  ["bastion", ["ward", "riposte"]],
+  ["furia", ["edge", "execution"]],
+  ["zloto", ["claw", "fortune"]]
+];
+for (const [synergyId, skillIds] of skillPairs) {
+  game.startRun(1);
+  for (const id of skillIds) {
+    game.state.levelChoices = [game.abilityPool.find(skill => skill.id === id)];
+    game.state.pendingLevelUps = 1;
+    assert.equal(game.chooseAbility(0), true, id + " should be selectable for " + synergyId);
+  }
+  assert.ok(game.getActiveSynergies().some(syn => syn.id === synergyId), synergyId + " should activate after taking its required skills");
+}
+
+// Tactical reposition is a free single movement before the single committed attack.
+game.startRun(1);
+completeClaw("coin");
+const shieldBeforeStep = game.state.shield;
+assert.equal(game.tacticalMove(-1), true, "one retreat step should be available in the hero phase");
+assert.equal(game.state.heroMovedThisTurn, true, "tactical movement should be tracked once per turn");
+assert.equal(game.state.shield, shieldBeforeStep + 3, "retreat should grant three shield");
+assert.equal(game.tacticalMove(-1), false, "a second tactical movement must be rejected in the same turn");
+assert.equal(game.canHeroAct(), true, "tactical movement must not consume the weapon attack");
+assert.equal(game.combatAttack(), true, "the hero should still be able to attack after repositioning");
+
+// The claw chamber uses gravity, sphere collisions and persistent ball body properties.
+game.startRun(1);
+const ordinaryBalls = game.state.machinePrizes.filter(p => p.type === "ball");
+assert.equal(ordinaryBalls.length, 24, "fresh run should contain 24 ordinary balls");
+assert.ok(ordinaryBalls.every(p => Number.isFinite(p.mass) && Number.isFinite(p.vx) && Number.isFinite(p.vy)),
+  "filler balls must carry physics body state");
+const fallingBall = { id: "gravity", type: "ball", x: 220, y: 600, vx: 0, vy: 0, radius: 10, mass: 100, restitution: .42, angVel: 0, color: "#fff" };
+game.stepChamberPhysics(1 / 60, false, [fallingBall]);
+assert.ok(fallingBall.y > 600, "gravity should move a free ball downwards");
+const collidingBalls = [
+  { id: "a", type: "ball", x: 200, y: 620, vx: 0, vy: 0, radius: 10, mass: 100, restitution: .42, angVel: 0 },
+  { id: "b", type: "ball", x: 205, y: 620, vx: 0, vy: 0, radius: 10, mass: 100, restitution: .42, angVel: 0 }
+];
+game.stepChamberPhysics(1 / 60, false, collidingBalls);
+assert.ok(Math.hypot(collidingBalls[0].x - collidingBalls[1].x, collidingBalls[0].y - collidingBalls[1].y) >= 19.9,
+  "ordinary balls should resolve physical overlap instead of occupying the same point");
 
 game.startRun(1);
 listeners.get("canvas:pointerdown")({ clientX: 120, clientY: 600, pointerId: 1 });
@@ -468,7 +555,7 @@ for (const weaponId of ["sidearm", "repeater", "scatter", "cannon", "laser"]) {
  game.state.shotFxTimer = .18;
  game.render();
 }
-for (const enemyType of ["slime", "bat", "porcupine", "goblin", "boss"]) {
+for (const enemyType of ["slime", "bat", "porcupine", "goblin", "fire_elemental", "dragon", "golem", "hydra", "boss"]) {
  game.state.enemies = [];
  game.spawnEnemy(enemyType);
  const enemy = game.state.enemies[0];
@@ -484,5 +571,7 @@ game.state.levelChoices = game.abilityPool.slice(0, 3); game.render(); game.stat
 game.state.stageCleared = true; game.render(); game.state.stageCleared = false;
 game.state.over = true; game.render(); game.state.over = false;
 
-console.log("PASS: title menu, help panel and keyboard-close behavior");
-console.log("PASS: five distinct weapon silhouettes, muzzle flashes and five enemy model render paths");
+console.log("PASS: title menu, Forge, Talent Tree, help panel and keyboard-close behavior");
+console.log("PASS: talent levels persist and modify weapon damage, claw tolerance and poison damage");
+console.log("PASS: four run synergies, tactical movement and physics-based claw chamber");
+console.log("PASS: five distinct weapon silhouettes, muzzle flashes and nine enemy model render paths");

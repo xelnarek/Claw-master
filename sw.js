@@ -1,4 +1,4 @@
-const CACHE_NAME = "claw-quest-v20-aisync";
+const CACHE_NAME = "claw-quest-v21-arcade-refresh";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {

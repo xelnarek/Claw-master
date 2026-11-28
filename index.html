@@ -1559,26 +1559,9 @@ function drawMenuScene(){
  for(let i=0;i<8;i++){const x=i*64+13;ctx.fillStyle="#ffffff4a";ctx.beginPath();ctx.ellipse(x,466,21,4,0,0,Math.PI*2);ctx.fill()}
 }
 function drawHubTabBar(){
- const ink="#07050a";
- rounded(10,716,430,68,14,"#1f1526",ink,2.6);
- rounded(14,720,422,60,11,"#110a17","#8f142e44",1.2);
- const tabs=[
-  {id:"forge",x:20,w:98,icon:"⚒",label:"KUŹNIA",tone:"#ff7a42"},
-  {id:"battle",x:124,w:98,icon:"⚔",label:"BITWA",tone:"#cf2742"},
-  {id:"arsenal",x:228,w:98,icon:"❖",label:"ARSENAŁ",tone:"#3898ec"},
-  {id:"codex",x:332,w:98,icon:"◈",label:"KODEKS",tone:"#a872ff"}
- ];
- for(const t of tabs){
-  const active=(t.id==="forge"&&(state.upgradesOpen||state.talentTreeOpen))||(t.id==="codex"&&state.helpOpen)||(!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&state.hubTab===t.id);
-  const topY=active?721:725,h=active?55:50;
-  rounded(t.x,topY+2,t.w,h,10,ink);
-  rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#211728",ink,2.2);
-  ctx.save();ctx.globalAlpha=active?.35:.14;ctx.fillStyle="#ffffff";
-  rounded(t.x+4,topY+2,t.w-8,12,6,"#ffffff");ctx.restore();
-  if(active)glow(t.x+t.w/2,topY+24,32,t.tone,.28);
-  inkText(t.icon,t.x+t.w/2,topY+18,16,active?"#ffffff":"#d6bea0",ink,2.4,"center",UI_FONT);
-  inkText(t.label,t.x+t.w/2,topY+38,8.8,active?"#ffffff":"#c4ad95",ink,2.2,"center",DISPLAY_FONT);
- }
+ rounded(10,716,430,68,14,"#b7d4e5","#42627d",2.2);rounded(15,721,420,58,11,"#e7f5fd","#a7c7da",1.3);
+ const tabs=[{id:"forge",x:20,w:98,icon:"⚒",label:"KUŹNIA",tone:"#eab04d"},{id:"battle",x:124,w:98,icon:"⚔",label:"BITWA",tone:"#e4775d"},{id:"arsenal",x:228,w:98,icon:"❖",label:"ARSENAŁ",tone:"#57b9d7"},{id:"codex",x:332,w:98,icon:"◈",label:"KODEKS",tone:"#9c8bdb"}];
+ for(const t of tabs){const active=(t.id==="forge"&&(state.upgradesOpen||state.talentTreeOpen))||(t.id==="codex"&&state.hubTab==="codex"&&!state.helpOpen)||(!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&state.hubTab===t.id),topY=active?721:725,h=active?55:50;rounded(t.x,topY+2,t.w,h,10,"#8faec4");rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#f8fdff",active?"#45637b":"#b3cbd9",1.5);ctx.save();ctx.globalAlpha=.36;ctx.fillStyle="#fff";rounded(t.x+4,topY+2,t.w-8,12,6,"#fff");ctx.restore();if(active)glow(t.x+t.w/2,topY+24,32,t.tone,.22);inkText(t.icon,t.x+t.w/2,topY+18,16,active?"#fff":"#45637b",active?"#45637b":"#fff",1.1,"center",UI_FONT);inkText(t.label,t.x+t.w/2,topY+38,8.8,active?"#fff":"#55728b",active?"#45637b":"#fff",1.1,"center",DISPLAY_FONT)}
 }
 function drawArsenalTab(){
  const ink="#07050a";
@@ -1618,66 +1601,24 @@ function drawArsenalTab(){
  text("FURIA ETERU (Kryt+Ostrze/Burza) • ZŁOTY CHWYT (Fortuna+Pazur)",225,682,6.6,"#ffe58f",900,"center");
 }
 function drawTitle(){
- const ink="#07050a";
- const activeStage=clamp(state.hubStage||profile.unlockedStage,1,profile.unlockedStage);
- const def=stageDefinition(activeStage);
- if(state.hubTab==="arsenal"&&!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&!state.settingsOpen){
-  drawArsenalTab();
- }else if(state.hubTab==="codex"&&!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&!state.settingsOpen){
-  drawCodexTab();
- }else{
-  drawMenuScene();
-  // Forged Dark-Iron & Blood-Ruby Monster Hunter Mission Ledger
-  rounded(21,497,408,214,15,ink);
-  rounded(23,495,404,212,14,"#221626",ink,2.6);
-  rounded(28,500,394,202,11,"#120c18","#8f142e3b",1.2);
-  rounded(23,495,404,10,8,"#7a1125",ink,2);
-  ctx.fillStyle="#cf2742";ctx.fillRect(38,516,4,18);
-  inkText("01  /  TABLICA WYPRAW",50,524,9,"#ffd580",ink,2,"left",DISPLAY_FONT);
-  if(profile.unlockedStage>1){
-   rounded(334,512,34,23,6,"#243c68",ink,2);inkText("◀",351,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
-   rounded(373,512,34,23,6,"#243c68",ink,2);inkText("▶",390,523.5,9,"#ffffff",ink,1.8,"center",UI_FONT);
-  }else{
-   rounded(320,512,88,22,7,"#154d3d",ink,1.8);
-   text(def.waves.length+" FALE • +"+def.coins+"◆",364,523,7.2,"#b8ffea",900,"center");
-  }
-  inkText("ROZDZIAŁ "+String(activeStage).padStart(2,"0")+" • "+def.title.toUpperCase(),42,548,14,"#ffffff",ink,2.8,"left",DISPLAY_FONT);
-  ctx.fillStyle="#e3d0ba";ctx.font="700 7.2px "+UI_FONT;ctx.textAlign="left";ctx.textBaseline="middle";
-  ctx.fillText(def.objective,42,566,364);
-  const previewTypes=[...new Set(def.waves.flat())].map(t=>enemyName({type:t})).join(", ");
-  text("ZAGROŻENIA: "+previewTypes.toUpperCase(),42,579,6.7,"#ff4d6d",900);
-  rounded(42,589,366,7,3.5,"#0b070f",ink,1.5);
-  const prog=clamp((activeStage-1)/Math.max(1,profile.unlockedStage),.08,1);rounded(44,590.5,362*prog,4,2,"#cf2742");
-  const stats=[["RANGA",String(profile.level),"#ffe075","#26182c"],["REKORD ETAPU",String(profile.bestStage),"#ff8ea5","#381424"],["NAGRODA",def.waves.length+" FALE • +"+def.coins+"◆","#9effcf","#16382b"]];
-  for(let i=0;i<3;i++){
-   const x=42+i*123;rounded(x,602,115,39,8,stats[i][3],ink,2);
-   text(stats[i][0],x+10,613,6.4,"#d6bfa8",800);
-   inkText(stats[i][1],x+10,629,i===2?9.4:13,stats[i][2],ink,2,"left",DISPLAY_FONT);
-  }
-  line(42,649,408,649,"#ffffff22",1.2);
-  button(43,660,364,44,"ROZPOCZNIJ WYPRAWĘ","MISJA  /  "+def.title.toUpperCase(),true,"red");
+ const activeStage=clamp(state.hubStage||profile.unlockedStage,1,profile.unlockedStage),def=stageDefinition(activeStage);
+ if(state.hubTab==="arsenal"&&!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&!state.settingsOpen)drawArsenalTab();
+ else if(state.hubTab==="codex"&&!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&!state.settingsOpen)drawCodexTab();
+ else{
+  drawMenuScene();rounded(21,497,408,214,16,"#dceefa","#345875",2.4);rounded(27,502,396,201,12,"#fff","#a8cde4",1.4);rounded(27,502,396,11,8,"#58b9df","#345875",1.5);rounded(38,516,4,18,2,"#ffbd50");inkText("01  /  TABLICA WYPRAW",50,524,9,"#38516b","#fff",1.7,"left",DISPLAY_FONT);
+  if(profile.unlockedStage>1){rounded(334,512,34,23,7,"#62c6e7","#2c718f",1.5);inkText("◀",351,523.5,9,"#fff","#2c718f",1.2,"center",UI_FONT);rounded(373,512,34,23,7,"#62c6e7","#2c718f",1.5);inkText("▶",390,523.5,9,"#fff","#2c718f",1.2,"center",UI_FONT)}
+  else{rounded(320,512,88,22,7,"#daf6e7","#69ae8f",1.3);text(def.waves.length+" FALE • +"+def.coins+"◆",364,523,7.2,"#34765e",900,"center")}
+  inkText("ROZDZIAŁ "+String(activeStage).padStart(2,"0")+" • "+def.title.toUpperCase(),42,548,13.2,"#26445f","#fff",1.6,"left",DISPLAY_FONT);ctx.fillStyle="#607e95";ctx.font="700 7.2px "+UI_FONT;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(def.objective,42,566,364);
+  const preview=[...new Set(def.waves.flat())].map(t=>enemyName({type:t})).join(", ");text("ZAGROŻENIA: "+preview.toUpperCase(),42,579,6.7,"#d46a66",900);rounded(42,589,366,7,3.5,"#dce8f1","#9fb8ca",1);const prog=clamp((activeStage-1)/Math.max(1,profile.unlockedStage),.08,1);rounded(44,590.5,362*prog,4,2,"#47b9dc");
+  const stats=[["RANGA",String(profile.level),"#d78d2e","#fff1d2"],["REKORD ETAPU",String(profile.bestStage),"#3889b5","#e4f6ff"],["NAGRODA",def.waves.length+" FALE • +"+def.coins+"◆","#348d70","#e4fff2"]];
+  for(let i=0;i<3;i++){const x=42+i*123;rounded(x,602,115,39,8,stats[i][3],"#adc5d7",1.2);text(stats[i][0],x+10,613,6.4,"#607d94",800);inkText(stats[i][1],x+10,629,i===2?9.4:13,stats[i][2],stats[i][3],1,"left",DISPLAY_FONT)}
+  line(42,649,408,649,"#b5cad8",1.2);button(43,660,364,44,"ROZPOCZNIJ WYPRAWĘ","MISJA / "+def.title.toUpperCase(),true,"red");
  }
- // Top Title Emblem Header Plate (Carved Obsidian & Blood-Ruby Crest)
- rounded(15,18,420,111,16,ink);
- rounded(17,15,416,110,15,"#251a2d",ink,2.8);
- rounded(22,20,406,100,12,"#120c18","#8f142e44",1.2);
- ctx.fillStyle="#ffffff12";rounded(24,22,402,22,8,"#ffffff");
- glow(126,64,74,"#8f142e",.26);
- text("TACTICAL ARCADE  /  ROGUELITE",38,34,7.4,"#ff8ea3",900);
- inkText("CLAW",38,65,30,"#ffd754",ink,4.2,"left",DISPLAY_FONT);
- inkText("QUEST",132,65,30,"#ff2e4c",ink,4.2,"left",DISPLAY_FONT);
- text("THE RELIC VAULT  /  PRECISION ROGUELITE",38,98,7,"#d6bfa8",800);
- line(262,32,262,107,"#8f142e44",1.4);
- rounded(272,27,108,22,7,"#221629",ink,1.8);inkText("◆ "+profile.coins,326,38,9.5,"#ffe370",ink,2,"center",DISPLAY_FONT);
- text("ETAP "+String(activeStage).padStart(2,"0")+"/"+String(profile.unlockedStage).padStart(2,"0"),274,62,9,"#ffffff",900);
- text("REKORD "+profile.bestScore,274,80,7.8,"#edd3b2",800);
- rounded(274,92,98,7,3,"#0d0813",ink,1.4);rounded(275,93,96*clamp(profile.xp/Math.max(1,profile.level*30),.08,1),5,2,"#4af0d4");
- text("POZ. "+profile.level,274,108,6.8,"#9cecff",900);
- // Settings gear button (exact hitbox x=382..428, y=22..66)
- rounded(388,30,32,32,8,ink);
- rounded(388,28,32,32,8,"#381c2e",ink,2.2);
- inkText("⚙",404,44,16,"#ffe075",ink,2,"center",UI_FONT);
- drawHubTabBar();
+ rounded(15,18,420,111,17,"#284f72","#213d59",2.4);rounded(20,23,410,101,13,"#e8f7ff","#8bb9d6",1.8);
+ const hg=ctx.createLinearGradient(20,23,420,124);hg.addColorStop(0,"#fff");hg.addColorStop(.52,"#eafaff");hg.addColorStop(1,"#c5e7f6");rounded(22,25,406,97,11,hg,"#b7d5e5",1);glow(126,65,72,"#69d7f0",.24);
+ text("ARCADE ROGUELITE / NIGHT EXPEDITION",38,39,7.2,"#4c7a96",900);inkText("CLAW",38,73,30,"#315675","#fff",2.1,"left",DISPLAY_FONT);inkText("QUEST",132,73,30,"#ef9250","#fff",2.1,"left",DISPLAY_FONT);text("MASTER THE CLAW • BUILD YOUR HERO",38,102,7,"#557b94",900);line(262,34,262,112,"#a3c7d9",1.2);
+ rounded(272,31,108,22,7,"#fff1c8","#d9b866",1.3);inkText("◆ "+profile.coins,326,42,9.5,"#a56e22","#fff8e9",1.1,"center",DISPLAY_FONT);text("ETAP "+String(activeStage).padStart(2,"0")+"/"+String(profile.unlockedStage).padStart(2,"0"),274,65,9,"#385f7c",900);text("REKORD "+profile.bestScore,274,83,7.8,"#617f95",800);rounded(274,94,98,7,3,"#d8e6ef","#96b4c6",1);rounded(275,95,96*clamp(profile.xp/Math.max(1,profile.level*30),.08,1),5,2,"#54c5a1");text("POZ. "+profile.level,274,110,6.8,"#347d9b",900);
+ rounded(388,30,32,32,9,"#fff","#8eb7cf",1.5);rounded(389,30,30,13,6,"#fff");inkText("⚙",404,46,16,"#43627e","#fff",1.2,"center",UI_FONT);drawHubTabBar();
 }
 function drawSettingsOverlay(){const ink="#294966";drawModalBackdrop();drawModalFrame(35,226,380,354,"#63c4e7");inkText("USTAWIENIA",225,264,18,"#315674","#ffffff",1.2,"center",DISPLAY_FONT);text("KONFIGURACJA SESJI",225,286,8,"#63839a",900,"center");line(62,306,388,306,"#b5d1e0",1.2);rounded(57,323,336,69,10,"#ffffff","#bed4e1",1.3);ctx.fillStyle="#58b9a2";ctx.fillRect(59,327,4,61);text("01 / DŹWIĘK",76,345,11,"#315674",900);text("Sygnały interfejsu i efekty audio",76,369,8.5,"#718ba0",700);button(284,338,96,39,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound,state.sound?"teal":"dim");rounded(57,405,336,69,10,"#ffffff","#bed4e1",1.3);ctx.fillStyle="#57b7df";ctx.fillRect(59,409,4,61);text("02 / EFEKTY WIZUALNE",76,427,11,"#315674",900);text("Poświaty, cząsteczki i drobne animacje",76,451,8.2,"#718ba0",700);button(284,420,96,39,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects,state.effects?"teal":"dim");line(62,490,388,490,"#b5d1e0",1.2);text("Zmiany są zapisywane automatycznie na tym urządzeniu.",225,507,8,"#70889a",700,"center");button(112,521,226,42,"ZAMKNIJ USTAWIENIA","",true,"blue")}
 function drawHelpOverlay(){
@@ -1711,33 +1652,10 @@ function drawHelpOverlay(){
  button(112,575,226,30,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawUpgradeOverlay(){
- const ink="#07050a";
- drawModalBackdrop();
- drawModalFrame(32,202,386,410,"#8f142e");
- inkText("KUŹNIA / ROZWÓJ",225,240,18,"#ffffff",ink,3,"center",DISPLAY_FONT);
- text("STAŁE MODYFIKATORA BOHATERA",225,262,8,"#ffbd8a",800,"center");
- line(58,282,392,282,"#ffffff26",1.2);
- const items=[
-  {rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń każdej broni",cost:30+profile.attackRank*20,code:"ATK",color:"#ffb65c"},
-  {rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20,code:"HP",color:"#ff7e9c"},
-  {rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18,code:"CLAW",color:"#72e8dd"}
- ];
- let y=297;
- for(const item of items){
-  rounded(57,y,336,74,9,"#18101e",ink,2);
-  ctx.fillStyle=item.color;ctx.fillRect(59,y+4,4,66);
-  rounded(67,y+12,34,34,7,"#100a16",item.color,1.8);
-  inkText(item.code,84,y+29,8.5,item.color,ink,1.8,"center",DISPLAY_FONT);
-  text(item.title,111,y+18,10,"#ffffff",900);
-  text(item.desc,111,y+37,8,"#d4c2ae",700);
-  text("POZIOM "+item.rank,111,y+56,7,"#ffd670",800);
-  for(let p=0;p<6;p++){rounded(168+p*14,y+53,10,5,2,p<item.rank?item.color:"#251829",ink,1)}
-  button(285,y+16,96,42,String(item.cost),"KREDYTÓW",profile.coins>=item.cost,profile.coins>=item.cost?"gold":"dim");
-  y+=81;
- }
- inkText("DOSTĘPNE KREDYTY  /  ◆ "+profile.coins,225,547,9.5,"#ffe075",ink,2,"center",DISPLAY_FONT);
- button(48,562,205,38,"DRZEWKO TALENTÓW","ROZWIJAJ TALENTY",true,"gold");
- button(263,562,138,38,"WRÓĆ DO BAZY","",true,"blue");
+ drawModalBackdrop();drawModalFrame(32,202,386,410,"#e3b45e");inkText("KUŹNIA / ROZWÓJ",225,240,18,"#315674","#fff",1.4,"center",DISPLAY_FONT);text("STAŁE MODYFIKATORY BOHATERA",225,262,8,"#6b879b",900,"center");line(58,282,392,282,"#b5d1e0",1.2);
+ const items=[{rank:profile.attackRank,title:"MOC ATAKU",desc:"+1 obrażeń każdej broni",cost:30+profile.attackRank*20,code:"ATK",color:"#eea25c"},{rank:profile.vitalityRank,title:"ŻYWOTNOŚĆ",desc:"+15 maksymalnego zdrowia",cost:35+profile.vitalityRank*20,code:"HP",color:"#e8839b"},{rank:profile.clawRank,title:"PRECYZJA CHWYTAKA",desc:"+4 px tolerancji chwytu",cost:25+profile.clawRank*18,code:"CLAW",color:"#63bdb3"}];
+ let y=297;for(const item of items){rounded(57,y,336,74,10,"#fff","#c3d9e3",1.4);ctx.fillStyle=item.color;ctx.fillRect(59,y+4,4,66);rounded(67,y+12,34,34,8,"#f0f8fc",item.color,1.8);inkText(item.code,84,y+29,8.5,item.color,"#fff",1.1,"center",DISPLAY_FONT);text(item.title,111,y+18,10,"#315674",900);text(item.desc,111,y+37,8,"#70899a",700);text("POZIOM "+item.rank,111,y+56,7,"#967948",800);for(let p=0;p<6;p++)rounded(168+p*14,y+53,10,5,2,p<item.rank?item.color:"#dbe8ed","#b7cbd4",.7);button(285,y+16,96,42,String(item.cost),"KREDYTÓW",profile.coins>=item.cost,profile.coins>=item.cost?"gold":"dim");y+=81}
+ inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,547,9.5,"#956c31","#fff9e7",1,"center",DISPLAY_FONT);button(48,562,205,38,"DRZEWKO TALENTÓW","ROZWIJAJ TALENTY",true,"gold");button(263,562,138,38,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawLevelChoiceOverlay(){
  const ink="#07050a";
@@ -2368,30 +2286,11 @@ function update(dt){
  if(state.turnPhase==="transition"&&state.enemies.length===0)checkEncounterClear();
 }
  function drawTalentTree(){
-  const ink="#07050a";
-  drawModalBackdrop();
-  drawModalFrame(32,198,386,414,"#8f142e");
-  inkText("DRZEWKO TALENTÓW",225,234,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
-  text("GAŁĘZIE ROZWOJU ŁOWCY BESTII • WYBIERZ TALENT",225,255,7.4,"#ffd58a",800,"center");
-  line(59,272,391,272,"#ffffff26",1.2);
-  const talents=[
-   {id:"warrior",name:"Męstwo Wojownika",desc:"+2 obrażenia ataku na poziom",cost:30,level:profile.talentWarrior||0,color:"#ff4d6d"},
-   {id:"relic",name:"Magia Reliktów",desc:"+4 px tolerancji i złoty chwyt",cost:25,level:profile.talentRelic||0,color:"#ffaa42"},
-   {id:"alchemist",name:"Alchemia Trucizn",desc:"+1 obrażenia statusu trucizny",cost:35,level:profile.talentAlchemist||0,color:"#4ade80"}
-  ];
-  let y=288;
-  for(const t of talents){
-   rounded(45,y,360,82,9,"#18101e",ink,2);
-   ctx.fillStyle=t.color;ctx.fillRect(47,y+4,4,74);
-   inkText(t.name,108,y+18,10.5,"#ffffff",ink,2,"left",DISPLAY_FONT);
-   text(t.desc,108,y+38,7.8,"#d4c2ae",700);
-   text("POZ. "+t.level+"/3 • KOSZT: "+t.cost+"◆",108,y+58,7.4,"#ffd670",800);
-   button(300,y+18,90,38,t.level>=3?"MAKS":"ROZWIŃ",t.level<3?t.cost+"◆":"GOTOWE",t.level<3&&profile.coins>=t.cost,t.level<3&&profile.coins>=t.cost?"gold":"dim");
-   y+=90;
-  }
-  inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,564,9.2,"#ffe075",ink,2,"center",DISPLAY_FONT);
-  button(112,578,226,30,"WRÓĆ DO KUŹNI","",true,"blue");
- }
+ drawModalBackdrop();drawModalFrame(32,198,386,414,"#e3b45e");inkText("DRZEWKO TALENTÓW",225,234,17,"#315674","#fff",1.3,"center",DISPLAY_FONT);text("GAŁĘZIE ROZWOJU ŁOWCY BESTII • WYBIERZ TALENT",225,255,7.4,"#63839a",900,"center");line(59,272,391,272,"#b5d1e0",1.2);
+ const talents=[{id:"warrior",name:"Męstwo Wojownika",desc:"+2 obrażenia ataku na poziom",cost:30,level:profile.talentWarrior||0,color:"#e77d85"},{id:"relic",name:"Magia Reliktów",desc:"+4 px tolerancji i złoty chwyt",cost:25,level:profile.talentRelic||0,color:"#e7b257"},{id:"alchemist",name:"Alchemia Trucizn",desc:"+1 obrażenia statusu trucizny",cost:35,level:profile.talentAlchemist||0,color:"#60b99e"}];
+ let y=288;for(const t of talents){rounded(45,y,360,82,10,"#fff","#c5dbe5",1.4);ctx.fillStyle=t.color;ctx.fillRect(47,y+4,4,74);rounded(60,y+14,38,38,8,t.color+"33",t.color,1.3);inkText(t.id==="warrior"?"⚔":t.id==="relic"?"◆":"✦",79,y+34,16,t.color,"#fff",1.1,"center",DISPLAY_FONT);inkText(t.name,108,y+18,10.5,"#315674","#fff",1,"left",DISPLAY_FONT);text(t.desc,108,y+38,7.8,"#70899a",700);text("POZ. "+t.level+"/3 • KOSZT: "+t.cost+"◆",108,y+58,7.4,"#967948",900);button(300,y+18,90,38,t.level>=3?"MAKS":"ROZWIŃ",t.level<3?t.cost+"◆":"GOTOWE",t.level<3&&profile.coins>=t.cost,t.level<3&&profile.coins>=t.cost?"gold":"dim");y+=90}
+ inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,564,9.2,"#956c31","#fff9e7",1,"center",DISPLAY_FONT);button(112,578,226,30,"WRÓĆ DO KUŹNI","",true,"blue");
+}
  function frame(ts){
  const dt=Math.min(.033,(ts-state.last)/1000||0);state.last=ts;
  update(dt);draw();requestAnimationFrame(frame);

@@ -1318,70 +1318,54 @@ function impulseChamber(strength=50,centerX=225){
 }
 function stepChamberPhysics(h,withClaw=true,list=state.machinePrizes){
  if(!list||!list.length)return;
- const n=list.length;
- const activeClaw=withClaw&&(state.clawMode==="down"||state.clawMode==="grab"||state.clawMode==="return");
- const gripProgress=state.clawMode==="grab"?1-clamp(state.clawGripDelay/.17,0,1):0;
- const gripEase=gripProgress*gripProgress*(3-2*gripProgress);
+ const n=list.length,activeClaw=withClaw&&(state.clawMode==="down"||state.clawMode==="grab"||state.clawMode==="return");
+ const grip=state.clawMode==="grab"?1-clamp(state.clawGripDelay/.17,0,1):0,gripEase=grip*grip*(3-2*grip);
  const spread=state.clawMode==="down"?22:state.clawMode==="grab"?22-19*gripEase:state.clawMode==="return"?7:19;
  const magnet=withClaw&&(state.runClawBonus>0||profile.clawRank>0)?(state.runClawBonus*.6+profile.clawRank*2):0;
  const airDrag=Math.exp(-1.1*h),angDrag=Math.exp(-3.2*h);
  for(let i=0;i<n;i++){
-  const p=ensurePrizeBody(list[i]);
-  const r=p.radius||10,floorY=chamberFloorY(p.x)-r,floorGap=Math.max(0,floorY-p.y);
-  const nearFloor=floorGap<46?1-floorGap/46:0;
-  // Stronger gravity + gentle downward seating force near the chamber floor to stabilize stacks and stop floating
+  const p=ensurePrizeBody(list[i]),r=p.radius||10,floorY=chamberFloorY(p.x)-r,floorGap=Math.max(0,floorY-p.y),nearFloor=floorGap<46?1-floorGap/46:0;
   p.vy+=(720*(1+nearFloor*.65)+(nearFloor>0&&Math.abs(p.vy)<32?24*nearFloor:0))*h;
   if(activeClaw){
    const dx=p.x-state.clawX,dy=p.y-(state.clawY+8),dist=Math.hypot(dx,dy);
-   if(p.type!=="ball"&&magnet>0&&dist<72&&Math.abs(dx)>4){
-    const pull=(1-dist/72)*Math.min(180,55+magnet*8)*h;
-    p.vx-=(dx/Math.max(1,dist))*pull;p.vy-=(dy/Math.max(1,dist))*pull*.25;
-   }
+   if(p.type!=="ball"&&magnet>0&&dist<72&&Math.abs(dx)>4){const pull=(1-dist/72)*Math.min(180,55+magnet*8)*h;p.vx-=(dx/Math.max(1,dist))*pull;p.vy-=(dy/Math.max(1,dist))*pull*.25}
    for(const [cx,cy,cr] of [[state.clawX-spread,state.clawY+11,5.5],[state.clawX+spread,state.clawY+11,5.5],[state.clawX,state.clawY-17,11]]){
     const pdx=p.x-cx,pdy=p.y-cy,minD=r+cr,dSq=pdx*pdx+pdy*pdy;
-    if(dSq<minD*minD&&dSq>.0001){
-     const d=Math.sqrt(dSq),nx=pdx/d,ny=pdy/d,pen=minD-d;
-     p.x+=nx*pen*.75;p.y+=ny*pen*.75;
-     p.vx+=nx*130*h;p.vy+=ny*130*h;
-     p.angVel+=nx*4*h;
-    }
+    if(dSq<minD*minD&&dSq>.0001){const d=Math.sqrt(dSq),nx=pdx/d,ny=pdy/d,pen=minD-d;p.x+=nx*pen*.75;p.y+=ny*pen*.75;p.vx+=nx*130*h;p.vy+=ny*130*h;p.angVel+=nx*4*h}
    }
   }
   p.vx*=airDrag;p.vy*=airDrag;p.angVel*=angDrag;
   if(nearFloor>.5&&Math.hypot(p.vx,p.vy)<5){p.vx*=Math.exp(-10*h);p.angVel*=Math.exp(-10*h)}
   p.x+=p.vx*h;p.y+=p.vy*h;p.angle+=p.angVel*h;
  }
- // Multi-iteration rigid sphere collision solver for crisp stacking & rolling
+ // Uniform spatial buckets reduce all-pairs collision checks to nearby chamber occupants.
+ // A 48 px cell exceeds the maximum prize diameter, so only adjacent cells can overlap.
+ const cellSize=48;
  for(let iter=0;iter<6;iter++){
+  const bins=new Map();
   for(let i=0;i<n;i++){
-   const a=list[i],ra=a.radius||10,invMa=1/(a.mass||100);
-   for(let j=i+1;j<n;j++){
-    const b=list[j],rb=b.radius||10,invMb=1/(b.mass||100);
-    const dx=b.x-a.x,dy=b.y-a.y,minD=ra+rb,dSq=dx*dx+dy*dy;
-    if(dSq>=minD*minD)continue;
-    let nx=0,ny=1,d=0;
-    if(dSq>1e-6){d=Math.sqrt(dSq);nx=dx/d;ny=dy/d}
-    const pen=minD-d,invSum=invMa+invMb;
-    const corr=pen/invSum;
-    a.x-=nx*corr*invMa;a.y-=ny*corr*invMa;
-    b.x+=nx*corr*invMb;b.y+=ny*corr*invMb;
-    if(iter===0){
-     const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rvn=rvx*nx+rvy*ny;
-     if(rvn<0){
-      const e=Math.abs(rvn)>24?Math.min(a.restitution,b.restitution):0;
-      const imp=-(1+e)*rvn/invSum;
-      a.vx-=nx*imp*invMa;a.vy-=ny*imp*invMa;
-      b.vx+=nx*imp*invMb;b.vy+=ny*imp*invMb;
-      const tx=-ny,ty=nx,rvt=rvx*tx+rvy*ty;
-      const mu=Math.abs(rvn)<18?.42:.22;
-      const jt=clamp(-rvt*mu/invSum,-Math.abs(imp)*.45,Math.abs(imp)*.45);
-      a.vx-=tx*jt*invMa;a.vy-=ty*jt*invMa;
-      b.vx+=tx*jt*invMb;b.vy+=ty*jt*invMb;
-      a.angVel-=jt/(ra*4);b.angVel+=jt/(rb*4);
-      if(Math.abs(ny)>.45&&Math.hypot(rvx,rvy)<12){
-       a.vx*=Math.exp(-8*h);b.vx*=Math.exp(-8*h);
-       if(Math.abs(a.vx)<2)a.vx=0;
-       if(Math.abs(b.vx)<2)b.vx=0;
+   const p=list[i],cx=Math.floor(p.x/cellSize),cy=Math.floor(p.y/cellSize),key=cx+","+cy;
+   let bucket=bins.get(key);if(!bucket){bucket=[];bins.set(key,bucket)}bucket.push(i);
+  }
+  for(let i=0;i<n;i++){
+   const a=list[i],ra=a.radius||10,invMa=1/(a.mass||100),cx=Math.floor(a.x/cellSize),cy=Math.floor(a.y/cellSize);
+   for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+    const bucket=bins.get((cx+ox)+","+(cy+oy));if(!bucket)continue;
+    for(const j of bucket){
+     if(j<=i)continue;
+     const b=list[j],rb=b.radius||10,invMb=1/(b.mass||100),dx=b.x-a.x,dy=b.y-a.y,minD=ra+rb,dSq=dx*dx+dy*dy;
+     if(dSq>=minD*minD)continue;
+     let nx=0,ny=1,d=0;if(dSq>1e-6){d=Math.sqrt(dSq);nx=dx/d;ny=dy/d}
+     const pen=minD-d,invSum=invMa+invMb,corr=pen/invSum;
+     a.x-=nx*corr*invMa;a.y-=ny*corr*invMa;b.x+=nx*corr*invMb;b.y+=ny*corr*invMb;
+     if(iter===0){
+      const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rvn=rvx*nx+rvy*ny;
+      if(rvn<0){
+       const restitution=Math.abs(rvn)>24?Math.min(a.restitution,b.restitution):0,imp=-(1+restitution)*rvn/invSum;
+       a.vx-=nx*imp*invMa;a.vy-=ny*imp*invMa;b.vx+=nx*imp*invMb;b.vy+=ny*imp*invMb;
+       const tx=-ny,ty=nx,rvt=rvx*tx+rvy*ty,mu=Math.abs(rvn)<18?.42:.22,jt=clamp(-rvt*mu/invSum,-Math.abs(imp)*.45,Math.abs(imp)*.45);
+       a.vx-=tx*jt*invMa;a.vy-=ty*jt*invMa;b.vx+=tx*jt*invMb;b.vy+=ty*jt*invMb;a.angVel-=jt/(ra*4);b.angVel+=jt/(rb*4);
+       if(Math.abs(ny)>.45&&Math.hypot(rvx,rvy)<12){a.vx*=Math.exp(-8*h);b.vx*=Math.exp(-8*h);if(Math.abs(a.vx)<2)a.vx=0;if(Math.abs(b.vx)<2)b.vx=0}
       }
      }
     }
@@ -1390,15 +1374,7 @@ function stepChamberPhysics(h,withClaw=true,list=state.machinePrizes){
    if(a.x<minX){a.x=minX;if(iter===0&&a.vx<0){a.vx=-a.vx*a.restitution;a.angVel=-a.vy/ra}}
    else if(a.x>maxX){a.x=maxX;if(iter===0&&a.vx>0){a.vx=-a.vx*a.restitution;a.angVel=a.vy/ra}}
    if(a.y<minY){a.y=minY;if(iter===0&&a.vy<0)a.vy=-a.vy*a.restitution}
-   else if(a.y>=maxY){
-    a.y=maxY;
-    if(iter===0){
-     if(a.vy>0)a.vy=a.vy>34?-a.vy*a.restitution:0;
-     a.vx*=Math.exp(-6.5*h);
-     a.angVel=a.vx/Math.max(6,ra);
-     if(Math.abs(a.vx)<2.8){a.vx=0;a.angVel=0}
-    }
-   }
+   else if(a.y>=maxY){a.y=maxY;if(iter===0){if(a.vy>0)a.vy=a.vy>34?-a.vy*a.restitution:0;a.vx*=Math.exp(-6.5*h);a.angVel=a.vx/Math.max(6,ra);if(Math.abs(a.vx)<2.8){a.vx=0;a.angVel=0}}}
   }
  }
 }
@@ -1496,9 +1472,8 @@ function getClawTargetCandidate(){
 }
 function updateChamberPhysics(dt){
  if(!state.machinePrizes||!state.machinePrizes.length)return;
- const frameDt=clamp(dt,0,.033);
- const h=frameDt/3;
- for(let s=0;s<3;s++)stepChamberPhysics(h,true,state.machinePrizes);
+ const frameDt=clamp(dt,0,.033),steps=2,h=frameDt/steps;
+ for(let s=0;s<steps;s++)stepChamberPhysics(h,true,state.machinePrizes);
 }
 function drawClawMachine(){
  const ink="#35536b",shell=ctx.createLinearGradient(0,500,0,788);
@@ -1714,14 +1689,19 @@ function spawnEnemy(typeOverride=null){
  if(boss){state.bossSpawned=true;notify("POJAWIA SIĘ STRAŻNIK!");beep(115,.22,"sawtooth")}
 }
 function particle(x,y,color,size=3){
+ if(state.particles.length>=480)state.particles.splice(0,state.particles.length-440);
  state.particles.push({x,y,vx:rand(-60,60),vy:rand(-85,40),life:rand(.3,.7),max:.7,color,size});
 }
-function popText(label,x,y,color="#fff",scale=1){state.floaters.push({label,x,y,vx:rand(-15,15),vy:-34,life:.95,max:.95,color,scale})}
+function popText(label,x,y,color="#fff",scale=1){
+ if(state.floaters.length>=36)state.floaters.shift();
+ state.floaters.push({label,x,y,vx:rand(-15,15),vy:-34,life:.95,max:.95,color,scale});
+}
 function spawnImpact(target,kind,damage=0,customColor=null){
  if(!state.effects)return;
  const palette={slime:"#8f172a",bat:"#99142e",porcupine:"#8a1a14",goblin:"#8a1a1f",fire_elemental:"#ff421c",dragon:"#a61436",golem:"#cf2547",hydra:"#1a7a48",boss:"#a81033",hero:"#ff2e4c"};
  const color=customColor||(kind==="arcane"||kind==="heavy"?"#9beeff":kind==="incoming"?"#ff3653":kind==="critical"?"#ff1f3a":(palette[target.type]||"#cf2742"));
  const max=kind==="arcane"?.56:kind==="incoming"?.3:.36;
+ if(state.impacts.length>=140)state.impacts.splice(0,state.impacts.length-120);
  state.impacts.push({x:target.x,y:target.y,kind,color,life:max,max,radius:target.type==="boss"?47:30});
  state.shake=Math.max(state.shake,kind==="arcane"?6.2:kind==="incoming"?3.2:kind==="critical"?4.4:2.7);
  if(kind==="arcane"||kind==="heavy")impulseChamber(58,225);

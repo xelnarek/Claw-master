@@ -1564,41 +1564,13 @@ function drawHubTabBar(){
  for(const t of tabs){const active=(t.id==="forge"&&(state.upgradesOpen||state.talentTreeOpen))||(t.id==="codex"&&state.hubTab==="codex"&&!state.helpOpen)||(!state.upgradesOpen&&!state.talentTreeOpen&&!state.helpOpen&&state.hubTab===t.id),topY=active?721:725,h=active?55:50;rounded(t.x,topY+2,t.w,h,10,"#8faec4");rounded(t.x,topY,t.w,h-2,10,active?t.tone:"#f8fdff",active?"#45637b":"#b3cbd9",1.5);ctx.save();ctx.globalAlpha=.36;ctx.fillStyle="#fff";rounded(t.x+4,topY+2,t.w-8,12,6,"#fff");ctx.restore();if(active)glow(t.x+t.w/2,topY+24,32,t.tone,.22);inkText(t.icon,t.x+t.w/2,topY+18,16,active?"#fff":"#45637b",active?"#45637b":"#fff",1.1,"center",UI_FONT);inkText(t.label,t.x+t.w/2,topY+38,8.8,active?"#fff":"#55728b",active?"#45637b":"#fff",1.1,"center",DISPLAY_FONT)}
 }
 function drawArsenalTab(){
- const ink="#07050a";
- drawMenuScene();
- ctx.fillStyle="#07050ac9";ctx.fillRect(0,130,W,588);
- drawModalFrame(17,138,416,570,"#8f142e");
- inkText("ARSENAŁ I SYNERGIE",225,165,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
- text("5 ARCHETYPÓW BRONI  •  12 SKILLI  •  4 SYNERGIE",225,186,7.4,"#ffd58a",800,"center");
- line(38,200,412,200,"#ffffff26",1.2);
- const activeW=weaponCatalog.find(w=>w.id===state.arsenalWeapon)||weaponCatalog[0];
- rounded(34,209,382,129,11,"#18101e",ink,2.2);
- ctx.fillStyle=activeW.color;ctx.fillRect(36,213,5,121);
- rounded(48,220,124,78,9,"#100a16",activeW.color,1.8);
- glow(108,260,44,activeW.color,.22);
- ctx.save();ctx.translate(92,260);ctx.scale(1.45,1.45);drawWeaponModel(activeW.id,activeW.color,0,false,false,3);ctx.restore();
- inkText(activeW.name.toUpperCase(),186,232,11.5,activeW.color,ink,2.4,"left",DISPLAY_FONT);
- text(activeW.role,186,252,8.4,"#f0e3d2",700);
- text("OBRAŻENIA: "+activeW.damage+" (+"+profile.attackRank+" RANGA)  •  MAX POZ. III",186,274,7.5,"#ffe078",800);
- text("KLIKNIJ IKONĘ PONIŻEJ, ABY OBEJRZEĆ MODEL",186,294,6.9,"#cdb8a3",700);
- for(let i=0;i<weaponCatalog.length;i++){
-  const w=weaponCatalog[i],bx=42+i*74,sel=w.id===activeW.id;
-  rounded(bx,306,68,25,7,sel?"#481628":"#19101d",sel?w.color:"#473245",sel?2:1.2);
-  inkText(w.id.toUpperCase(),bx+34,318.5,7.2,sel?"#ffffff":"#cbb89d",ink,1.8,"center",DISPLAY_FONT);
- }
- line(38,348,412,348,"#ffffff26",1.2);
- inkText("KARTY SKILLI I SYNERGIE WYPRAWY",225,363,8.8,"#ffd670",ink,2,"center",DISPLAY_FONT);
- for(let i=0;i<abilityPool.length;i++){
-  const a=abilityPool[i],col=i%2,row=Math.floor(i/2);
-  const cx=34+col*194,cy=378+row*45;
-  rounded(cx,cy,186,39,8,"#18101e",ink,1.8);
-  ctx.fillStyle=a.color;ctx.fillRect(cx+2,cy+3,4,33);
-  text(a.name,cx+13,cy+13,8.5,"#ffffff",900);
-  ctx.fillStyle="#d1beaa";ctx.font="700 6.5px "+UI_FONT;ctx.textAlign="left";ctx.fillText(a.desc,cx+13,cy+28,166);
- }
- rounded(34,650,382,48,8,"#1a2a1f",ink,2);
- text("SYNERGIE: KOROZJA (Trucizna+Krwaw.) • BASTION (Tarcza+Riposta)",225,665,6.6,"#c5ff94",900,"center");
- text("FURIA ETERU (Kryt+Ostrze/Burza) • ZŁOTY CHWYT (Fortuna+Pazur)",225,682,6.6,"#ffe58f",900,"center");
+ drawMenuScene();ctx.fillStyle="#eaf7ffdc";ctx.fillRect(0,130,W,588);drawModalFrame(17,138,416,570,"#63c9e8");inkText("ARSENAŁ I SYNERGIE",225,165,17,"#315674","#fff",1.3,"center",DISPLAY_FONT);text("5 ARCHETYPÓW BRONI • 12 SKILLI • 4 SYNERGIE",225,186,7.4,"#63839a",900,"center");line(38,200,412,200,"#b5d1e0",1.2);
+ const activeW=weaponCatalog.find(w=>w.id===state.arsenalWeapon)||weaponCatalog[0];rounded(34,209,382,129,11,"#fff","#c3dbe6",1.5);ctx.fillStyle=activeW.color;ctx.fillRect(36,213,5,121);rounded(48,220,124,78,9,"#eef8fb",activeW.color,1.8);glow(108,260,44,activeW.color,.2);ctx.save();ctx.translate(92,260);ctx.scale(1.45,1.45);drawWeaponModel(activeW.id,activeW.color,0,false,false,3);ctx.restore();
+ inkText(activeW.name.toUpperCase(),186,232,11.5,activeW.color,"#fff",1,"left",DISPLAY_FONT);text(activeW.role,186,252,8.4,"#58798f",800);text("OBRAŻENIA: "+activeW.damage+" (+"+profile.attackRank+" RANGA) • MAX POZ. III",186,274,7.5,"#98743c",900);text("KLIKNIJ IKONĘ PONIŻEJ, ABY OBEJRZEĆ MODEL",186,294,6.9,"#6a8799",800);
+ for(let i=0;i<weaponCatalog.length;i++){const w=weaponCatalog[i],bx=42+i*74,sel=w.id===activeW.id;rounded(bx,306,68,25,7,sel?"#d6f1f5":"#f2f8fb",sel?w.color:"#b8d1dc",sel?2:1.2);inkText(w.id.toUpperCase(),bx+34,318.5,7.2,sel?"#315674":"#71899a","#fff",1,"center",DISPLAY_FONT)}
+ line(38,348,412,348,"#b5d1e0",1.2);inkText("KARTY SKILLI I SYNERGIE WYPRAWY",225,363,8.8,"#97743a","#fff",1,"center",DISPLAY_FONT);
+ for(let i=0;i<abilityPool.length;i++){const a=abilityPool[i],col=i%2,row=Math.floor(i/2),cx=34+col*194,cy=378+row*45;rounded(cx,cy,186,39,8,"#fff","#c6dce5",1.2);ctx.fillStyle=a.color;ctx.fillRect(cx+2,cy+3,4,33);text(a.name,cx+13,cy+13,8.5,"#315674",900);ctx.fillStyle="#617f92";ctx.font="700 6.5px "+UI_FONT;ctx.textAlign="left";ctx.fillText(a.desc,cx+13,cy+28,166)}
+ rounded(34,650,382,48,8,"#edf8e9","#b7d1b3",1.4);text("SYNERGIE: KOROZJA (Trucizna+Krwaw.) • BASTION (Tarcza+Riposta)",225,665,6.6,"#40816b",900,"center");text("FURIA ETERU (Kryt+Ostrze/Burza) • ZŁOTY CHWYT (Fortuna+Pazur)",225,682,6.6,"#98743c",900,"center");
 }
 function drawTitle(){
  const activeStage=clamp(state.hubStage||profile.unlockedStage,1,profile.unlockedStage),def=stageDefinition(activeStage);
@@ -1622,34 +1594,12 @@ function drawTitle(){
 }
 function drawSettingsOverlay(){const ink="#294966";drawModalBackdrop();drawModalFrame(35,226,380,354,"#63c4e7");inkText("USTAWIENIA",225,264,18,"#315674","#ffffff",1.2,"center",DISPLAY_FONT);text("KONFIGURACJA SESJI",225,286,8,"#63839a",900,"center");line(62,306,388,306,"#b5d1e0",1.2);rounded(57,323,336,69,10,"#ffffff","#bed4e1",1.3);ctx.fillStyle="#58b9a2";ctx.fillRect(59,327,4,61);text("01 / DŹWIĘK",76,345,11,"#315674",900);text("Sygnały interfejsu i efekty audio",76,369,8.5,"#718ba0",700);button(284,338,96,39,state.sound?"WŁĄCZONY":"WYŁĄCZONY","",state.sound,state.sound?"teal":"dim");rounded(57,405,336,69,10,"#ffffff","#bed4e1",1.3);ctx.fillStyle="#57b7df";ctx.fillRect(59,409,4,61);text("02 / EFEKTY WIZUALNE",76,427,11,"#315674",900);text("Poświaty, cząsteczki i drobne animacje",76,451,8.2,"#718ba0",700);button(284,420,96,39,state.effects?"WŁĄCZONE":"WYŁĄCZONE","",state.effects,state.effects?"teal":"dim");line(62,490,388,490,"#b5d1e0",1.2);text("Zmiany są zapisywane automatycznie na tym urządzeniu.",225,507,8,"#70889a",700,"center");button(112,521,226,42,"ZAMKNIJ USTAWIENIA","",true,"blue")}
 function drawHelpOverlay(){
- const ink="#07050a";
- drawModalBackdrop();
- drawModalFrame(32,198,386,414,"#8f142e");
- inkText("KODEKS TAKTYCZNY",225,234,17,"#ffffff",ink,3,"center",DISPLAY_FONT);
- text("JEDNA TURA  /  RUCH TAKTYCZNY  /  BESTIARIUSZ",225,255,7.4,"#dfcaff",800,"center");line(59,272,391,272,"#ffffff26",1.2);
- const rows=[
-  ["01","USTAW I ZŁAP","Przesuń pazur w krypcie. Kryształy XP ładują karty skilli."],
-  ["02","RUCH I CIOS","Przesuń łowcę o 1 pole i wymierz cios wybraną bronią."],
-  ["03","ZAGROŻENIA","Wrogowie pokazują zamiar oraz strzałki podejścia na posadzce."]
- ];
- let y=299;for(const r of rows){inkText(r[0],62,y,9.5,"#ffd45c",ink,2);text(r[1],92,y-2,9.5,"#ffffff",900);text(r[2],92,y+14,7.4,"#d4c2ae",700);line(92,y+26,386,y+26,"#ffffff18",1);y+=48}
- inkText("BESTIARIUSZ ARENY",225,442,8.5,"#ffd875",ink,2,"center",DISPLAY_FONT);
- const beasts=[
-  ["SZLAM","Zatruwa na 2 tury","#73e8b6"],
-  ["NIETOPERZ","Szybkie nurkowanie","#ba9cff"],
-  ["JEŻORYJ","Kolce odbijają 2 dmg","#ffc56e"],
-  ["GOBLIN","Tworzy pancerz 3 pkt","#ff9470"],
-  ["STRAŻNIK","Szał poniżej 50% HP","#ff799c"]
- ];
- for(let i=0;i<beasts.length;i++){
-  const bx=54+i*70;rounded(bx,456,64,54,7,"#18101e",beasts[i][2],1.6);
-  text(beasts[i][0],bx+32,473,6.4,beasts[i][2],900,"center");
-  ctx.fillStyle="#e8d8c8";ctx.font="700 5.6px "+UI_FONT;ctx.textAlign="center";ctx.fillText(beasts[i][1],bx+32,495,58);
- }
- rounded(59,520,332,42,7,"#120a16",ink,1.8);
- text("A/D LUB ←/→: PAZUR  •  SPACJA/F: ZŁAP  •  Q/E: KROK",225,534,7.4,"#ffd88a",800,"center");
- text("J / SPACJA: WYMIERZ CIOS  •  UPUSZCZANE STATUSY I KRYTYKI",225,549,7.8,"#ff6b84",800,"center");
- button(112,575,226,30,"WRÓĆ DO BAZY","",true,"blue");
+ drawModalBackdrop();drawModalFrame(32,198,386,414,"#63c9e8");inkText("KODEKS TAKTYCZNY",225,234,17,"#315674","#fff",1.3,"center",DISPLAY_FONT);text("JEDNA TURA / RUCH TAKTYCZNY / BESTIARIUSZ",225,255,7.4,"#65839a",900,"center");line(59,272,391,272,"#b5d1e0",1.2);
+ const rows=[["01","USTAW I ZŁAP","Przesuń pazur. Idealny chwyt daje dodatkowe nagrody."],["02","RUCH I CIOS","Jeden krok taktyczny i jedna akcja bohatera na turę."],["03","ZAGROŻENIA","Wrogowie pokazują zamiar i strefę nadchodzącego ataku."]];
+ let y=299;for(const a of rows){inkText(a[0],62,y,9.5,"#d99e45","#fff",1,"center",DISPLAY_FONT);text(a[1],92,y-2,9.5,"#315674",900);text(a[2],92,y+14,7.4,"#6a8598",800);line(92,y+26,386,y+26,"#d1e1e9",1);y+=48}
+ inkText("BESTIARIUSZ ARENY",225,442,8.5,"#98743c","#fff",1,"center",DISPLAY_FONT);const beasts=[["SZLAM","Zatruwa na 2 tury","#66c9a7"],["NIETOPERZ","Szybkie nurkowanie","#9b87df"],["JEŻORYJ","Kolce odbijają 2 dmg","#e8ad53"],["GOBLIN","Tworzy pancerz 3 pkt","#74b98e"],["STRAŻNIK","Szał poniżej 50% HP","#df7b82"]];
+ for(let i=0;i<beasts.length;i++){const x=54+i*70;rounded(x,456,64,54,7,"#fff",beasts[i][2],1.3);text(beasts[i][0],x+32,473,6.4,beasts[i][2],900,"center");ctx.fillStyle="#6a8295";ctx.font="700 5.6px "+UI_FONT;ctx.textAlign="center";ctx.fillText(beasts[i][1],x+32,495,58)}
+ rounded(59,520,332,42,7,"#e9f5fa","#c0d8e3",1.3);text("A/D LUB ←/→: PAZUR • SPACJA/F: ZŁAP • Q/E: KROK",225,534,7.4,"#55758b",900,"center");text("J / SPACJA: WYMIERZ CIOS • ZDOBYWAJ RELIKTY",225,549,7.8,"#d17c6c",900,"center");button(112,575,226,30,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawUpgradeOverlay(){
  drawModalBackdrop();drawModalFrame(32,202,386,410,"#e3b45e");inkText("KUŹNIA / ROZWÓJ",225,240,18,"#315674","#fff",1.4,"center",DISPLAY_FONT);text("STAŁE MODYFIKATORY BOHATERA",225,262,8,"#6b879b",900,"center");line(58,282,392,282,"#b5d1e0",1.2);
@@ -1658,42 +1608,10 @@ function drawUpgradeOverlay(){
  inkText("DOSTĘPNE KREDYTY / ◆ "+profile.coins,225,547,9.5,"#956c31","#fff9e7",1,"center",DISPLAY_FONT);button(48,562,205,38,"DRZEWKO TALENTÓW","ROZWIJAJ TALENTY",true,"gold");button(263,562,138,38,"WRÓĆ DO BAZY","",true,"blue");
 }
 function drawLevelChoiceOverlay(){
- const ink="#07050a";
- drawModalBackdrop();
- drawModalFrame(25,170,400,455,"#8f142e");
- glow(225,205,110,"#8f142e",.24);
- inkText("AWANS ŁOWCY",225,206,19.5,"#ffd95e",ink,3.4,"center",DISPLAY_FONT);
- const toLvl=Math.max(1,state.runLevel||1),fromLvl=Math.max(1,toLvl-Math.min(toLvl-1,state.pendingLevelUps||1));
- const subHdr=toLvl>fromLvl?("POZIOM "+fromLvl+" → POZIOM "+toLvl+"  •  WYBIERZ 1 Z 3 KART"):"KARTA UMIEJĘTNOŚCI  •  WYBIERZ 1 Z 3";
- text(subHdr,225,232,7.5,"#ffd58a",800,"center");
- line(52,250,398,250,"#ffffff26",1.2);
- const cards=state.levelChoices||[];
- for(let i=0;i<cards.length;i++){
-  const a=cards[i],y=270+i*108,curLvl=state.runSkills[a.id]||0,nextLvl=curLvl+1;
-  const synInfo=synergyForCandidate(a),isHotSyn=synInfo&&synInfo.state==="completes";
-  rounded(49,y,352,94,10,"#18101e",isHotSyn?"#4ade80":ink,isHotSyn?2.6:2.2);
-  ctx.fillStyle=a.color;ctx.fillRect(51,y+4,5,86);
-  rounded(62,y+12,42,42,8,a.color+"2e",a.color,1.8);
-  inkText(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠","✹","◈","↯"][abilityPool.findIndex(v=>v.id===a.id)],83,y+33,20,a.color,ink,2,"center",UI_FONT);
-  const rarity=a.max===2?"EPICKI":a.max===3?"RZADKI":"BAZOWY";
-  text(a.tag+" • "+rarity,116,y+17,7.4,a.color,900);
-  inkText(a.name,116,y+36,12.5,"#ffffff",ink,2.2,"left",DISPLAY_FONT);
-  text(a.desc,116,y+56,8.2,"#ebd8c3",700);
-  // Level pips
-  for(let p=0;p<a.max;p++){
-   const px=116+p*14,py=y+74;
-   ctx.fillStyle=p<nextLvl?(p===curLvl?"#ffe46b":a.color):"#251829";
-   ctx.strokeStyle=ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(px+4,py,4,0,Math.PI*2);ctx.fill();ctx.stroke();
-  }
-  if(synInfo){
-   const synTxt=synInfo.state==="completes"?"★ AKTYWUJE: "+synInfo.syn.name:synInfo.state==="active"?"SYNERGIA "+synInfo.syn.name+" AKTYWNA":"SYNERGIA: "+synInfo.syn.name;
-   const synCol=synInfo.state==="completes"?"#a8ff8e":synInfo.state==="active"?synInfo.syn.color:"#c7b4a0";
-   text(synTxt,182,y+74.5,6.5,synCol,900);
-  }
-  text("POZ. "+nextLvl+"/"+a.max,382,y+56,7.6,"#ffd670",800,"right");
-  button(320,y+10,68,30,"WYBIERZ","",true,"gold");
- }
- text("XP ZE SKRZYNI I WALK ŁADUJE KOLEJNE KARTY SYNERGII (KLAWISZE 1–3)",225,603,7.3,"#d6c0aa",800,"center");
+ drawModalBackdrop();drawModalFrame(25,170,400,455,"#d9b45c");glow(225,205,110,"#8ed5e4",.19);inkText("AWANS ŁOWCY",225,206,19.5,"#d79f3d","#fff",1.4,"center",DISPLAY_FONT);
+ const toLvl=Math.max(1,state.runLevel||1),fromLvl=Math.max(1,toLvl-Math.min(toLvl-1,state.pendingLevelUps||1));text(toLvl>fromLvl?"POZIOM "+fromLvl+" → POZIOM "+toLvl+" • WYBIERZ 1 Z 3 KART":"KARTA UMIEJĘTNOŚCI • WYBIERZ 1 Z 3",225,232,7.5,"#63839a",900,"center");line(52,250,398,250,"#b5d1e0",1.2);
+ const cards=state.levelChoices||[];for(let i=0;i<cards.length;i++){const a=cards[i],y=270+i*108,cur=state.runSkills[a.id]||0,next=cur+1,info=synergyForCandidate(a),hot=info&&info.state==="completes";rounded(49,y,352,94,10,"#fff",hot?"#5bb58b":"#c3d9e3",hot?2.5:1.4);ctx.fillStyle=a.color;ctx.fillRect(51,y+4,5,86);rounded(62,y+12,42,42,8,a.color+"33",a.color,1.8);inkText(["✦","♥","⬡","⚔","♜","✧","⌖","◆","☠","✹","◈","↯"][abilityPool.findIndex(v=>v.id===a.id)],83,y+33,20,a.color,"#fff",1,"center",UI_FONT);const rarity=a.max===2?"EPICKI":a.max===3?"RZADKI":"BAZOWY";text(a.tag+" • "+rarity,116,y+17,7.4,a.color,900);inkText(a.name,116,y+36,12.5,"#315674","#fff",1.2,"left",DISPLAY_FONT);text(a.desc,116,y+56,8.2,"#68859a",800);for(let j=0;j<a.max;j++){const px=116+j*14,py=y+74;ctx.fillStyle=j<next?(j===cur?"#e6b951":a.color):"#e6eef1";ctx.strokeStyle="#b9cdd7";ctx.lineWidth=1;ctx.beginPath();ctx.arc(px+4,py,4,0,Math.PI*2);ctx.fill();ctx.stroke()}if(info){const st=info.state,txt=st==="completes"?"★ AKTYWUJE: "+info.syn.name:st==="active"?"SYNERGIA "+info.syn.name+" AKTYWNA":"SYNERGIA: "+info.syn.name;text(txt,182,y+74.5,6.5,st==="completes"?"#4a9b71":info.syn.color,900)}text("POZ. "+next+"/"+a.max,382,y+56,7.6,"#98743c",900,"right");button(320,y+10,68,30,"WYBIERZ","",true,"gold")}
+ text("XP ZE SKRZYNI I WALK ŁADUJE KOLEJNE KARTY SYNERGII (KLAWISZE 1–3)",225,603,7.3,"#617e93",900,"center");
 }
 function drawOverlay(){
  const ink="#07050a";
